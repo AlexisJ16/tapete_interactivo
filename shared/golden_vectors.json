@@ -73,6 +73,48 @@
         { "ev": "score", "mode": 2, "hits": 2, "misses": 0, "rt_ms": 500, "round": 2 },
         { "ev": "led", "cell": 5, "level": 255 }
       ]
+    },
+    {
+      "name": "memoria_juego_completo",
+      "match": "subsequence",
+      "config": { "mode": 1, "level": 1, "seed": 777 },
+      "_nota": "seed 777 -> secuencia [4,5,2,3,6]. Longitud inicial 2, maxima 5. Se juega hasta 'finished'. Los pasos en t grande dejan que actualizar() vacie la fase de EXHIBICION antes de pisar.",
+      "timeline": [
+        { "t": 0, "cmd": { "cmd": "set_mode", "mode": 1, "level": 1 } },
+        { "t": 0, "cmd": { "cmd": "start" } },
+        { "t": 20000, "press": 4 }, { "t": 20100, "press": 5 },
+        { "t": 40000, "press": 4 }, { "t": 40100, "press": 5 }, { "t": 40200, "press": 2 },
+        { "t": 60000, "press": 4 }, { "t": 60100, "press": 5 }, { "t": 60200, "press": 2 }, { "t": 60300, "press": 3 },
+        { "t": 80000, "press": 4 }, { "t": 80100, "press": 5 }, { "t": 80200, "press": 2 }, { "t": 80300, "press": 3 }, { "t": 80400, "press": 6 }
+      ],
+      "expected": [
+        { "ev": "state", "mode": 1, "status": "running" },
+        { "ev": "led", "cell": 4, "level": 255 },
+        { "ev": "sound", "id": 4 },
+        { "ev": "led", "cell": 2, "level": 255 },
+        { "ev": "state", "mode": 1, "status": "finished" }
+      ]
+    },
+    {
+      "name": "equilibrio_juego_completo",
+      "match": "subsequence",
+      "config": { "mode": 3, "level": 1, "seed": 2024 },
+      "_nota": "seed 2024 -> patrones [3,6],[5,4],[6,2],[5,1]. 4 rondas. Se completan todas hasta 'finished'.",
+      "timeline": [
+        { "t": 0, "cmd": { "cmd": "set_mode", "mode": 3, "level": 1 } },
+        { "t": 0, "cmd": { "cmd": "start" } },
+        { "t": 500, "press": 3 }, { "t": 600, "press": 6 },
+        { "t": 700, "press": 5 }, { "t": 800, "press": 4 },
+        { "t": 900, "press": 6 }, { "t": 1000, "press": 2 },
+        { "t": 1100, "press": 5 }, { "t": 1200, "press": 1 }
+      ],
+      "expected": [
+        { "ev": "state", "mode": 3, "status": "running" },
+        { "ev": "led", "cell": 3, "level": 255 },
+        { "ev": "led", "cell": 6, "level": 255 },
+        { "ev": "sound", "id": 4 },
+        { "ev": "state", "mode": 3, "status": "finished" }
+      ]
     }
   ]
 }

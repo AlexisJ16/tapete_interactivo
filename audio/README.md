@@ -1,7 +1,12 @@
 # Audios del DFPlayer Mini
 
-Coloca estos archivos MP3 en la **raíz** de la microSD (FAT32) del DFPlayer.
-El firmware/simulador los pide por `id` (evento `{"ev":"sound","id":N}`):
+Los pide el firmware/simulador por `id` (evento `{"ev":"sound","id":N}`).
+
+- **ESP32 (microSD FAT32):** crea una carpeta `/mp3` en la raíz de la SD y pon
+  los archivos ahí: `/mp3/0001.mp3` … `/mp3/0004.mp3`. El firmware usa
+  `playMp3Folder(id)`, que los reproduce **por número** de forma fiable (no
+  depende del orden de copiado, a diferencia de `play()`).
+- **Simulador:** los archivos van en esta misma carpeta `audio/` (`0001.mp3`…).
 
 | Archivo | id | Cuándo suena |
 |---|---|---|
@@ -12,8 +17,7 @@ El firmware/simulador los pide por `id` (evento `{"ev":"sound","id":N}`):
 
 Notas:
 
-- Numéralos con 4 dígitos (`0001.mp3`, `0002.mp3`, …). El DFPlayer reproduce por
-  índice de pista (`play(id)`).
-- En el **simulador**, los archivos van en esta misma carpeta `audio/`. Si faltan,
-  el simulador no falla: simplemente no reproduce sonido.
+- Numéralos con 4 dígitos (`0001.mp3`, `0002.mp3`, …).
+- En el **simulador**, si faltan los archivos no pasa nada: simplemente no
+  reproduce sonido (no falla).
 - Sonidos sugeridos: cortos (0,3–1 s), claros y amables para niños.

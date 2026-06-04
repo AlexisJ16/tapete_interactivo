@@ -11,7 +11,8 @@ lógica.
   pip install platformio        # o usar el venv del proyecto: .venv/bin/pip install platformio
   ```
 - Cable **USB-C** del ESP32 a la PC.
-- (Audio) microSD FAT32 con `0001.mp3`..`0004.mp3` en la raíz (ver `audio/README.md`).
+- (Audio) microSD FAT32 con los MP3 en la carpeta `/mp3/`: `/mp3/0001.mp3`..
+  `/mp3/0004.mp3` (ver `audio/README.md`).
 
 ## 2. Credenciales WiFi (sin secretos en git)
 

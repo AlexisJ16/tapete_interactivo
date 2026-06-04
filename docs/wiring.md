@@ -88,8 +88,8 @@ juntos). El brillo lo fija el firmware vía LEDC (0..255).
   recomendada (protege la entrada del módulo).
 - `TX` del DFPlayer → **GPIO 16 (RX2)** del ESP32.
 - Parlante a `SPK_1`/`SPK_2` (3 W) o salida `DAC` a un amplificador.
-- **microSD** (FAT32) con los audios en la raíz: `0001.mp3` … `0004.mp3`
-  (ver `audio/README.md`).
+- **microSD** (FAT32) con los audios en la carpeta `/mp3/`: `/mp3/0001.mp3` …
+  `/mp3/0004.mp3` (ver `audio/README.md`).
 
 ## 5. Alimentación
 
@@ -104,5 +104,5 @@ juntos). El brillo lo fija el firmware vía LEDC (0..255).
 - [ ] LEDs con 110 Ω en serie; si van a 5 V, transistor/ULN2803 por grupo.
 - [ ] DFPlayer: TX/RX cruzados (17→RX, 16←TX) y 1 kΩ en la línea a su RX.
 - [ ] GND común entre ESP32, etapa de LEDs y DFPlayer.
-- [ ] microSD FAT32 con `0001.mp3`..`0004.mp3` en la raíz.
+- [ ] microSD FAT32 con `/mp3/0001.mp3`..`/mp3/0004.mp3`.
 - [ ] Nada conectado a ADC2/ pines de WiFi.

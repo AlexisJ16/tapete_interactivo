@@ -61,6 +61,9 @@ void EspHardware::setLed(int celda, int nivel) {
 
 void EspHardware::reproducirSonido(int id) {
     if (audioOk_) {
-        player_.play(id);  // reproduce la pista 000{id}.mp3 de la raiz del SD
+        // playMp3Folder reproduce /mp3/000{id}.mp3 por NUMERO (fiable), a
+        // diferencia de play(), que depende del orden en que se copiaron los
+        // archivos a la SD. Ver audio/README.md y docs/flashing.md.
+        player_.playMp3Folder(id);
     }
 }
