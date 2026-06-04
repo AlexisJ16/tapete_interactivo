@@ -3,29 +3,31 @@
 #  run_all_tests.sh — corre TODOS los tests del proyecto y reporta verde/rojo.
 # ----------------------------------------------------------------------------
 #  1. Tests unitarios de C++ (GameCore) con doctest, compilados con g++.
-#  2. Golden vectors + integracion + protocolo en Python (pytest).
-#  3. Construye GameCore.so (lo necesita el simulador y el golden_runner).
+#  2. Construye GameCore.so (lo necesita el simulador y el golden_runner).
+#  3. Golden vectors + integracion + protocolo en Python (pytest).
 #
 #  No requiere PlatformIO: la logica portable se compila directo con g++.
 #  Salida: codigo 0 si TODO esta verde; != 0 si algo falla.
+#
+#  NOTA: se usan rutas RELATIVAS (tras cd al raiz) porque la ruta del proyecto
+#  puede contener espacios ("Tapete Interactivo"), que romperian un -I sin comillas.
 # ============================================================================
 set -u
 
-# Raiz del repo = carpeta padre de este script.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$ROOT"
 
-GAMECORE="$ROOT/firmware/lib/GameCore"
-VENDOR="$ROOT/firmware/test/vendor"
-TESTDIR="$ROOT/firmware/test"
-BUILD="$ROOT/build"
+GAMECORE="firmware/lib/GameCore"
+VENDOR="firmware/test/vendor"
+TESTDIR="firmware/test"
+BUILD="build"
 mkdir -p "$BUILD"
 
 CXX="${CXX:-g++}"
-CXXFLAGS="-std=c++17 -Wall -Wextra -O1 -I$GAMECORE -I$VENDOR"
+INCLUDES=(-I"$GAMECORE" -I"$VENDOR" -I"$TESTDIR")
+CXXFLAGS=(-std=c++17 -Wall -Wextra -O1 "${INCLUDES[@]}")
 
-# Fuentes de la logica portable (se enlazan a cada binario de test).
 shopt -s nullglob
 CORE_SRCS=( "$GAMECORE"/*.cpp "$GAMECORE"/modes/*.cpp )
 
@@ -37,7 +39,7 @@ echo "=============================================================="
 echo " 1) Tests unitarios C++ (doctest)"
 echo "=============================================================="
 if [ ! -f "$VENDOR/doctest.h" ]; then
-  echo "${YEL}AVISO:${NC} falta $VENDOR/doctest.h (se descarga en la Fase 2)."
+  echo "${YEL}AVISO:${NC} falta $VENDOR/doctest.h"
 fi
 for d in "$TESTDIR"/test_*/; do
   srcs=( "$d"*.cpp )
@@ -46,8 +48,8 @@ for d in "$TESTDIR"/test_*/; do
   name="$(basename "$d")"
   bin="$BUILD/$name"
   echo "--- compilando $name ---"
-  if $CXX $CXXFLAGS "${srcs[@]}" "${CORE_SRCS[@]}" -o "$bin" 2>&1; then
-    if "$bin"; then
+  if "$CXX" "${CXXFLAGS[@]}" "${srcs[@]}" "${CORE_SRCS[@]}" -o "$bin" 2>&1; then
+    if "./$bin"; then
       echo "${GREEN}OK${NC} $name"
     else
       echo "${RED}FALLO (runtime)${NC} $name"; FAILED=1
@@ -62,39 +64,34 @@ echo
 echo "=============================================================="
 echo " 2) Construir GameCore.so (para simulador / golden_runner)"
 echo "=============================================================="
-if [ ${#CORE_SRCS[@]} -gt 0 ] && [ -f "$GAMECORE/bridge.cpp" ]; then
-  if $CXX -std=c++17 -O2 -fPIC -shared -I"$GAMECORE" "${CORE_SRCS[@]}" \
+if [ -f "$GAMECORE/bridge.cpp" ]; then
+  if "$CXX" -std=c++17 -O2 -fPIC -shared -I"$GAMECORE" "${CORE_SRCS[@]}" \
         -o "$BUILD/libgamecore.so" 2>&1; then
     echo "${GREEN}OK${NC} build/libgamecore.so"
   else
     echo "${RED}FALLO${NC} al construir libgamecore.so"; FAILED=1
   fi
 else
-  echo "${YEL}(GameCore aun no tiene bridge.cpp; se crea en la Fase 2/3)${NC}"
+  echo "${YEL}(GameCore aun no tiene bridge.cpp; se crea en la Fase 3)${NC}"
 fi
 
 echo
 echo "=============================================================="
 echo " 3) Tests Python (golden vectors + integracion + protocolo)"
 echo "=============================================================="
-# Activa el venv del proyecto si existe.
-if [ -f "$ROOT/.venv/bin/activate" ]; then
+if [ -f ".venv/bin/activate" ]; then
   # shellcheck disable=SC1091
-  source "$ROOT/.venv/bin/activate"
+  source ".venv/bin/activate"
 fi
 if command -v pytest >/dev/null 2>&1; then
-  if pytest -q "$ROOT" \
-        --ignore="$ROOT/.venv" \
-        --rootdir="$ROOT" 2>&1; then
+  pytest -q . --ignore=.venv --rootdir=. 2>&1
+  rc=$?
+  if [ "$rc" -eq 0 ]; then
     echo "${GREEN}OK${NC} pytest"
+  elif [ "$rc" -eq 5 ]; then
+    echo "${YEL}(pytest no encontro tests todavia)${NC}"
   else
-    rc=$?
-    # pytest devuelve 5 cuando NO recolecta ningun test: no es un fallo real.
-    if [ "$rc" -eq 5 ]; then
-      echo "${YEL}(pytest no encontro tests todavia)${NC}"
-    else
-      echo "${RED}FALLO${NC} pytest (rc=$rc)"; FAILED=1
-    fi
+    echo "${RED}FALLO${NC} pytest (rc=$rc)"; FAILED=1
   fi
 else
   echo "${YEL}AVISO:${NC} pytest no disponible. Crea el venv: python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt"
