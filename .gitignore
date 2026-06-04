@@ -18,6 +18,9 @@ firmware/test/**/test_runner
 .pioenvs/
 .piolibdeps/
 
+# --- Secretos del firmware (credenciales WiFi) ---
+firmware/src/secrets.h
+
 # --- Bases de datos / reportes generados ---
 *.sqlite
 *.sqlite3
