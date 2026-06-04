@@ -111,6 +111,17 @@ inline int rondas(int nivel) {
 }
 }  // namespace equilibrio
 
+// --- Logica adaptable (SP1): recomendacion de nivel asistida ----------------
+// El sistema SUGIERE subir/mantener/bajar segun la tasa de acierto en una
+// ventana movil; el terapeuta decide. Todo ajustable (se calibra en SP2).
+namespace adaptacion {
+constexpr int   W          = 4;      // tamano de la ventana movil de resultados
+constexpr float umbralAlto = 0.75f;  // tasa >= umbralAlto -> sugerir SUBIR
+constexpr float umbralBajo = 0.25f;  // tasa <= umbralBajo -> sugerir BAJAR
+constexpr int   nivelMin   = 1;
+constexpr int   nivelMax   = 4;
+}  // namespace adaptacion
+
 }  // namespace cfg
 
 #endif  // TAPETE_CONFIG_H
