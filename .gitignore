@@ -1,0 +1,32 @@
+# --- Python ---
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# --- Entorno C++ / build nativo ---
+build/
+*.o
+*.so
+*.a
+*.out
+firmware/test/**/test_runner
+
+# --- PlatformIO ---
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# --- Bases de datos / reportes generados ---
+*.sqlite
+*.sqlite3
+*.db
+reports/*.csv
+reports/*.pdf
+
+# --- Sistema / editores ---
+.DS_Store
+*.swp
+.idea/
+.vscode/

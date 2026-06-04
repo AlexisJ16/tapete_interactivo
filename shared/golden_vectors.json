@@ -1,0 +1,53 @@
+{
+  "version": "1.0.0",
+  "description": "Vectores de oro: escenarios deterministas (entrada -> salida esperada) que GameCore debe reproducir EXACTAMENTE. Como el simulador carga el mismo GameCore.so compilado, ejecutar estos vectores contra el .so valida simultaneamente 'C++' y 'simulador': hay una sola implementacion de la logica.",
+  "schema": {
+    "scenario": {
+      "name": "identificador unico",
+      "match": "'strict' = el stream emitido debe ser EXACTAMENTE 'expected'; 'subsequence' = 'expected' debe aparecer EN ORDEN como subsecuencia del stream emitido (permite eventos intermedios).",
+      "config": { "mode": "1|2|3", "level": "entero", "seed": "semilla xorshift32 (uint32 != 0)" },
+      "timeline": "lista de pasos ordenados por 't' (ms de sesion). Cada paso es uno de: {t, cmd:{...}} para inyectar un comando, o {t, press:N} para simular la pisada de la casilla N en el ms 't'. Entre pasos el motor avanza el reloj hasta 't' y procesa update().",
+      "expected": "lista de eventos (objetos del protocolo) que se comparan segun 'match'."
+    },
+    "rng": "cell = (xorshift32(seed) % 6) + 1. seed=12345 -> casillas [3,4,5,3,6,1,1,3]."
+  },
+  "scenarios": [
+    {
+      "name": "velocidad_dos_aciertos",
+      "match": "subsequence",
+      "config": { "mode": 2, "level": 1, "seed": 12345 },
+      "timeline": [
+        { "t": 0,   "cmd": { "cmd": "set_seed", "seed": 12345 } },
+        { "t": 0,   "cmd": { "cmd": "set_mode", "mode": 2, "level": 1 } },
+        { "t": 0,   "cmd": { "cmd": "start" } },
+        { "t": 400, "press": 3 },
+        { "t": 900, "press": 4 }
+      ],
+      "expected": [
+        { "ev": "state", "mode": 2, "status": "running" },
+        { "ev": "led", "cell": 3, "level": 255 },
+        { "ev": "press", "cell": 3, "ms": 400 },
+        { "ev": "score", "mode": 2, "hits": 1, "misses": 0, "rt_ms": 400, "round": 1 },
+        { "ev": "led", "cell": 4, "level": 255 },
+        { "ev": "press", "cell": 4, "ms": 900 },
+        { "ev": "score", "mode": 2, "hits": 2, "misses": 0, "rt_ms": 500, "round": 2 }
+      ]
+    },
+    {
+      "name": "velocidad_timeout",
+      "match": "subsequence",
+      "config": { "mode": 2, "level": 1, "seed": 12345 },
+      "timeline": [
+        { "t": 0,    "cmd": { "cmd": "set_seed", "seed": 12345 } },
+        { "t": 0,    "cmd": { "cmd": "set_mode", "mode": 2, "level": 1 } },
+        { "t": 0,    "cmd": { "cmd": "start" } },
+        { "t": 5000, "press": 3 }
+      ],
+      "expected": [
+        { "ev": "state", "mode": 2, "status": "running" },
+        { "ev": "led", "cell": 3, "level": 255 },
+        { "ev": "score", "mode": 2, "hits": 0, "misses": 1, "rt_ms": 0, "round": 1 }
+      ]
+    }
+  ]
+}

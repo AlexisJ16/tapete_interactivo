@@ -1,0 +1,2 @@
+# Simulador visual del tapete.
+pygame>=2.5
