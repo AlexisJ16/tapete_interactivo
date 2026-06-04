@@ -49,16 +49,21 @@ Clase pequeña con una sola responsabilidad: dado el flujo de resultados de rond
 decidir la sugerencia. Vive en `firmware/lib/GameCore/` (portable, sin Arduino).
 
 - **Estado interno:** ventana móvil (cola) de los últimos `W` resultados
-  booleanos (acierto/fallo); última dirección emitida (para la histéresis).
+  booleanos (acierto/fallo). **Nada más:** `evaluar()` es una función pura de
+  `(ventana, nivelActual)`. (La validación movió la dedup de dirección a
+  `GameEngine`; ver §4.4 y bitácora §10.)
 - **Entrada:** `registrarResultado(bool acierto)`.
 - **Consulta:** `Sugerencia evaluar(int nivelActual) const`, donde
   `Sugerencia { Direccion dir; int nivelSugerido; float tasa; int n; }` y
-  `Direccion ∈ {SUBIR, MANTENER, BAJAR}`.
-- **Regla:** solo decide con la ventana llena (`n == W`).
+  `Direccion ∈ {SUBIR, MANTENER, BAJAR}`. `tasa` es float **interno** (0..1); se
+  serializa como entero porcentaje en el evento (§4.3).
+- **Regla:** solo decide con la ventana llena (`n == W`; si `n < W → MANTENER`).
   `tasa ≥ umbralAlto → SUBIR`; `tasa ≤ umbralBajo → BAJAR`; en medio `MANTENER`.
-  `nivelSugerido` satura en `[nivelMin, nivelMax]`.
-- **Histéresis:** no vuelve a proponer una dirección ya emitida hasta que la
-  tendencia cambie (evita repetir/oscilar).
+  `nivelSugerido = clamp(nivelActual ± 1, nivelMin, nivelMax)`. **Saturación:** si
+  `nivelSugerido == nivelActual` (ya en el tope/piso), `dir` se fuerza a
+  `MANTENER` (no hay cambio accionable).
+- **Banda muerta = anti-oscilación:** la zona neutra `(umbralBajo, umbralAlto)`
+  evita los flips por aciertos/fallos aislados; es pura y sin estado.
 - **Ciclo de vida:** se reinicia al iniciar cada sesión.
 
 *Alternativa descartada:* alojar este estado dentro de `GameEngine`. Una clase
@@ -69,59 +74,87 @@ Hoy cada modo congela sus parámetros en el constructor (`ventana_`, `rondas_`,
 `k_`, `limite_`, longitudes, tiempos). Para que un cambio de nivel surta efecto en
 la **próxima ronda** sin reiniciar:
 
-- Se añade `int nivelActual() const` a `IMotor`.
-- Cada modo recalcula sus parámetros **por ronda** desde `Config` con el nivel
-  actual, en el punto donde arranca una ronda:
-  - Velocidad → en `nuevoObjetivo` (ventana de reacción).
-  - Equilibrio → en `nuevoPatron` (número de casillas `k` y tiempo límite).
-  - Memoria → en la próxima exhibición (velocidad de exhibición y longitud máxima).
-- Los parámetros **de sesión** (número total de rondas) se fijan al `START` y no
-  cambian a mitad, para no alargar/cortar la sesión de forma sorpresiva.
+- Se añade `int nivelActual() const` a `IMotor` (lo implementa `GameEngine`
+  devolviendo `nivel_`).
+- Cada modo recalcula **solo sus parámetros por ronda** desde `Config` con
+  `m_.nivelActual()`, en el punto donde arranca una ronda. Los parámetros **de
+  sesión** (los que definen cuándo termina) se congelan al `START` y no cambian a
+  mitad, para no alargar/cortar la sesión de forma sorpresiva:
+
+  | Modo | Por ronda (recalcula con el nivel actual) | De sesión (congelado al START) |
+  |------|-------------------------------------------|--------------------------------|
+  | Velocidad | `ventana` (en `nuevoObjetivo`) | `rondas` |
+  | Equilibrio | `k`, `limite` (en `nuevoPatron`) | `rondas` |
+  | Memoria | `onMs`, `gapMs` (en `iniciarExhibicion`) | `longitudInicial`, `longitudMax` |
+
+  (Corrige el borrador previo de §4.2, que listaba `longitudMax` de Memoria como
+  por-ronda: es de sesión — define el fin de la partida; ver bitácora §10.)
 - `set_level` en `RUNNING` pasa a **solo actualizar `nivel_`** (ya no recrea el
   modo); en `IDLE`/`FINISHED` sigue recreándolo. Esto corrige el bug latente
   actual (recrear sin iniciar dejaba el modo inconsistente).
 
 ### 4.3 Protocolo: evento `suggest`
 Cerebro → PC. Se emite **solo cuando la dirección sugerida cambia** respecto a la
-última emitida (evita ruido). Esquema canónico (orden de claves fijo, como el
-resto del protocolo):
+última emitida (evita ruido; la dedup vive en `GameEngine`, §4.4). Esquema
+canónico (orden de claves fijo, como el resto del protocolo):
 
 ```json
-{"ev":"suggest","mode":2,"from":2,"level":3,"dir":"up","rate":0.75,"window":4}
+{"ev":"suggest","mode":2,"from":2,"level":3,"dir":"up","rate":75,"window":4}
 ```
 
-(Ejemplo coherente con los defaults: 3 de 4 aciertos = `rate` 0.75 ≥ `umbralAlto`
-0.75 → `dir` `up`.)
+(Ejemplo coherente con los defaults: 3 de 4 aciertos = tasa interna 0.75 ≥
+`umbralAlto` 0.75 → `dir` `up`; `rate` se transmite como **entero porcentaje** 75.)
 
 - `mode`: modo actual (1/2/3).
 - `from`: nivel actual.
-- `level`: nivel sugerido (`from ± 1`, saturado).
-- `dir`: `"up" | "down" | "keep"`.
-- `rate`: tasa de acierto observada en la ventana (0..1).
+- `level`: nivel sugerido (`clamp(from ± 1, nivelMin, nivelMax)`).
+- `dir`: `"up" | "down" | "keep"` (al saturar el nivel → `"keep"`, §4.1).
+- `rate`: **entero porcentaje 0..100** = `round(tasa·100)`. El protocolo es
+  entero-o-cadena (`protocol.md §2`); no se introducen floats por el cable. Por
+  dentro el `Recomendador` usa float; el dashboard mostrará `rate %`.
 - `window`: tamaño de ventana usado.
 
-Se documenta en `shared/protocol.md`, se serializa en `Protocol.cpp` siguiendo el
-mini-serializador existente y se parsea idéntico en Python.
+Orden de claves canónico a añadir en `shared/protocol.md §3`:
+`suggest : ev, mode, from, level, dir, rate, window`.
+
+Se documenta en `shared/protocol.md`, se serializa en `Protocol.cpp` con el
+mini-serializador existente (todo `int`/cadena; **sin tocar la gramática**) y se
+parsea idéntico en Python. El round-trip C++ de §5 queda trivial porque `rate` es
+entero (no hay que extender `leerEntero`/`Par`).
 
 ### 4.4 Flujo de datos en `GameEngine`
-`GameEngine` ya centraliza todos los `score()` de los modos. En cada `score()`:
-1. Deriva `Δhits/Δmisses` respecto al `score` anterior → resultado de la ronda.
+`GameEngine` ya centraliza todos los `score()` de los modos. Mantiene tres campos
+nuevos: `prevHits_/prevMisses_` (para derivar el resultado) y `ultimaDirEmitida_`
+(para la dedup de emisión). En cada `score(hits, misses, …)`:
+1. `acierto = (hits - prevHits_) > 0` (≡ `Δmisses == 0`); luego actualiza
+   `prevHits_/prevMisses_`. **No** se usa el campo `round`: en Memoria vale `len_`
+   y no es monótono (verificado en `ModoMemoria.cpp:80-82,92-94`).
 2. `recomendador.registrarResultado(acierto)`.
 3. `s = recomendador.evaluar(nivel_)`.
-4. Si `s.dir` cambió respecto a la última emitida → emite `suggest`.
+4. Si `s.dir != ultimaDirEmitida_` → emite `suggest` y actualiza
+   `ultimaDirEmitida_`. Esta dedup (no el `Recomendador`) es lo que evita repetir
+   la misma dirección; `evaluar()` permanece puro.
 
-Los modos no se enteran: la mecánica de juego queda intacta y la fuente única de
-verdad se conserva.
+`prevHits_/prevMisses_/ultimaDirEmitida_` se reinician junto con el `Recomendador`
+al `START`. Los modos no se enteran: la mecánica de juego queda intacta y la
+fuente única de verdad se conserva.
 
 ### 4.5 Configuración (`cfg::adaptacion`, todo ajustable)
 Defaults de partida (se calibran con la evidencia de SP2):
 `W = 4`, `umbralAlto = 0.75`, `umbralBajo = 0.25`, `nivelMin = 1`, `nivelMax = 4`.
+Los umbrales son **float** (lógica interna); solo el campo `rate` del evento se
+emite como entero porcentaje (§4.3). La narrativa académica "tasa ≥ 0.75" se
+mantiene intacta en `Config`.
 
 ## 5. Estrategia de pruebas (TDD: test → fallar → mínimo)
 
-- **Unitarios del `Recomendador`** (doctest): rachas de aciertos → `SUBIR`;
-  rachas de fallos → `BAJAR`; mezclas → `MANTENER`; histéresis (no repite);
-  saturación en `nivelMin/nivelMax`; ventana incompleta → `MANTENER`.
+- **Unitarios del `Recomendador`** (doctest, sobre la función pura `evaluar`):
+  rachas de aciertos → `SUBIR`; rachas de fallos → `BAJAR`; mezclas/banda muerta →
+  `MANTENER`; ventana incompleta (`n < W`) → `MANTENER`; saturación en
+  `nivelMin/nivelMax` → `dir = MANTENER` (no hay cambio accionable).
+- **Unitarios de la dedup en `GameEngine`** (doctest): una dirección repetida
+  emite `suggest` **una sola vez**; vuelve a emitir solo cuando la dirección
+  cambia.
 - **Unitarios del refactor de modos** (doctest): cambiar nivel a mitad de sesión →
   la próxima ronda usa los parámetros nuevos; contadores intactos; los parámetros
   de sesión no cambian.
@@ -208,3 +241,40 @@ Defaults de partida (se calibran con la evidencia de SP2):
 
 Secuencia acordada: **SP1 → SP2 → SP3 → SP4**. Cada uno tiene su propio ciclo
 diseño → plan → implementación con TDD.
+
+## 10. Bitácora de validación (2026-06-04)
+
+Validación profunda de esta spec contra el código real **antes** de escribir el
+plan de implementación. Veredicto: diseño sólido y bien anclado; 12 afirmaciones
+verificadas, 1 amienda material y varias precisiones. Decisiones del usuario y
+correcciones aplicadas a este documento:
+
+- **`rate` = entero porcentaje 0..100** (no float). El protocolo es entero-o-cadena
+  (`protocol.md §2`; `Protocol.cpp:9-14,44-52`); un float rompería el `strict`
+  byte-a-byte de los golden (`std::to_string(0.75)` → `"0.750000"`) y obligaría a
+  extender el mini-parser. Float por dentro, entero por el cable. (§4.3, §4.5)
+- **Saturación → `dir:"keep"`**: al estar ya en el tope/piso no hay cambio
+  accionable; evita el evento contradictorio `from=4/level=4/dir=up`. (§4.1, §4.3)
+- **Histéresis = banda muerta (pura, en `evaluar`) + dedup de emisión (en
+  `GameEngine`, `ultimaDirEmitida_`).** Se eliminó el estado "última dirección" del
+  `Recomendador` (la §4.1 original lo ubicaba mal y duplicaba la §4.4). (§4.1, §4.4)
+- **`acierto = Δhits>0`** derivado de los acumuladores `(hits,misses)`, **no** del
+  campo `round` (en Memoria `round = len_`, no monótono). Válido en los 3 modos.
+  (§4.4)
+- **Split sesión/por-ronda de Memoria corregido**: `longitudInicial/longitudMax`
+  son de sesión (definen el fin), no por-ronda. (§4.2)
+
+Evidencias que de-riesgan el plan:
+
+- **Ningún golden vector ni doctest ejercita `set_level` en RUNNING** (`grep`
+  confirmado) → el refactor de `set_level` (corrige el bug latente de
+  `GameEngine.cpp:57-60`, que recrea el modo sin iniciarlo) es **aditivo**: no
+  rompe la suite ni obliga a re-versionar goldens.
+- Ambos parsers Python (`sesion.py:73-94`, `tapete_sim.py:76-87`) **ya** ignoran
+  `ev` desconocido → "el dashboard/simulador no se rompe con `suggest`" se cumple
+  hoy con cero cambios. El alcance en SP1 se limita a capturar `ultimo_suggest`
+  (espejo de `ultimo_score`) + un test de no-regresión; **sin UI** (la vista en
+  vivo es SP2).
+- `score()` está centralizado en `GameEngine` (`GameEngine.cpp:121-123`) y los
+  modos solo usan `IMotor` → el `Recomendador` se engancha en un único punto sin
+  tocar la mecánica de los modos.
