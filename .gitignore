@@ -24,6 +24,8 @@ firmware/test/**/test_runner
 *.db
 reports/*.csv
 reports/*.pdf
+reportes/
+dashboard/reportes/
 
 # --- Sistema / editores ---
 .DS_Store
