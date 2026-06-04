@@ -48,6 +48,31 @@
         { "ev": "led", "cell": 3, "level": 255 },
         { "ev": "score", "mode": 2, "hits": 0, "misses": 1, "rt_ms": 0, "round": 1 }
       ]
+    },
+    {
+      "name": "velocidad_strict_dos_aciertos",
+      "match": "strict",
+      "config": { "mode": 2, "level": 1, "seed": 12345 },
+      "timeline": [
+        { "t": 0,   "cmd": { "cmd": "set_mode", "mode": 2, "level": 1 } },
+        { "t": 0,   "cmd": { "cmd": "start" } },
+        { "t": 400, "press": 3 },
+        { "t": 900, "press": 4 }
+      ],
+      "expected": [
+        { "ev": "state", "mode": 2, "status": "running" },
+        { "ev": "led", "cell": 3, "level": 255 },
+        { "ev": "press", "cell": 3, "ms": 400 },
+        { "ev": "led", "cell": 3, "level": 0 },
+        { "ev": "sound", "id": 2 },
+        { "ev": "score", "mode": 2, "hits": 1, "misses": 0, "rt_ms": 400, "round": 1 },
+        { "ev": "led", "cell": 4, "level": 255 },
+        { "ev": "press", "cell": 4, "ms": 900 },
+        { "ev": "led", "cell": 4, "level": 0 },
+        { "ev": "sound", "id": 2 },
+        { "ev": "score", "mode": 2, "hits": 2, "misses": 0, "rt_ms": 500, "round": 2 },
+        { "ev": "led", "cell": 5, "level": 255 }
+      ]
     }
   ]
 }
