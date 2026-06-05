@@ -15,13 +15,13 @@ habla con un **dashboard** de PC en tiempo real.
 Las 6 fases del plan (`Tapete Interactivo Terapéutico — Especificación maestra
 para Claude Code.md`) están **completas y validadas**:
 
-- GameCore (RNG, protocolo, motor, 3 modos) — tests doctest, ~2099 aserciones.
+- GameCore (RNG, protocolo, motor, 3 modos) — tests doctest, ~2118 aserciones.
 - Simulador Pygame + puente ctypes + servidor TCP + golden runner.
 - Dashboard PyQt6 + SQLite + export CSV/PDF + integración (FuenteCore y FuenteTCP).
 - Firmware ESP32 (`EspHardware` + WiFi/TCP) — **compila para `esp32dev`**.
 - Documentación completa en `docs/` y `README.md`.
 
-`./scripts/run_all_tests.sh` → **TODO VERDE** (26 casos C++ + 16 pytest).
+`./scripts/run_all_tests.sh` → **TODO VERDE** (34 casos C++ + 16 pytest).
 `pio run -e esp32dev` → **SUCCESS** (Flash ~60%, RAM ~14%).
 
 Próximos pasos y mejoras: ver `docs/ROADMAP.md`.
@@ -51,7 +51,6 @@ pio run -e esp32dev -t upload && pio device monitor -b 115200
 
 ## Convenciones (respetar)
 
-- **Idioma:** español en código, comentarios, commits y docs.
 - **TDD:** test primero, verlo fallar, mínimo para pasar. No avanzar de fase con
   tests en rojo. Tests C++ con **doctest** (en `firmware/test/vendor/`, sin
   PlatformIO); tests Python con **pytest**.

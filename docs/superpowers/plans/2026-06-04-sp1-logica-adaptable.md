@@ -54,12 +54,13 @@ g++ -std=c++17 -Wall -Wextra -O1 \
 
 ---
 
-## Task 1: Configuración `cfg::adaptacion`
+## Task 1: Configuración `cfg::adaptacion` ✅
+<!-- DONE: git commit b8e8131 2026-06-04 -->
 
 **Files:**
 - Modify: `firmware/lib/GameCore/Config.h:112-114`
 
-- [ ] **Step 1: Añadir el namespace `adaptacion` antes del cierre de `cfg`**
+- [x] **Step 1: Añadir el namespace `adaptacion` antes del cierre de `cfg`**
 
 En `firmware/lib/GameCore/Config.h`, justo **después** de la línea `}  // namespace equilibrio` (línea 112) y **antes** de `}  // namespace cfg` (línea 114), insertar:
 
@@ -77,7 +78,7 @@ constexpr int   nivelMax   = 4;
 }  // namespace adaptacion
 ```
 
-- [ ] **Step 2: Verificar que el header compila**
+- [x] **Step 2: Verificar que el header compila**
 
 Run:
 ```bash
@@ -85,7 +86,7 @@ g++ -std=c++17 -fsyntax-only -I firmware/lib/GameCore firmware/lib/GameCore/Game
 ```
 Expected: sin salida (exit 0). El header es válido y no rompe el build existente.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add firmware/lib/GameCore/Config.h
@@ -96,14 +97,15 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 2: Clase `adapt::Recomendador` (lógica pura)
+## Task 2: Clase `adapt::Recomendador` (lógica pura) ✅
+<!-- DONE: git commit 1b1b14e 2026-06-04 -->
 
 **Files:**
 - Create: `firmware/lib/GameCore/Recomendador.h`
 - Create: `firmware/lib/GameCore/Recomendador.cpp`
 - Test: `firmware/test/test_recomendador/test_recomendador.cpp`
 
-- [ ] **Step 1: Escribir el test que falla**
+- [x] **Step 1: Escribir el test que falla**
 
 Crear `firmware/test/test_recomendador/test_recomendador.cpp`:
 
@@ -187,7 +189,7 @@ TEST_CASE("reiniciar vacia la ventana") {
 }
 ```
 
-- [ ] **Step 2: Ejecutar el test para verlo fallar (no compila: falta Recomendador.h)**
+- [x] **Step 2: Ejecutar el test para verlo fallar (no compila: falta Recomendador.h)**
 
 Run:
 ```bash
@@ -199,7 +201,7 @@ g++ -std=c++17 -Wall -Wextra -O1 \
 ```
 Expected: FALLA en compilación — `fatal error: Recomendador.h: No such file or directory`.
 
-- [ ] **Step 3: Escribir el header `Recomendador.h`**
+- [x] **Step 3: Escribir el header `Recomendador.h`**
 
 Crear `firmware/lib/GameCore/Recomendador.h`:
 
@@ -268,7 +270,7 @@ private:
 #endif  // TAPETE_RECOMENDADOR_H
 ```
 
-- [ ] **Step 4: Escribir la implementación `Recomendador.cpp`**
+- [x] **Step 4: Escribir la implementación `Recomendador.cpp`**
 
 Crear `firmware/lib/GameCore/Recomendador.cpp`:
 
@@ -338,7 +340,7 @@ Sugerencia Recomendador::evaluar(int nivelActual) const {
 }  // namespace adapt
 ```
 
-- [ ] **Step 5: Ejecutar el test para verlo pasar**
+- [x] **Step 5: Ejecutar el test para verlo pasar**
 
 Run:
 ```bash
@@ -350,7 +352,7 @@ g++ -std=c++17 -Wall -Wextra -O1 \
 ```
 Expected: `[doctest] test cases: 8 | 8 passed` (Status: SUCCESS).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add firmware/lib/GameCore/Recomendador.h firmware/lib/GameCore/Recomendador.cpp firmware/test/test_recomendador/
