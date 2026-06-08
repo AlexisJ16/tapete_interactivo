@@ -52,17 +52,19 @@ librería externa:
 | `press` | `{"ev":"press","cell":3,"ms":1820}`                                 | Pisada detectada. `ms` = timestamp relativo al inicio de la sesión. |
 | `sound` | `{"ev":"sound","id":2}`                                              | Petición de reproducir el audio `000{id}.mp3`. |
 | `score` | `{"ev":"score","mode":1,"hits":5,"misses":1,"rt_ms":820,"round":6}` | Actualización de métricas. `rt_ms` = último/promedio tiempo de reacción. |
-| `state` | `{"ev":"state","mode":1,"status":"running"}`                        | Cambio de estado del motor. `status` ∈ `idle\|running\|paused\|finished`. |
+| `state`   | `{"ev":"state","mode":1,"status":"running"}`                        | Cambio de estado del motor. `status` ∈ `idle\|running\|paused\|finished`. |
+| `suggest` | `{"ev":"suggest","mode":2,"from":2,"level":3,"dir":"up","rate":75,"window":4}` | Recomendación de nivel (asistida, SP1). `from`=nivel actual, `level`=sugerido, `dir`∈`up\|down\|keep`, `rate`=acierto % (0..100) en la ventana, `window`=tamaño de ventana. Se emite solo al cambiar la dirección. |
 
 **Orden de claves canónico (al escribir):**
 
 ```
-hello : ev, fw, cells
-led   : ev, cell, level
-press : ev, cell, ms
-sound : ev, id
-score : ev, mode, hits, misses, rt_ms, round
-state : ev, mode, status
+hello   : ev, fw, cells
+led     : ev, cell, level
+press   : ev, cell, ms
+sound   : ev, id
+score   : ev, mode, hits, misses, rt_ms, round
+state   : ev, mode, status
+suggest : ev, mode, from, level, dir, rate, window
 ```
 
 ---
