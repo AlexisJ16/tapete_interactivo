@@ -64,6 +64,7 @@ class Simulador:
         self.nivel = 1
         self.estado = "idle"
         self.ultimo_score = {}
+        self.ultima_sugerencia = {}
         self.core.comando(json.dumps({"cmd": "set_mode", "mode": self.modo, "level": self.nivel}))
 
     # --- comunicacion con el motor ---
@@ -83,6 +84,8 @@ class Simulador:
                 self._reproducir(ev["id"])
             elif t == "score":
                 self.ultimo_score = ev
+            elif t == "suggest":
+                self.ultima_sugerencia = ev
             elif t == "state":
                 self.estado = ev["status"]
 

@@ -83,3 +83,25 @@ def test_metricas_con_errores():
     s = almacen.sesion(ses.sesion_id)
     assert s["misses"] == 1
     assert s["hits"] == 0
+
+
+def test_suggest_up_tras_cuatro_aciertos():
+    almacen = Almacen(":memory:")
+    reloj = Reloj()
+    fuente = FuenteCore(reloj=reloj)
+    ses = Sesion(almacen, fuente)
+    ses.sembrar(12345)                        # objetivos [3,4,5,3,6]
+    ses.configurar(modo=2, nivel=1)
+    ses.iniciar()
+    for _ in range(4):                        # 4 de 5 rondas: sigue corriendo
+        ses.bombear()
+        encendida = next((c for c in range(1, 7) if ses.leds[c] > 0), None)
+        assert encendida is not None
+        reloj.avanzar(500)
+        fuente.pisar(encendida)
+        ses.bombear()
+    assert ses.estado == "running"
+    assert ses.ultima_sugerencia == {
+        "ev": "suggest", "mode": 2, "from": 1, "level": 2,
+        "dir": "up", "rate": 100, "window": 4,
+    }

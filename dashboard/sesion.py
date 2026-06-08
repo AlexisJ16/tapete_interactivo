@@ -26,6 +26,7 @@ class Sesion:
         self.rondas = 0
         self.ultimo_rt = 0
         self._rts: list[int] = []    # tiempos de reaccion (>0) para el promedio
+        self.ultima_sugerencia: dict = {}   # ultima recomendacion (SP1; UI en SP2)
 
     # --- configuracion / control ---
     def set_perfil(self, id: str, nombre: str) -> None:
@@ -87,6 +88,8 @@ class Sesion:
                 self._rts.append(ev["rt_ms"])
             self._log(0, "score", ev)
             self._persistir_metricas()
+        elif tipo == "suggest":
+            self.ultima_sugerencia = ev   # se reconoce; la vista en vivo es SP2
         elif tipo == "state":
             self.estado = ev["status"]
             if self.estado == "finished":
