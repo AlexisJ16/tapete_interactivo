@@ -1,17 +1,23 @@
 # Roadmap — próximos pasos
 
-El sistema está **completo y validado en software** (6 fases, todo verde,
-firmware compila para `esp32dev`). Este documento recoge el trabajo que sigue,
-para retomarlo en una conversación nueva. Mantener siempre la disciplina del
-proyecto: **TDD**, **una sola fuente de verdad** (`GameCore`), tests en verde
-antes de avanzar (ver `CLAUDE.md`).
+El sistema está **completo y validado en software** (6 fases base + SP1 todo
+verde, firmware compila para `esp32dev`). Este documento recoge el trabajo que
+sigue, para retomarlo en una conversación nueva. Mantener siempre la disciplina
+del proyecto: **TDD**, **una sola fuente de verdad** (`GameCore`), tests en
+verde antes de avanzar (ver `CLAUDE.md`).
+
+> **PUNTO DE CONTINUACIÓN:** SP1 está completo en la rama `sp1-logica-adaptable`
+> (lista para merge a `main`). El **siguiente paso es SP2** — evidencia funcional
+> + analítica + CI. Crear rama `sp2-evidencia-analitica` desde `main` tras el
+> merge. Plan detallado en la memoria del proyecto.
 
 ## 1. Puesta en marcha del hardware físico (lo único no validable en software)
 
 - [ ] Conseguir **6 resistencias de 10 kΩ** (pull-down de los FSR — NO las de
-      110 Ω, que son para los LEDs). Ver `docs/wiring.md`.
-- [ ] Montar en protoboard según `docs/wiring.md` (FSR en ADC1, LEDs por LEDC,
-      DFPlayer en Serial2, GND común).
+      110 Ω, que son para los LEDs).
+- [ ] Montar en protoboard según **`docs/diagrama-conexiones.html`** (guía visual
+      principal: pinout CSS + circuitos SVG + tablas + secuencia de 11 pasos).
+      Referencia textual adicional: `docs/wiring.md`.
 - [ ] LEDs a brillo pleno: alimentar desde **5 V** con transistor por grupo
       (2N2222) o **ULN2803**; el GPIO solo controla.
 - [ ] microSD FAT32 con `/mp3/0001.mp3`..`/mp3/0004.mp3` (instrucción, acierto,

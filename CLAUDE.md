@@ -21,7 +21,7 @@ para Claude Code.md`) están **completas y validadas**:
 - Firmware ESP32 (`EspHardware` + WiFi/TCP) — **compila para `esp32dev`**.
 - Documentación completa en `docs/` y `README.md`.
 
-`./scripts/run_all_tests.sh` → **TODO VERDE** (34 casos C++ + 16 pytest).
+`./scripts/run_all_tests.sh` → **TODO VERDE** (43 casos C++ / 2134 aserciones + 21 pytest).
 `pio run -e esp32dev` → **SUCCESS** (Flash ~60%, RAM ~14%).
 
 Próximos pasos y mejoras: ver `docs/ROADMAP.md`.
@@ -87,7 +87,7 @@ firmware/test/           doctest (test_core, test_protocolo, test_modo_*)
 simulator/               tapete_sim.py, core_bridge.py, golden_runner.py, servidor.py
 dashboard/               app.py, sesion.py, storage.py, reports.py, fuente.py
 shared/                  protocol.md, golden_vectors.json
-docs/                    wiring.md, flashing.md, validation.md, ROADMAP.md
+docs/                    diagrama-conexiones.html, wiring.md, flashing.md, validation.md, ROADMAP.md
 scripts/                 run_all_tests.sh, demo_visual.py
 audio/                   000X.mp3 (simulador) — ver audio/README.md
 ```
