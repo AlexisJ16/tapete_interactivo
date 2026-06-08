@@ -21,6 +21,8 @@ TEST_CASE("eventos se serializan en la forma canonica del protocolo") {
           R"({"ev":"score","mode":1,"hits":5,"misses":1,"rt_ms":820,"round":6})");
     CHECK(Evento::state(1, "running").serializar() ==
           R"({"ev":"state","mode":1,"status":"running"})");
+    CHECK(Evento::suggest(2, 2, 3, "up", 75, 4).serializar() ==
+          R"({"ev":"suggest","mode":2,"from":2,"level":3,"dir":"up","rate":75,"window":4})");
 }
 
 // ----------------------------------------------------------------------------
@@ -75,6 +77,7 @@ TEST_CASE("round-trip de eventos: parsear(serializar(e)) == e") {
         Evento::sound(3),
         Evento::score(2, 7, 2, 540, 9),
         Evento::state(3, "finished"),
+        Evento::suggest(2, 2, 3, "up", 75, 4),
     };
     for (const auto& e : ev) {
         CHECK(Evento::parsear(e.serializar()) == e);

@@ -131,6 +131,11 @@ Evento Evento::score(int mode, int hits, int misses, int rt_ms, int round) {
 Evento Evento::state(int mode, const std::string& status) {
     Evento e; e.tipo = Tipo::STATE; e.mode = mode; e.status = status; return e;
 }
+Evento Evento::suggest(int mode, int from, int level,
+                       const std::string& dir, int rate, int window) {
+    Evento e; e.tipo = Tipo::SUGGEST; e.mode = mode; e.from = from;
+    e.level = level; e.dir = dir; e.rate = rate; e.window = window; return e;
+}
 
 std::string Evento::serializar() const {
     switch (tipo) {
@@ -154,6 +159,13 @@ std::string Evento::serializar() const {
         case Tipo::STATE:
             return "{\"ev\":\"state\",\"mode\":" + std::to_string(mode) +
                    ",\"status\":\"" + escapar(status) + "\"}";
+        case Tipo::SUGGEST:
+            return "{\"ev\":\"suggest\",\"mode\":" + std::to_string(mode) +
+                   ",\"from\":" + std::to_string(from) +
+                   ",\"level\":" + std::to_string(level) +
+                   ",\"dir\":\"" + escapar(dir) + "\"" +
+                   ",\"rate\":" + std::to_string(rate) +
+                   ",\"window\":" + std::to_string(window) + "}";
         default:
             return "";
     }
@@ -184,6 +196,14 @@ Evento Evento::parsear(const std::string& linea) {
     } else if (ev == "state") {
         e.tipo = Tipo::STATE; e.mode = static_cast<int>(entero(v, "mode"));
         e.status = cadena(v, "status");
+    } else if (ev == "suggest") {
+        e.tipo = Tipo::SUGGEST;
+        e.mode = static_cast<int>(entero(v, "mode"));
+        e.from = static_cast<int>(entero(v, "from"));
+        e.level = static_cast<int>(entero(v, "level"));
+        e.dir = cadena(v, "dir");
+        e.rate = static_cast<int>(entero(v, "rate"));
+        e.window = static_cast<int>(entero(v, "window"));
     }
     return e;
 }
@@ -192,7 +212,8 @@ bool Evento::operator==(const Evento& o) const {
     return tipo == o.tipo && fw == o.fw && cells == o.cells && cell == o.cell &&
            level == o.level && ms == o.ms && id == o.id && mode == o.mode &&
            hits == o.hits && misses == o.misses && rt_ms == o.rt_ms &&
-           round == o.round && status == o.status;
+           round == o.round && status == o.status &&
+           from == o.from && dir == o.dir && rate == o.rate && window == o.window;
 }
 
 // ============================================================================

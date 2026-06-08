@@ -14,7 +14,7 @@ namespace proto {
 //  Eventos: cerebro (ESP32 / Simulador) -> PC
 // ----------------------------------------------------------------------------
 struct Evento {
-    enum class Tipo { HELLO, LED, PRESS, SOUND, SCORE, STATE, INVALIDO };
+    enum class Tipo { HELLO, LED, PRESS, SOUND, SCORE, STATE, SUGGEST, INVALIDO };
     Tipo tipo = Tipo::INVALIDO;
 
     std::string fw;        // hello
@@ -29,6 +29,10 @@ struct Evento {
     int rt_ms = 0;         // score
     int round = 0;         // score
     std::string status;    // state
+    int from = 0;          // suggest (nivel actual)
+    std::string dir;       // suggest ("up" | "down" | "keep")
+    int rate = 0;          // suggest (tasa de acierto en %, 0..100)
+    int window = 0;        // suggest (tamano de la ventana)
 
     static Evento hello(const std::string& fw, int cells);
     static Evento led(int cell, int level);
@@ -36,6 +40,8 @@ struct Evento {
     static Evento sound(int id);
     static Evento score(int mode, int hits, int misses, int rt_ms, int round);
     static Evento state(int mode, const std::string& status);
+    static Evento suggest(int mode, int from, int level,
+                          const std::string& dir, int rate, int window);
 
     std::string serializar() const;
     static Evento parsear(const std::string& linea);
