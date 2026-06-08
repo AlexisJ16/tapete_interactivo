@@ -22,6 +22,8 @@ void ModoMemoria::iniciar(uint32_t ms) {
 }
 
 void ModoMemoria::iniciarExhibicion(uint32_t ms) {
+    onMs_ = cfg::memoria::exhibicionOnMs(m_.nivelActual());   // nivel dinamico por ronda
+    gapMs_ = cfg::memoria::exhibicionGapMs(m_.nivelActual());
     apagarTodo();
     fase_ = Fase::EXHIBIENDO;
     idxShow_ = 0;

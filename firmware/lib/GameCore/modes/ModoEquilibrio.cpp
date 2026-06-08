@@ -19,6 +19,8 @@ void ModoEquilibrio::nuevoPatron(uint32_t ms) {
         fin_ = true;
         return;
     }
+    k_ = cfg::equilibrio::casillasPatron(m_.nivelActual());  // nivel dinamico por ronda
+    limite_ = cfg::equilibrio::limiteMs(m_.nivelActual());
     for (int c = 0; c <= cfg::CELDAS; ++c) { enPatron_[c] = false; yaPisada_[c] = false; }
     pisadasOk_ = 0;
     int puestos = 0;

@@ -21,6 +21,7 @@ void ModoVelocidad::nuevoObjetivo(uint32_t ms) {
         objetivo_ = 0;
         return;
     }
+    ventana_ = cfg::velocidad::ventanaMs(m_.nivelActual());  // nivel dinamico por ronda
     objetivo_ = m_.rng().casilla(cfg::CELDAS);
     inicioVentana_ = ms;
     m_.led(objetivo_, cfg::LED_ENCENDIDO);

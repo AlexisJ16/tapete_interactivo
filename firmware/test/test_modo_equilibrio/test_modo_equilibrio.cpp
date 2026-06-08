@@ -73,3 +73,22 @@ TEST_CASE("equilibrio: termina tras completar todas las rondas (nivel 1 = 4)") {
     CHECK(motor.estado() == Estado::FINISHED);
     CHECK(contiene(col.eventos, Evento::state(3, "finished")));
 }
+
+TEST_CASE("equilibrio: la ronda siguiente usa el k del nuevo nivel") {
+    FakeHardware hw; Colector col;
+    GameEngine motor(hw, col.sink());
+    motor.procesar(Comando::parsear(R"({"cmd":"set_seed","seed":2024})"));
+    motor.procesar(Comando::parsear(R"({"cmd":"set_mode","mode":3,"level":1})")); // k=2
+    motor.procesar(Comando::parsear(R"({"cmd":"start"})"));
+    // patron ronda1 (k=2) = [3,6]. Subir a nivel 2 (k=3) en RUNNING.
+    hw.reloj = 100;
+    motor.procesar(Comando::parsear(R"({"cmd":"set_level","level":2})"));
+    size_t base = col.eventos.size();
+    hw.reloj = 150; motor.pisar(3);
+    hw.reloj = 200; motor.pisar(6);        // completa ronda1 -> nuevoPatron ronda2 (k=3)
+    int encendidos = 0;
+    for (size_t i = base; i < col.eventos.size(); ++i)
+        if (col.eventos[i].tipo == Evento::Tipo::LED && col.eventos[i].level == 255)
+            ++encendidos;
+    CHECK(encendidos == 3);                // 3 casillas = k del nivel 2
+}

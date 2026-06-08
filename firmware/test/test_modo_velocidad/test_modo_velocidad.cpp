@@ -83,6 +83,33 @@ TEST_CASE("velocidad: ping responde con hello") {
     CHECK(contiene(col.eventos, Evento::hello("1.0.0", 6)));
 }
 
+TEST_CASE("velocidad: la ronda siguiente usa la ventana del nuevo nivel") {
+    FakeHardware hw; Colector col;
+    GameEngine motor(hw, col.sink());
+    arrancar(motor);                       // nivel 1: ventana 3000 ms
+    hw.reloj = 100;
+    motor.procesar(Comando::parsear(R"({"cmd":"set_level","level":3})")); // ventana 1200
+    hw.reloj = 200; motor.pisar(3);        // acierto ronda1 -> ronda2 con ventana(3)=1200
+
+    size_t antes = col.eventos.size();
+    hw.reloj = 200 + 1199; motor.actualizar();
+    CHECK(col.eventos.size() == antes);    // aun no expira (ventana 1200)
+    hw.reloj = 200 + 1200; motor.actualizar();
+    CHECK(contieneScore(col.eventos, 2, 1, 1, 2));  // timeout con la ventana nueva
+}
+
+TEST_CASE("velocidad: cambiar el nivel a mitad NO cambia el numero de rondas") {
+    FakeHardware hw; Colector col;
+    GameEngine motor(hw, col.sink());
+    arrancar(motor);                       // nivel 1: 5 rondas; objetivos [3,4,5,3,6]
+    const int obj[5] = {3, 4, 5, 3, 6};
+    for (int i = 0; i < 5; ++i) {
+        if (i == 1) motor.procesar(Comando::parsear(R"({"cmd":"set_level","level":4})"));
+        hw.reloj = 100 * (i + 1); motor.pisar(obj[i]);
+    }
+    CHECK(motor.estado() == Estado::FINISHED);  // termina en 5 rondas (nivel 1), no 12
+}
+
 TEST_CASE("set_level en RUNNING no recrea el modo (conserva la ronda en curso)") {
     FakeHardware hw; Colector col;
     GameEngine motor(hw, col.sink());
