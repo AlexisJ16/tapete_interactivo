@@ -115,6 +115,68 @@
         { "ev": "sound", "id": 4 },
         { "ev": "state", "mode": 3, "status": "finished" }
       ]
+    },
+    {
+      "name": "velocidad_suggest_up",
+      "match": "subsequence",
+      "config": { "mode": 2, "level": 1, "seed": 12345 },
+      "_nota": "4 aciertos llenan la ventana (W=4); tasa 1.0 -> sugiere subir a nivel 2 (rate 100). objetivos seed 12345 = [3,4,5,3].",
+      "timeline": [
+        { "t": 0,    "cmd": { "cmd": "set_mode", "mode": 2, "level": 1 } },
+        { "t": 0,    "cmd": { "cmd": "start" } },
+        { "t": 400,  "press": 3 },
+        { "t": 800,  "press": 4 },
+        { "t": 1200, "press": 5 },
+        { "t": 1600, "press": 3 }
+      ],
+      "expected": [
+        { "ev": "state", "mode": 2, "status": "running" },
+        { "ev": "suggest", "mode": 2, "from": 1, "level": 2, "dir": "up", "rate": 100, "window": 4 }
+      ]
+    },
+    {
+      "name": "velocidad_suggest_down",
+      "match": "subsequence",
+      "config": { "mode": 2, "level": 2, "seed": 12345 },
+      "_nota": "4 fallos (pisar siempre la casilla 1, nunca objetivo) -> tasa 0 -> bajar a nivel 1.",
+      "timeline": [
+        { "t": 0,   "cmd": { "cmd": "set_mode", "mode": 2, "level": 2 } },
+        { "t": 0,   "cmd": { "cmd": "start" } },
+        { "t": 100, "press": 1 },
+        { "t": 200, "press": 1 },
+        { "t": 300, "press": 1 },
+        { "t": 400, "press": 1 }
+      ],
+      "expected": [
+        { "ev": "state", "mode": 2, "status": "running" },
+        { "ev": "suggest", "mode": 2, "from": 2, "level": 1, "dir": "down", "rate": 0, "window": 4 }
+      ]
+    },
+    {
+      "name": "velocidad_set_level_strict",
+      "match": "strict",
+      "config": { "mode": 2, "level": 1, "seed": 12345 },
+      "_nota": "set_level a nivel 3 en RUNNING: NO recrea el modo; la ronda 2 usa ventana(3)=1200 (timeout a t=1400), contadores intactos. Sin suggest (solo 2 scores < W).",
+      "timeline": [
+        { "t": 0,    "cmd": { "cmd": "set_mode", "mode": 2, "level": 1 } },
+        { "t": 0,    "cmd": { "cmd": "start" } },
+        { "t": 100,  "cmd": { "cmd": "set_level", "level": 3 } },
+        { "t": 200,  "press": 3 },
+        { "t": 1400 }
+      ],
+      "expected": [
+        { "ev": "state", "mode": 2, "status": "running" },
+        { "ev": "led", "cell": 3, "level": 255 },
+        { "ev": "press", "cell": 3, "ms": 200 },
+        { "ev": "led", "cell": 3, "level": 0 },
+        { "ev": "sound", "id": 2 },
+        { "ev": "score", "mode": 2, "hits": 1, "misses": 0, "rt_ms": 200, "round": 1 },
+        { "ev": "led", "cell": 4, "level": 255 },
+        { "ev": "led", "cell": 4, "level": 0 },
+        { "ev": "sound", "id": 3 },
+        { "ev": "score", "mode": 2, "hits": 1, "misses": 1, "rt_ms": 0, "round": 2 },
+        { "ev": "led", "cell": 5, "level": 255 }
+      ]
     }
   ]
 }
