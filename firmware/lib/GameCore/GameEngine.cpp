@@ -64,6 +64,10 @@ void GameEngine::procesar(const proto::Comando& c) {
         case T::START:
             if (modo_) {
                 inicio_ = hw_.millis();
+                recomendador_.reiniciar();
+                prevHits_ = 0;
+                prevMisses_ = 0;
+                ultimaDirEmitida_ = adapt::Direccion::MANTENER;
                 cambiarEstado(Estado::RUNNING);
                 modo_->iniciar(0);
                 revisarFin();
@@ -120,4 +124,22 @@ void GameEngine::sonido(int id) {
 }
 void GameEngine::score(int hits, int misses, int rt_ms, int round) {
     emitir(proto::Evento::score(modoId_, hits, misses, rt_ms, round));
+
+    // --- Capa adaptable (SP1) -------------------------------------------------
+    // Deriva el resultado de la ronda de los acumuladores (NO del campo round:
+    // en Memoria 'round' = len_, no es monotono). Cada score sube exactamente
+    // uno de hits/misses en +1.
+    bool acierto = (hits - prevHits_) > 0;
+    prevHits_ = hits;
+    prevMisses_ = misses;
+    recomendador_.registrarResultado(acierto);
+
+    adapt::Sugerencia s = recomendador_.evaluar(nivel_);
+    if (s.dir != ultimaDirEmitida_) {            // de-dup: solo al cambiar
+        ultimaDirEmitida_ = s.dir;
+        int ratePct = static_cast<int>(s.tasa * 100.0f + 0.5f);
+        emitir(proto::Evento::suggest(modoId_, nivel_, s.nivelSugerido,
+                                      adapt::aTexto(s.dir), ratePct,
+                                      cfg::adaptacion::W));
+    }
 }

@@ -9,6 +9,7 @@
 #include "IHardware.h"
 #include "Motor.h"
 #include "Protocol.h"
+#include "Recomendador.h"
 #include "Rng.h"
 
 // Sumidero de eventos: el motor emite eventos del protocolo a traves de este
@@ -61,6 +62,11 @@ private:
     int modoId_ = 0;
     int nivel_ = 1;
     uint32_t inicio_ = 0;
+    // --- Capa adaptable (SP1) ---
+    adapt::Recomendador recomendador_;
+    int prevHits_ = 0;
+    int prevMisses_ = 0;
+    adapt::Direccion ultimaDirEmitida_ = adapt::Direccion::MANTENER;
 };
 
 #endif  // TAPETE_GAMEENGINE_H
