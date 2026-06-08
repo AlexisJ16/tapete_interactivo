@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tapete Interactivo — Diagrama de Conexiones</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f1117;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      padding: 24px;
+    }
+    h1 {
+      text-align: center;
+      color: #60c4ff;
+      font-size: 20px;
+      margin-bottom: 6px;
+      letter-spacing: 0.05em;
+    }
+    .subtitle {
+      text-align: center;
+      color: #888;
+      font-size: 13px;
+      margin-bottom: 24px;
+    }
+    .diagram-wrap {
+      overflow-x: auto;
+      background: #161b22;
+      border-radius: 12px;
+      border: 1px solid #30363d;
+      padding: 16px;
+    }
+    svg text { font-family: 'Segoe UI', system-ui, monospace; }
+
+    /* ---- leyenda ---- */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 24px;
+      justify-content: center;
+      margin-top: 20px;
+      font-size: 13px;
+    }
+    .leg { display: flex; align-items: center; gap: 6px; }
+    .leg-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ---- tabla de conexiones ---- */
+    .tables { display: flex; gap: 24px; margin-top: 28px; flex-wrap: wrap; justify-content: center; }
+    .tbl-section { flex: 1; min-width: 320px; max-width: 500px; }
+    .tbl-section h2 {
+      font-size: 14px;
+      color: #60c4ff;
+      border-bottom: 1px solid #30363d;
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { background: #1f2937; color: #9ca3af; font-weight: 600; padding: 6px 8px; text-align: left; }
+    td { padding: 5px 8px; border-bottom: 1px solid #21262d; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    .wire { display: inline-block; width: 28px; height: 6px; border-radius: 3px; vertical-align: middle; margin-right: 4px; }
+    .step-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #1e3a5f; color: #60c4ff;
+      font-size: 11px; font-weight: bold; flex-shrink: 0;
+    }
+    .alert {
+      background: #2a1a00; border: 1px solid #f59e0b; color: #fcd34d;
+      border-radius: 8px; padding: 10px 14px; font-size: 13px;
+      margin-top: 20px; text-align: center;
+    }
+
+    @media print {
+      body { background: white; color: black; padding: 10px; }
+      .diagram-wrap { background: white; border: 1px solid #ccc; }
+      h1 { color: #1a5276; }
+      .subtitle { color: #555; }
+      .tbl-section h2 { color: #1a5276; }
+      th { background: #f0f0f0; color: #333; }
+      td { border-color: #ddd; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Tapete Interactivo Terapéutico — Diagrama de Conexiones</h1>
+<p class="subtitle">ESP32 DevKit V1 · 6 FSR 402 · 18 LEDs blancos · DFPlayer Mini · Protoboard grande</p>
+
+<div class="alert">
+  PENDIENTE DE COMPRAR: 6 × resistencias 10 kΩ (pull-down FSR) + 1 × microSD (DFPlayer).
+  Sin las 10 kΩ no conectar los FSR a GPIO.
+</div>
+
+<div class="diagram-wrap">
+<svg viewBox="0 0 1440 820" width="100%" style="max-width:1440px;display:block;margin:0 auto;">
+  <defs>
+    <!-- Gradiente para el ESP32 -->
+    <linearGradient id="esp32g" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#1e3a5f"/>
+      <stop offset="100%" stop-color="#1a3050"/>
+    </linearGradient>
+    <!-- Gradiente FSR -->
+    <linearGradient id="fsrg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#2d1b4e"/>
+      <stop offset="100%" stop-color="#3b235e"/>
+    </linearGradient>
+    <!-- Gradiente LED -->
+    <linearGradient id="ledg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#1a3e2a"/>
+      <stop offset="100%" stop-color="#1f4e33"/>
+    </linearGradient>
+    <!-- Gradiente DFPlayer -->
+    <linearGradient id="dfpg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#3e2206"/>
+      <stop offset="100%" stop-color="#2e1a04"/>
+    </linearGradient>
+    <!-- Marcador de flecha -->
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#888"/>
+    </marker>
+  </defs>
+
+  <!-- ============================== FONDO ============================== -->
+  <rect width="1440" height="820" fill="#0d1117" rx="8"/>
+
+  <!-- ============================== RIEL 3V3 (horizontal) ============================== -->
+  <line x1="60" y1="36" x2="1380" y2="36" stroke="#ef4444" stroke-width="4" stroke-linecap="round"/>
+  <rect x="60" y="22" width="56" height="20" rx="4" fill="#7f1d1d"/>
+  <text x="88" y="36" text-anchor="middle" fill="#fca5a5" font-size="11" font-weight="bold" dy="4">3V3</text>
+
+  <!-- ============================== RIEL GND (horizontal) ============================== -->
+  <line x1="60" y1="64" x2="1380" y2="64" stroke="#374151" stroke-width="4" stroke-linecap="round"/>
+  <rect x="60" y="50" width="56" height="20" rx="4" fill="#111827"/>
+  <text x="88" y="64" text-anchor="middle" fill="#9ca3af" font-size="11" font-weight="bold" dy="4">GND</text>
+
+  <!-- ============================== RIEL 5V / VIN ============================== -->
+  <line x1="60" y1="92" x2="600" y2="92" stroke="#f59e0b" stroke-width="3" stroke-linecap="round" stroke-dasharray="10,5"/>
+  <rect x="60" y="78" width="56" height="20" rx="4" fill="#451a03"/>
+  <text x="88" y="92" text-anchor="middle" fill="#fcd34d" font-size="11" font-weight="bold" dy="4">VIN 5V</text>
+  <!-- VIN desde ESP32 hacia la izquierda, solo para DFPlayer -->
+
+  <!-- ============================== ESP32 ============================== -->
+  <!-- Cuerpo principal -->
+  <rect x="560" y="110" width="320" height="660" rx="10" fill="url(#esp32g)" stroke="#3b82f6" stroke-width="2"/>
+  <rect x="570" y="115" width="300" height="30" rx="6" fill="#0f2942"/>
+  <text x="720" y="135" text-anchor="middle" fill="#93c5fd" font-size="14" font-weight="bold">ESP32 DevKit V1</text>
+
+  <!-- Línea vertical centro -->
+  <line x1="720" y1="145" x2="720" y2="760" stroke="#1d4ed8" stroke-width="1" stroke-dasharray="4,4"/>
+
+  <!-- USB-C (abajo) -->
+  <rect x="650" y="762" width="140" height="22" rx="5" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
+  <text x="720" y="777" text-anchor="middle" fill="#64748b" font-size="11">USB-C</text>
+
+  <!-- ===== PINES IZQUIERDA del ESP32 ===== -->
+  <!-- Cada pin: rect punteado + texto GPIO + texto función -->
+  <!-- y posiciones de pines: spacing 40px, inicio y=160 -->
+
+  <!-- Helper: pin izquierda (x de la línea del pin = 560) -->
+  <!-- Pines izq (GPIOs de entrada FSR) -->
+
+  <!-- EN (no usado) -->
+  <text x="555" y="174" text-anchor="end" fill="#4b5563" font-size="11">EN</text>
+  <circle cx="562" cy="170" r="4" fill="#1f2937" stroke="#374151"/>
+
+  <!-- GPIO36 = FSR1 -->
+  <circle cx="562" cy="210" r="5" fill="#1f2937" stroke="#a855f7" stroke-width="2"/>
+  <text x="555" y="214" text-anchor="end" fill="#c084fc" font-size="11">GPIO36</text>
+  <text x="567" y="208" fill="#9333ea" font-size="9">(VP/ADC1)</text>
+
+  <!-- GPIO39 = FSR2 -->
+  <circle cx="562" cy="250" r="5" fill="#1f2937" stroke="#a855f7" stroke-width="2"/>
+  <text x="555" y="254" text-anchor="end" fill="#c084fc" font-size="11">GPIO39</text>
+  <text x="567" y="248" fill="#9333ea" font-size="9">(VN/ADC1)</text>
+
+  <!-- GPIO34 = FSR3 -->
+  <circle cx="562" cy="290" r="5" fill="#1f2937" stroke="#a855f7" stroke-width="2"/>
+  <text x="555" y="294" text-anchor="end" fill="#c084fc" font-size="11">GPIO34</text>
+
+  <!-- GPIO35 = FSR4 -->
+  <circle cx="562" cy="330" r="5" fill="#1f2937" stroke="#a855f7" stroke-width="2"/>
+  <text x="555" y="334" text-anchor="end" fill="#c084fc" font-size="11">GPIO35</text>
+
+  <!-- GPIO32 = FSR5 -->
+  <circle cx="562" cy="370" r="5" fill="#1f2937" stroke="#a855f7" stroke-width="2"/>
+  <text x="555" y="374" text-anchor="end" fill="#c084fc" font-size="11">GPIO32</text>
+
+  <!-- GPIO33 = FSR6 -->
+  <circle cx="562" cy="410" r="5" fill="#1f2937" stroke="#a855f7" stroke-width="2"/>
+  <text x="555" y="414" text-anchor="end" fill="#c084fc" font-size="11">GPIO33</text>
+
+  <!-- Pines no usados izquierda -->
+  <text x="555" y="454" text-anchor="end" fill="#374151" font-size="10">GPIO25</text>
+  <circle cx="562" cy="450" r="3" fill="#1f2937" stroke="#374151"/>
+  <text x="555" y="494" text-anchor="end" fill="#374151" font-size="10">GPIO26</text>
+  <circle cx="562" cy="490" r="3" fill="#1f2937" stroke="#374151"/>
+  <text x="555" y="534" text-anchor="end" fill="#374151" font-size="10">GPIO27</text>
+  <circle cx="562" cy="530" r="3" fill="#1f2937" stroke="#374151"/>
+  <text x="555" y="574" text-anchor="end" fill="#374151" font-size="10">GPIO14</text>
+  <circle cx="562" cy="570" r="3" fill="#1f2937" stroke="#374151"/>
+  <text x="555" y="614" text-anchor="end" fill="#374151" font-size="10">GPIO12</text>
+  <circle cx="562" cy="610" r="3" fill="#1f2937" stroke="#374151"/>
+  <text x="555" y="654" text-anchor="end" fill="#374151" font-size="10">GPIO13</text>
+  <circle cx="562" cy="650" r="3" fill="#1f2937" stroke="#374151"/>
+
+  <!-- GND y VIN izquierda -->
+  <circle cx="562" cy="690" r="5" fill="#111827" stroke="#374151" stroke-width="2"/>
+  <text x="555" y="694" text-anchor="end" fill="#9ca3af" font-size="11">GND</text>
+  <circle cx="562" cy="730" r="5" fill="#451a03" stroke="#f59e0b" stroke-width="2"/>
+  <text x="555" y="734" text-anchor="end" fill="#fcd34d" font-size="11">VIN (5V)</text>
+
+  <!-- ===== PINES DERECHA del ESP32 ===== -->
+
+  <!-- GPIO23 = LED6 -->
+  <circle cx="878" cy="210" r="5" fill="#1f2937" stroke="#22c55e" stroke-width="2"/>
+  <text x="885" y="214" fill="#86efac" font-size="11">GPIO23</text>
+
+  <!-- GPIO22 no usado -->
+  <circle cx="878" cy="250" r="3" fill="#1f2937" stroke="#374151"/>
+  <text x="885" y="254" fill="#374151" font-size="10">GPIO22</text>
+
+  <!-- TX0 / RX0 no usados -->
+  <circle cx="878" cy="290" r="3" fill="#1f2937" stroke="#374151"/>
+  <text x="885" y="294" fill="#374151" font-size="10">TX0</text>
+  <circle cx="878" cy="330" r="3" fill="#1f2937" stroke="#374151"/>
+  <text x="885" y="334" fill="#374151" font-size="10">RX0</text>
+
+  <!-- GPIO21 = LED5 -->
+  <circle cx="878" cy="370" r="5" fill="#1f2937" stroke="#22c55e" stroke-width="2"/>
+  <text x="885" y="374" fill="#86efac" font-size="11">GPIO21</text>
+
+  <!-- GPIO19 = LED4 -->
+  <circle cx="878" cy="410" r="5" fill="#1f2937" stroke="#22c55e" stroke-width="2"/>
+  <text x="885" y="414" fill="#86efac" font-size="11">GPIO19</text>
+
+  <!-- GPIO18 = LED3 -->
+  <circle cx="878" cy="450" r="5" fill="#1f2937" stroke="#22c55e" stroke-width="2"/>
+  <text x="885" y="454" fill="#86efac" font-size="11">GPIO18</text>
+
+  <!-- GPIO5 = LED2 -->
+  <circle cx="878" cy="490" r="5" fill="#1f2937" stroke="#22c55e" stroke-width="2"/>
+  <text x="885" y="494" fill="#86efac" font-size="11">GPIO5</text>
+
+  <!-- GPIO17 = DFPlayer RX -->
+  <circle cx="878" cy="530" r="5" fill="#1f2937" stroke="#fb923c" stroke-width="2"/>
+  <text x="885" y="534" fill="#fdba74" font-size="11">GPIO17/TX2</text>
+
+  <!-- GPIO16 = DFPlayer TX -->
+  <circle cx="878" cy="570" r="5" fill="#1f2937" stroke="#fb923c" stroke-width="2"/>
+  <text x="885" y="574" fill="#fdba74" font-size="11">GPIO16/RX2</text>
+
+  <!-- GPIO4 = LED1 -->
+  <circle cx="878" cy="610" r="5" fill="#1f2937" stroke="#22c55e" stroke-width="2"/>
+  <text x="885" y="614" fill="#86efac" font-size="11">GPIO4</text>
+
+  <!-- GPIO2 / GPIO15 no usados -->
+  <circle cx="878" cy="650" r="3" fill="#1f2937" stroke="#374151"/>
+  <text x="885" y="654" fill="#374151" font-size="10">GPIO2</text>
+  <circle cx="878" cy="690" r="3" fill="#1f2937" stroke="#374151"/>
+  <text x="885" y="694" fill="#374151" font-size="10">GPIO15</text>
+
+  <!-- GND y 3V3 derecha -->
+  <circle cx="878" cy="730" r="5" fill="#111827" stroke="#374151" stroke-width="2"/>
+  <text x="885" y="734" fill="#9ca3af" font-size="11">GND</text>
+  <circle cx="878" cy="760" r="5" fill="#7f1d1d" stroke="#ef4444" stroke-width="2"/>
+  <text x="885" y="764" fill="#fca5a5" font-size="11">3V3</text>
+
+  <!-- Cables desde 3V3/GND del ESP32 hacia rieles superiores -->
+  <!-- 3V3 derecha → riel 3V3 -->
+  <polyline points="878,760 878,36" stroke="#ef4444" stroke-width="2" fill="none" stroke-dasharray="6,3" opacity="0.5"/>
+  <!-- GND derecha → riel GND -->
+  <polyline points="878,730 912,730 912,64" stroke="#374151" stroke-width="2" fill="none" stroke-dasharray="6,3" opacity="0.5"/>
+  <!-- GND izquierda → riel GND -->
+  <polyline points="562,690 528,690 528,64" stroke="#374151" stroke-width="2" fill="none" stroke-dasharray="6,3" opacity="0.5"/>
+  <!-- VIN izquierda → riel 5V (para DFPlayer) -->
+  <polyline points="562,730 528,730 528,92" stroke="#f59e0b" stroke-width="2" fill="none" stroke-dasharray="6,3" opacity="0.5"/>
+
+  <!-- ============================== FSR SECTION (izquierda) ============================== -->
+
+  <!-- FSR 1 -->
+  <g transform="translate(0, 0)">
+    <!-- Bloque FSR -->
+    <rect x="62" y="192" width="120" height="36" rx="6" fill="url(#fsrg)" stroke="#7c3aed" stroke-width="1.5"/>
+    <text x="122" y="208" text-anchor="middle" fill="#e9d5ff" font-size="12" font-weight="bold">FSR 402</text>
+    <text x="122" y="222" text-anchor="middle" fill="#a78bfa" font-size="10">Botón 1</text>
+    <!-- Pin VCC del FSR → riel 3V3 -->
+    <line x1="182" y1="200" x2="220" y2="200" stroke="#ef4444" stroke-width="2"/>
+    <line x1="220" y1="200" x2="220" y2="36" stroke="#ef4444" stroke-width="2"/>
+    <!-- Pin señal del FSR -->
+    <line x1="182" y1="218" x2="240" y2="218" stroke="#a855f7" stroke-width="2.5"/>
+    <!-- Nodo divisor de voltaje -->
+    <circle cx="240" cy="218" r="5" fill="#7c3aed"/>
+    <!-- 10kΩ pull-down -->
+    <rect x="232" y="222" width="16" height="40" rx="3" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5"/>
+    <text x="240" y="237" text-anchor="middle" fill="#a5b4fc" font-size="9">10k</text>
+    <text x="240" y="249" text-anchor="middle" fill="#a5b4fc" font-size="9">Ω</text>
+    <!-- Resistor → GND -->
+    <line x1="240" y1="262" x2="240" y2="280" stroke="#374151" stroke-width="2"/>
+    <line x1="240" y1="280" x2="480" y2="280" stroke="#374151" stroke-width="2"/>
+    <line x1="480" y1="280" x2="480" y2="64" stroke="#374151" stroke-width="2"/>
+    <!-- Nodo → GPIO36 -->
+    <line x1="240" y1="218" x2="562" y2="210" stroke="#a855f7" stroke-width="2.5"/>
+  </g>
+
+  <!-- FSR 2 -->
+  <g transform="translate(0, 40)">
+    <rect x="62" y="192" width="120" height="36" rx="6" fill="url(#fsrg)" stroke="#7c3aed" stroke-width="1.5"/>
+    <text x="122" y="208" text-anchor="middle" fill="#e9d5ff" font-size="12" font-weight="bold">FSR 402</text>
+    <text x="122" y="222" text-anchor="middle" fill="#a78bfa" font-size="10">Botón 2</text>
+    <line x1="182" y1="200" x2="300" y2="200" stroke="#ef4444" stroke-width="2"/>
+    <line x1="300" y1="200" x2="300" y2="36" stroke="#ef4444" stroke-width="2"/>
+    <line x1="182" y1="218" x2="280" y2="218" stroke="#a855f7" stroke-width="2.5"/>
+    <circle cx="280" cy="218" r="5" fill="#7c3aed"/>
+    <rect x="272" y="222" width="16" height="40" rx="3" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5"/>
+    <text x="280" y="237" text-anchor="middle" fill="#a5b4fc" font-size="9">10k</text>
+    <text x="280" y="249" text-anchor="middle" fill="#a5b4fc" font-size="9">Ω</text>
+    <line x1="280" y1="262" x2="280" y2="316" stroke="#374151" stroke-width="2"/>
+    <line x1="280" y1="316" x2="500" y2="316" stroke="#374151" stroke-width="2"/>
+    <line x1="500" y1="316" x2="500" y2="64" stroke="#374151" stroke-width="2"/>
+    <line x1="280" y1="218" x2="562" y2="250" stroke="#a855f7" stroke-width="2.5"/>
+  </g>
+
+  <!-- FSR 3 -->
+  <g transform="translate(0, 80)">
+    <rect x="62" y="192" width="120" height="36" rx="6" fill="url(#fsrg)" stroke="#7c3aed" stroke-width="1.5"/>
+    <text x="122" y="208" text-anchor="middle" fill="#e9d5ff" font-size="12" font-weight="bold">FSR 402</text>
+    <text x="122" y="222" text-anchor="middle" fill="#a78bfa" font-size="10">Botón 3</text>
+    <line x1="182" y1="200" x2="340" y2="200" stroke="#ef4444" stroke-width="2"/>
+    <line x1="340" y1="200" x2="340" y2="36" stroke="#ef4444" stroke-width="2"/>
+    <line x1="182" y1="218" x2="320" y2="218" stroke="#a855f7" stroke-width="2.5"/>
+    <circle cx="320" cy="218" r="5" fill="#7c3aed"/>
+    <rect x="312" y="222" width="16" height="40" rx="3" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5"/>
+    <text x="320" y="237" text-anchor="middle" fill="#a5b4fc" font-size="9">10k</text>
+    <text x="320" y="249" text-anchor="middle" fill="#a5b4fc" font-size="9">Ω</text>
+    <line x1="320" y1="262" x2="320" y2="350" stroke="#374151" stroke-width="2"/>
+    <line x1="320" y1="350" x2="515" y2="350" stroke="#374151" stroke-width="2"/>
+    <line x1="515" y1="350" x2="515" y2="64" stroke="#374151" stroke-width="2"/>
+    <line x1="320" y1="218" x2="562" y2="290" stroke="#a855f7" stroke-width="2.5"/>
+  </g>
+
+  <!-- FSR 4 -->
+  <g transform="translate(0, 120)">
+    <rect x="62" y="192" width="120" height="36" rx="6" fill="url(#fsrg)" stroke="#7c3aed" stroke-width="1.5"/>
+    <text x="122" y="208" text-anchor="middle" fill="#e9d5ff" font-size="12" font-weight="bold">FSR 402</text>
+    <text x="122" y="222" text-anchor="middle" fill="#a78bfa" font-size="10">Botón 4</text>
+    <line x1="182" y1="200" x2="360" y2="200" stroke="#ef4444" stroke-width="2"/>
+    <line x1="360" y1="200" x2="360" y2="36" stroke="#ef4444" stroke-width="2"/>
+    <line x1="182" y1="218" x2="355" y2="218" stroke="#a855f7" stroke-width="2.5"/>
+    <circle cx="355" cy="218" r="5" fill="#7c3aed"/>
+    <rect x="347" y="222" width="16" height="40" rx="3" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5"/>
+    <text x="355" y="237" text-anchor="middle" fill="#a5b4fc" font-size="9">10k</text>
+    <text x="355" y="249" text-anchor="middle" fill="#a5b4fc" font-size="9">Ω</text>
+    <line x1="355" y1="262" x2="355" y2="382" stroke="#374151" stroke-width="2"/>
+    <line x1="355" y1="382" x2="530" y2="382" stroke="#374151" stroke-width="2"/>
+    <line x1="530" y1="382" x2="530" y2="64" stroke="#374151" stroke-width="2"/>
+    <line x1="355" y1="218" x2="562" y2="330" stroke="#a855f7" stroke-width="2.5"/>
+  </g>
+
+  <!-- FSR 5 -->
+  <g transform="translate(0, 160)">
+    <rect x="62" y="192" width="120" height="36" rx="6" fill="url(#fsrg)" stroke="#7c3aed" stroke-width="1.5"/>
+    <text x="122" y="208" text-anchor="middle" fill="#e9d5ff" font-size="12" font-weight="bold">FSR 402</text>
+    <text x="122" y="222" text-anchor="middle" fill="#a78bfa" font-size="10">Botón 5</text>
+    <line x1="182" y1="200" x2="395" y2="200" stroke="#ef4444" stroke-width="2"/>
+    <line x1="395" y1="200" x2="395" y2="36" stroke="#ef4444" stroke-width="2"/>
+    <line x1="182" y1="218" x2="390" y2="218" stroke="#a855f7" stroke-width="2.5"/>
+    <circle cx="390" cy="218" r="5" fill="#7c3aed"/>
+    <rect x="382" y="222" width="16" height="40" rx="3" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5"/>
+    <text x="390" y="237" text-anchor="middle" fill="#a5b4fc" font-size="9">10k</text>
+    <text x="390" y="249" text-anchor="middle" fill="#a5b4fc" font-size="9">Ω</text>
+    <line x1="390" y1="262" x2="390" y2="416" stroke="#374151" stroke-width="2"/>
+    <line x1="390" y1="416" x2="544" y2="416" stroke="#374151" stroke-width="2"/>
+    <line x1="544" y1="416" x2="544" y2="64" stroke="#374151" stroke-width="2"/>
+    <line x1="390" y1="218" x2="562" y2="370" stroke="#a855f7" stroke-width="2.5"/>
+  </g>
+
+  <!-- FSR 6 -->
+  <g transform="translate(0, 200)">
+    <rect x="62" y="192" width="120" height="36" rx="6" fill="url(#fsrg)" stroke="#7c3aed" stroke-width="1.5"/>
+    <text x="122" y="208" text-anchor="middle" fill="#e9d5ff" font-size="12" font-weight="bold">FSR 402</text>
+    <text x="122" y="222" text-anchor="middle" fill="#a78bfa" font-size="10">Botón 6</text>
+    <line x1="182" y1="200" x2="420" y2="200" stroke="#ef4444" stroke-width="2"/>
+    <line x1="420" y1="200" x2="420" y2="36" stroke="#ef4444" stroke-width="2"/>
+    <line x1="182" y1="218" x2="425" y2="218" stroke="#a855f7" stroke-width="2.5"/>
+    <circle cx="425" cy="218" r="5" fill="#7c3aed"/>
+    <rect x="417" y="222" width="16" height="40" rx="3" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5"/>
+    <text x="425" y="237" text-anchor="middle" fill="#a5b4fc" font-size="9">10k</text>
+    <text x="425" y="249" text-anchor="middle" fill="#a5b4fc" font-size="9">Ω</text>
+    <line x1="425" y1="262" x2="425" y2="450" stroke="#374151" stroke-width="2"/>
+    <line x1="425" y1="450" x2="556" y2="450" stroke="#374151" stroke-width="2"/>
+    <line x1="556" y1="450" x2="556" y2="64" stroke="#374151" stroke-width="2"/>
+    <line x1="425" y1="218" x2="562" y2="410" stroke="#a855f7" stroke-width="2.5"/>
+  </g>
+
+  <!-- ============================== LED SECTION (derecha) ============================== -->
+
+  <!-- Macro: cada grupo LED (GPIO → 110Ω → 3×LED // → GND) -->
+
+  <!-- LED Grupo 6 (GPIO23, y=210) -->
+  <g>
+    <!-- cable desde GPIO -->
+    <line x1="878" y1="210" x2="970" y2="210" stroke="#22c55e" stroke-width="2.5"/>
+    <!-- 110Ω -->
+    <rect x="970" y="198" width="18" height="30" rx="3" fill="#052e16" stroke="#4ade80" stroke-width="1.5"/>
+    <text x="979" y="210" text-anchor="middle" fill="#86efac" font-size="9">110</text>
+    <text x="979" y="221" text-anchor="middle" fill="#86efac" font-size="9">Ω</text>
+    <!-- nodo después de resistor -->
+    <line x1="988" y1="213" x2="1040" y2="213" stroke="#22c55e" stroke-width="2.5"/>
+    <circle cx="1040" cy="213" r="5" fill="#15803d"/>
+    <!-- 3 LEDs en paralelo -->
+    <line x1="1040" y1="213" x2="1040" y2="190" stroke="#22c55e" stroke-width="2"/>
+    <line x1="1040" y1="213" x2="1040" y2="213" stroke="#22c55e" stroke-width="2"/>
+    <line x1="1040" y1="213" x2="1040" y2="236" stroke="#22c55e" stroke-width="2"/>
+    <!-- LED A (arriba) -->
+    <polygon points="1040,182 1060,182 1050,165" fill="#d1fae5" stroke="#22c55e" stroke-width="1"/>
+    <line x1="1050" y1="165" x2="1050" y2="155" stroke="#374151" stroke-width="2"/>
+    <line x1="1050" y1="155" x2="1100" y2="155" stroke="#374151" stroke-width="2"/>
+    <line x1="1100" y1="155" x2="1100" y2="64" stroke="#374151" stroke-width="2"/>
+    <text x="1065" y="177" fill="#6ee7b7" font-size="9">LED</text>
+    <!-- LED B (medio) -->
+    <polygon points="1040,208 1060,208 1050,191" fill="#d1fae5" stroke="#22c55e" stroke-width="1"/>
+    <line x1="1050" y1="191" x2="1050" y2="180" stroke="#374151" stroke-width="2"/>
+    <line x1="1050" y1="180" x2="1110" y2="180" stroke="#374151" stroke-width="2"/>
+    <line x1="1110" y1="180" x2="1110" y2="64" stroke="#374151" stroke-width="2"/>
+    <text x="1065" y="203" fill="#6ee7b7" font-size="9">LED</text>
+    <!-- LED C (abajo) -->
+    <polygon points="1040,233 1060,233 1050,216" fill="#d1fae5" stroke="#22c55e" stroke-width="1"/>
+    <line x1="1050" y1="216" x2="1050" y2="208" stroke="#374151" stroke-width="2"/>
+    <line x1="1050" y1="208" x2="1120" y2="208" stroke="#374151" stroke-width="2"/>
+    <line x1="1120" y1="208" x2="1120" y2="64" stroke="#374151" stroke-width="2"/>
+    <text x="1065" y="228" fill="#6ee7b7" font-size="9">LED</text>
+    <!-- Label grupo -->
+    <text x="1140" y="214" fill="#4ade80" font-size="11" font-weight="bold">Grp 6</text>
+    <!-- Cátodos → GND (flechas hacia riel GND arriba) -->
+    <text x="1090" y="145" fill="#9ca3af" font-size="9">→GND</text>
+  </g>
+
+  <!-- LED Grupo 5 (GPIO21, y=370) -->
+  <g>
+    <line x1="878" y1="370" x2="970" y2="370" stroke="#22c55e" stroke-width="2.5"/>
+    <rect x="970" y="358" width="18" height="30" rx="3" fill="#052e16" stroke="#4ade80" stroke-width="1.5"/>
+    <text x="979" y="370" text-anchor="middle" fill="#86efac" font-size="9">110</text>
+    <text x="979" y="381" text-anchor="middle" fill="#86efac" font-size="9">Ω</text>
+    <line x1="988" y1="373" x2="1040" y2="373" stroke="#22c55e" stroke-width="2.5"/>
+    <circle cx="1040" cy="373" r="5" fill="#15803d"/>
+    <line x1="1040" y1="373" x2="1040" y2="350" stroke="#22c55e" stroke-width="2"/>
+    <line x1="1040" y1="373" x2="1040" y2="396" stroke="#22c55e" stroke-width="2"/>
+    <polygon points="1040,342 1060,342 1050,325" fill="#d1fae5" stroke="#22c55e" stroke-width="1"/>
+    <line x1="1050" y1="325" x2="1150" y2="325" stroke="#374151" stroke-width="2"/>
+    <line x1="1150" y1="325" x2="1150" y2="64" stroke="#374151" stroke-width="2"/>
+    <text x="1065" y="337" fill="#6ee7b7" font-size="9">LED</text>
+    <polygon points="1040,368 1060,368 1050,351" fill="#d1fae5" stroke="#22c55e" stroke-width="1"/>
+    <line x1="1050" y1="351" x2="1160" y2="351" stroke="#374151" stroke-width="2"/>
+    <line x1="1160" y1="351" x2="1160" y2="64" stroke="#374151" stroke-width="2"/>
+    <text x="1065" y="363" fill="#6ee7b7" font-size="9">LED</text>
+    <polygon points="1040,393 1060,393 1050,376" fill="#d1fae5" stroke="#22c55e" stroke-width="1"/>
+    <line x1="1050" y1="376" x2="1170" y2="376" stroke="#374151" stroke-width="2"/>
+    <line x1="1170" y1="376" x2="1170" y2="64" stroke="#374151" stroke-width="2"/>
+    <text x="1065" y="388" fill="#6ee7b7" font-size="9">LED</text>
+    <text x="1190" y="374" fill="#4ade80" font-size="11" font-weight="bold">Grp 5</text>
+  </g>
+
+  <!-- LED Grupo 4 (GPIO19, y=410) -->
+  <g>
+    <line x1="878" y1="410" x2="1000" y2="410" stroke="#22c55e" stroke-width="2.5"/>
+    <rect x="1000" y="398" width="18" height="30" rx="3" fill="#052e16" stroke="#4ade80" stroke-width="1.5"/>
+    <text x="1009" y="410" text-anchor="middle" fill="#86efac" font-size="9">110</text>
+    <text x="1009" y="421" text-anchor="middle" fill="#86efac" font-size="9">Ω</text>
+    <line x1="1018" y1="413" x2="1070" y2="413" stroke="#22c55e" stroke-width="2.5"/>
+    <circle cx="1070" cy="413" r="5" fill="#15803d"/>
+    <line x1="1070" y1="413" x2="1070" y2="390" stroke="#22c55e" stroke-width="2"/>
+    <line x1="1070" y1="413" x2="1070" y2="436" stroke="#22c55e" stroke-width="2"/>
+    <polygon points="1070,382 1090,382 1080,365" fill="#d1fae5" stroke="#22c55e" stroke-width="1"/>
+    <line x1="1080" y1="365" x2="1200" y2="365" stroke="#374151" stroke-width="2"/>
+    <line x1="1200" y1="365" x2="1200" y2="64" stroke="#374151" stroke-width="2"/>
+    <text x="1095" y="377" fill="#6ee7b7" font-size="9">LED</text>
+    <polygon points="1070,408 1090,408 1080,391" fill="#d1fae5" stroke="#22c55e" stroke-width="1"/>
+    <line x1="1080" y1="391" x2="1210" y2="391" stroke="#374151" stroke-width="2"/>
+    <line x1="1210" y1="391" x2="1210" y2="64" stroke="#374151" stroke-width="2"/>
+    <text x="1095" y="403" fill="#6ee7b7" font-size="9">LED</text>
+    <polygon points="1070,433 1090,433 1080,416" fill="#d1fae5" stroke="#22c55e" stroke-width="1"/>
+    <line x1="1080" y1="416" x2="1220" y2="416" stroke="#374151" stroke-width="2"/>
+    <line x1="1220" y1="416" x2="1220" y2="64" stroke="#374151" stroke-width="2"/>
+    <text x="1095" y="428" fill="#6ee7b7" font-size="9">LED</text>
+    <text x="1240" y="414" fill="#4ade80" font-size="11" font-weight="bold">Grp 4</text>
+  </g>
+
+  <!-- LED Grupo 3 (GPIO18, y=450) -->
+  <g>
+    <line x1="878" y1="450" x2="1000" y2="450" stroke="#22c55e" stroke-width="2.5"/>
+    <rect x="1000" y="438" width="18" height="30" rx="3" fill="#052e16" stroke="#4ade80" stroke-width="1.5"/>
+    <text x="1009" y="450" text-anchor="middle" fill="#86efac" font-size="9">110</text>
+    <text x="1009" y="461" text-anchor="middle" fill="#86efac" font-size="9">Ω</text>
+    <line x1="1018" y1="453" x2="1070" y2="453" stroke="#22c55e" stroke-width="2.5"/>
+    <circle cx="1070" cy="453" r="5" fill="#15803d"/>
+    <line x1="1070" y1="453" x2="1070" y2="430" stroke="#22c55e" stroke-width="2"/>
+    <line x1="1070" y1="453" x2="1070" y2="476" stroke="#22c55e" stroke-width="2"/>
+    <polygon points="1070,422 1090,422 1080,405" fill="#d1fae5" stroke="#22c55e" stroke-width="1"/>
+    <line x1="1080" y1="405" x2="1260" y2="405" stroke="#374151" stroke-width="2"/>
+    <line x1="1260" y1="405" x2="1260" y2="64" stroke="#374151" stroke-width="2"/>
+    <text x="1095" y="417" fill="#6ee7b7" font-size="9">LED</text>
+    <polygon points="1070,448 1090,448 1080,431" fill="#d1fae5" stroke="#22c55e" stroke-width="1"/>
+    <line x1="1080" y1="431" x2="1270" y2="431" stroke="#374151" stroke-width="2"/>
+    <line x1="1270" y1="431" x2="1270" y2="64" stroke="#374151" stroke-width="2"/>
+    <text x="1095" y="443" fill="#6ee7b7" font-size="9">LED</text>
+    <polygon points="1070,473 1090,473 1080,456" fill="#d1fae5" stroke="#22c55e" stroke-width="1"/>
+    <line x1="1080" y1="456" x2="1280" y2="456" stroke="#374151" stroke-width="2"/>
+    <line x1="1280" y1="456" x2="1280" y2="64" stroke="#374151" stroke-width="2"/>
+    <text x="1095" y="468" fill="#6ee7b7" font-size="9">LED</text>
+    <text x="1300" y="454" fill="#4ade80" font-size="11" font-weight="bold">Grp 3</text>
+  </g>
+
+  <!-- LED Grupo 2 (GPIO5, y=490) -->
+  <g>
+    <line x1="878" y1="490" x2="1000" y2="490" stroke="#22c55e" stroke-width="2.5"/>
+    <rect x="1000" y="478" width="18" height="30" rx="3" fill="#052e16" stroke="#4ade80" stroke-width="1.5"/>
+    <text x="1009" y="490" text-anchor="middle" fill="#86efac" font-size="9">110</text>
+    <text x="1009" y="501" text-anchor="middle" fill="#86efac" font-size="9">Ω</text>
+    <line x1="1018" y1="493" x2="1070" y2="493" stroke="#22c55e" stroke-width="2.5"/>
+    <circle cx="1070" cy="493" r="5" fill="#15803d"/>
+    <line x1="1070" y1="493" x2="1070" y2="470" stroke="#22c55e" stroke-width="2"/>
+    <line x1="1070" y1="493" x2="1070" y2="516" stroke="#22c55e" stroke-width="2"/>
+    <polygon points="1070,462 1090,462 1080,445" fill="#d1fae5" stroke="#22c55e" stroke-width="1"/>
+    <line x1="1080" y1="445" x2="1310" y2="445" stroke="#374151" stroke-width="2"/>
+    <line x1="1310" y1="445" x2="1310" y2="64" stroke="#374151" stroke-width="2"/>
+    <text x="1095" y="457" fill="#6ee7b7" font-size="9">LED</text>
+    <polygon points="1070,488 1090,488 1080,471" fill="#d1fae5" stroke="#22c55e" stroke-width="1"/>
+    <line x1="1080" y1="471" x2="1320" y2="471" stroke="#374151" stroke-width="2"/>
+    <line x1="1320" y1="471" x2="1320" y2="64" stroke="#374151" stroke-width="2"/>
+    <text x="1095" y="483" fill="#6ee7b7" font-size="9">LED</text>
+    <polygon points="1070,513 1090,513 1080,496" fill="#d1fae5" stroke="#22c55e" stroke-width="1"/>
+    <line x1="1080" y1="496" x2="1330" y2="496" stroke="#374151" stroke-width="2"/>
+    <line x1="1330" y1="496" x2="1330" y2="64" stroke="#374151" stroke-width="2"/>
+    <text x="1095" y="508" fill="#6ee7b7" font-size="9">LED</text>
+    <text x="1350" y="494" fill="#4ade80" font-size="11" font-weight="bold">Grp 2</text>
+  </g>
+
+  <!-- LED Grupo 1 (GPIO4, y=610) -->
+  <g>
+    <line x1="878" y1="610" x2="970" y2="610" stroke="#22c55e" stroke-width="2.5"/>
+    <rect x="970" y="598" width="18" height="30" rx="3" fill="#052e16" stroke="#4ade80" stroke-width="1.5"/>
+    <text x="979" y="610" text-anchor="middle" fill="#86efac" font-size="9">110</text>
+    <text x="979" y="621" text-anchor="middle" fill="#86efac" font-size="9">Ω</text>
+    <line x1="988" y1="613" x2="1040" y2="613" stroke="#22c55e" stroke-width="2.5"/>
+    <circle cx="1040" cy="613" r="5" fill="#15803d"/>
+    <line x1="1040" y1="613" x2="1040" y2="590" stroke="#22c55e" stroke-width="2"/>
+    <line x1="1040" y1="613" x2="1040" y2="636" stroke="#22c55e" stroke-width="2"/>
+    <polygon points="1040,582 1060,582 1050,565" fill="#d1fae5" stroke="#22c55e" stroke-width="1"/>
+    <line x1="1050" y1="565" x2="1360" y2="565" stroke="#374151" stroke-width="2"/>
+    <line x1="1360" y1="565" x2="1360" y2="64" stroke="#374151" stroke-width="2"/>
+    <text x="1065" y="577" fill="#6ee7b7" font-size="9">LED</text>
+    <polygon points="1040,608 1060,608 1050,591" fill="#d1fae5" stroke="#22c55e" stroke-width="1"/>
+    <line x1="1050" y1="591" x2="1370" y2="591" stroke="#374151" stroke-width="2"/>
+    <line x1="1370" y1="591" x2="1370" y2="64" stroke="#374151" stroke-width="2"/>
+    <text x="1065" y="603" fill="#6ee7b7" font-size="9">LED</text>
+    <polygon points="1040,633 1060,633 1050,616" fill="#d1fae5" stroke="#22c55e" stroke-width="1"/>
+    <line x1="1050" y1="616" x2="1380" y2="616" stroke="#374151" stroke-width="2"/>
+    <line x1="1380" y1="616" x2="1380" y2="64" stroke="#374151" stroke-width="2"/>
+    <text x="1065" y="628" fill="#6ee7b7" font-size="9">LED</text>
+    <text x="1140" y="614" fill="#4ade80" font-size="11" font-weight="bold">Grp 1</text>
+  </g>
+
+  <!-- ============================== DFPLAYER ============================== -->
+  <rect x="570" y="720" width="300" height="80" rx="8" fill="url(#dfpg)" stroke="#f59e0b" stroke-width="2"/>
+  <text x="720" y="745" text-anchor="middle" fill="#fcd34d" font-size="13" font-weight="bold">DFPlayer Mini</text>
+  <text x="720" y="762" text-anchor="middle" fill="#d97706" font-size="11">MP3 · Serial2 (GPIO16/17)</text>
+  <text x="720" y="778" text-anchor="middle" fill="#92400e" font-size="10">Sin parlante (graceful degradation)</text>
+
+  <!-- VIN → DFPlayer VCC -->
+  <line x1="562" y1="730" x2="562" y2="760" stroke="#f59e0b" stroke-width="2.5"/>
+  <line x1="562" y1="760" x2="570" y2="760" stroke="#f59e0b" stroke-width="2.5"/>
+  <!-- GND → DFPlayer GND (desde ESP32 GND izq) -->
+  <line x1="562" y1="690" x2="540" y2="690" stroke="#374151" stroke-width="2"/>
+  <line x1="540" y1="690" x2="540" y2="775" stroke="#374151" stroke-width="2"/>
+  <line x1="540" y1="775" x2="570" y2="775" stroke="#374151" stroke-width="2"/>
+
+  <!-- TX2 (GPIO17) → DFPlayer RX (morado) -->
+  <polyline points="878,530 936,530 936,745 870,745" stroke="#c084fc" stroke-width="2.5" fill="none"/>
+  <text x="900" y="526" fill="#c084fc" font-size="9">TX2→DFP.RX</text>
+
+  <!-- RX2 (GPIO16) → DFPlayer TX (gris) -->
+  <polyline points="878,570 950,570 950,758 870,758" stroke="#9ca3af" stroke-width="2.5" fill="none"/>
+  <text x="900" y="584" fill="#9ca3af" font-size="9">RX2→DFP.TX</text>
+
+  <!-- ============================== ETIQUETAS ESP32 PIN-MAP ============================== -->
+  <!-- Etiquetas internas del ESP32 -->
+  <text x="620" y="174" fill="#60a5fa" font-size="10">EN</text>
+  <text x="620" y="214" fill="#c084fc" font-size="10">GPIO36 (FSR 1)</text>
+  <text x="620" y="254" fill="#c084fc" font-size="10">GPIO39 (FSR 2)</text>
+  <text x="620" y="294" fill="#c084fc" font-size="10">GPIO34 (FSR 3)</text>
+  <text x="620" y="334" fill="#c084fc" font-size="10">GPIO35 (FSR 4)</text>
+  <text x="620" y="374" fill="#c084fc" font-size="10">GPIO32 (FSR 5)</text>
+  <text x="620" y="414" fill="#c084fc" font-size="10">GPIO33 (FSR 6)</text>
+  <text x="620" y="694" fill="#9ca3af" font-size="10">GND</text>
+  <text x="620" y="734" fill="#fcd34d" font-size="10">VIN (5V)</text>
+
+  <text x="720" y="214" text-anchor="end" fill="#86efac" font-size="10">(LED 6) GPIO23</text>
+  <text x="720" y="374" text-anchor="end" fill="#86efac" font-size="10">(LED 5) GPIO21</text>
+  <text x="720" y="414" text-anchor="end" fill="#86efac" font-size="10">(LED 4) GPIO19</text>
+  <text x="720" y="454" text-anchor="end" fill="#86efac" font-size="10">(LED 3) GPIO18</text>
+  <text x="720" y="494" text-anchor="end" fill="#86efac" font-size="10">(LED 2) GPIO5</text>
+  <text x="720" y="534" text-anchor="end" fill="#fdba74" font-size="10">GPIO17/TX2</text>
+  <text x="720" y="574" text-anchor="end" fill="#fdba74" font-size="10">GPIO16/RX2</text>
+  <text x="720" y="614" text-anchor="end" fill="#86efac" font-size="10">(LED 1) GPIO4</text>
+  <text x="720" y="734" text-anchor="end" fill="#9ca3af" font-size="10">GND</text>
+  <text x="720" y="764" text-anchor="end" fill="#fca5a5" font-size="10">3V3</text>
+
+  <!-- ============================== NOTAS / VALORES ============================== -->
+  <!-- Nota FSR pull-down -->
+  <rect x="60" y="620" width="180" height="72" rx="6" fill="#1c1917" stroke="#44403c" stroke-width="1"/>
+  <text x="70" y="638" fill="#a8a29e" font-size="11" font-weight="bold">Divisor de voltaje FSR:</text>
+  <text x="70" y="654" fill="#78716c" font-size="10">3V3 → FSR → nodo → GPIO</text>
+  <text x="70" y="668" fill="#78716c" font-size="10">          nodo → 10kΩ → GND</text>
+  <text x="70" y="682" fill="#78716c" font-size="10">ADC umbral: 2000/4095</text>
+
+  <!-- Nota LED corriente -->
+  <rect x="60" y="700" width="180" height="72" rx="6" fill="#1c1917" stroke="#44403c" stroke-width="1"/>
+  <text x="70" y="718" fill="#a8a29e" font-size="11" font-weight="bold">Grupos LED (3 en paralelo):</text>
+  <text x="70" y="734" fill="#78716c" font-size="10">GPIO(3V3) → 110Ω → ánodo(+)</text>
+  <text x="70" y="748" fill="#78716c" font-size="10">cátodo(–) → GND</text>
+  <text x="70" y="762" fill="#78716c" font-size="10">~9mA total/grupo (safe 3.3V)</text>
+
+</svg>
+</div>
+
+<!-- ============================== LEYENDA ============================== -->
+<div class="legend">
+  <div class="leg"><div class="leg-dot" style="background:#ef4444"></div> 3V3 (alimentación)</div>
+  <div class="leg"><div class="leg-dot" style="background:#374151"></div> GND</div>
+  <div class="leg"><div class="leg-dot" style="background:#f59e0b"></div> VIN / 5V (DFPlayer)</div>
+  <div class="leg"><div class="leg-dot" style="background:#a855f7"></div> Señal FSR (ADC1)</div>
+  <div class="leg"><div class="leg-dot" style="background:#6366f1"></div> 10kΩ pull-down</div>
+  <div class="leg"><div class="leg-dot" style="background:#22c55e"></div> GPIO → LED</div>
+  <div class="leg"><div class="leg-dot" style="background:#d1fae5"></div> LED blanco (ánodo arriba)</div>
+  <div class="leg"><div class="leg-dot" style="background:#c084fc"></div> TX2 → DFPlayer RX</div>
+  <div class="leg"><div class="leg-dot" style="background:#9ca3af"></div> RX2 → DFPlayer TX</div>
+</div>
+
+<!-- ============================== TABLAS DE CONEXIÓN ============================== -->
+<div class="tables">
+
+  <!-- FSR -->
+  <div class="tbl-section">
+    <h2>Conexiones FSR 402 (sensores de presión)</h2>
+    <table>
+      <tr><th>Botón</th><th>FSR Pin 1</th><th>FSR Pin 2 (señal)</th><th>Resistor</th><th>GPIO ESP32</th></tr>
+      <tr>
+        <td>1</td>
+        <td><span class="wire" style="background:#ef4444"></span>3V3</td>
+        <td><span class="wire" style="background:#a855f7"></span>Nodo → 10kΩ → GND</td>
+        <td>10 kΩ</td>
+        <td>GPIO36 (VP)</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><span class="wire" style="background:#ef4444"></span>3V3</td>
+        <td><span class="wire" style="background:#a855f7"></span>Nodo → 10kΩ → GND</td>
+        <td>10 kΩ</td>
+        <td>GPIO39 (VN)</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><span class="wire" style="background:#ef4444"></span>3V3</td>
+        <td><span class="wire" style="background:#a855f7"></span>Nodo → 10kΩ → GND</td>
+        <td>10 kΩ</td>
+        <td>GPIO34</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td><span class="wire" style="background:#ef4444"></span>3V3</td>
+        <td><span class="wire" style="background:#a855f7"></span>Nodo → 10kΩ → GND</td>
+        <td>10 kΩ</td>
+        <td>GPIO35</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td><span class="wire" style="background:#ef4444"></span>3V3</td>
+        <td><span class="wire" style="background:#a855f7"></span>Nodo → 10kΩ → GND</td>
+        <td>10 kΩ</td>
+        <td>GPIO32</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td><span class="wire" style="background:#ef4444"></span>3V3</td>
+        <td><span class="wire" style="background:#a855f7"></span>Nodo → 10kΩ → GND</td>
+        <td>10 kΩ</td>
+        <td>GPIO33</td>
+      </tr>
+    </table>
+    <p style="font-size:11px;color:#6b7280;margin-top:8px;">
+      FSR 402: no tiene polaridad. Un pin a 3V3, el otro al nodo.
+      El nodo se conecta al GPIO y al pull-down a GND.
+      UMBRAL_PISADA = 2000 (ADC 0–4095).
+    </p>
+  </div>
+
+  <!-- LED -->
+  <div class="tbl-section">
+    <h2>Conexiones Grupos LED (3 blancos en paralelo)</h2>
+    <table>
+      <tr><th>Grupo</th><th>GPIO</th><th>Resistor</th><th>Ánodo (+) ×3</th><th>Cátodo (–) ×3</th></tr>
+      <tr>
+        <td>1 (B1)</td>
+        <td><span class="wire" style="background:#22c55e"></span>GPIO4</td>
+        <td>110 Ω</td>
+        <td>→ nodo post-R</td>
+        <td><span class="wire" style="background:#374151"></span>GND</td>
+      </tr>
+      <tr>
+        <td>2 (B2)</td>
+        <td><span class="wire" style="background:#22c55e"></span>GPIO5</td>
+        <td>110 Ω</td>
+        <td>→ nodo post-R</td>
+        <td><span class="wire" style="background:#374151"></span>GND</td>
+      </tr>
+      <tr>
+        <td>3 (B3)</td>
+        <td><span class="wire" style="background:#22c55e"></span>GPIO18</td>
+        <td>110 Ω</td>
+        <td>→ nodo post-R</td>
+        <td><span class="wire" style="background:#374151"></span>GND</td>
+      </tr>
+      <tr>
+        <td>4 (B4)</td>
+        <td><span class="wire" style="background:#22c55e"></span>GPIO19</td>
+        <td>110 Ω</td>
+        <td>→ nodo post-R</td>
+        <td><span class="wire" style="background:#374151"></span>GND</td>
+      </tr>
+      <tr>
+        <td>5 (B5)</td>
+        <td><span class="wire" style="background:#22c55e"></span>GPIO21</td>
+        <td>110 Ω</td>
+        <td>→ nodo post-R</td>
+        <td><span class="wire" style="background:#374151"></span>GND</td>
+      </tr>
+      <tr>
+        <td>6 (B6)</td>
+        <td><span class="wire" style="background:#22c55e"></span>GPIO23</td>
+        <td>110 Ω</td>
+        <td>→ nodo post-R</td>
+        <td><span class="wire" style="background:#374151"></span>GND</td>
+      </tr>
+    </table>
+    <p style="font-size:11px;color:#6b7280;margin-top:8px;">
+      LED blanco: pata larga = ánodo (+), pata corta = cátodo (–).
+      Los 3 ánodos al mismo nodo (tras la resistencia 110 Ω).
+      Los 3 cátodos directamente a GND. ~3 mA por LED.
+    </p>
+  </div>
+
+  <!-- DFPlayer -->
+  <div class="tbl-section">
+    <h2>Conexiones DFPlayer Mini</h2>
+    <table>
+      <tr><th>Pin DFPlayer</th><th>Conectar a</th><th>Cable</th></tr>
+      <tr><td>VCC</td><td>VIN / 5V del ESP32</td><td><span class="wire" style="background:#f59e0b"></span>Amarillo/Naranja</td></tr>
+      <tr><td>GND</td><td>GND</td><td><span class="wire" style="background:#374151"></span>Negro</td></tr>
+      <tr><td>RX</td><td>GPIO17 / TX2 del ESP32</td><td><span class="wire" style="background:#c084fc"></span>Morado</td></tr>
+      <tr><td>TX</td><td>GPIO16 / RX2 del ESP32</td><td><span class="wire" style="background:#9ca3af"></span>Gris</td></tr>
+      <tr><td>SPK1, SPK2</td><td>Sin conectar</td><td>—</td></tr>
+    </table>
+    <p style="font-size:11px;color:#6b7280;margin-top:8px;">
+      DFPlayer necesita microSD con audios en /mp3/0001.mp3 ... 0006.mp3.
+      Si no hay microSD, el firmware sigue funcionando sin audio (audioOk_=false).
+    </p>
+  </div>
+
+  <!-- Secuencia de armado -->
+  <div class="tbl-section">
+    <h2>Secuencia de armado (orden recomendado)</h2>
+    <table>
+      <tr><th>#</th><th>Paso</th><th>Componente</th></tr>
+      <tr><td><span class="step-num">1</span></td><td>Colocar ESP32 en el centro de la protoboard</td><td>ESP32 DevKit</td></tr>
+      <tr><td><span class="step-num">2</span></td><td>Tender los rieles: 3V3 → riel+izq, GND → riel–izq, VIN → riel+der, GND → riel–der + puente GND–GND</td><td>4 cables</td></tr>
+      <tr><td><span class="step-num">3</span></td><td>Colocar 6 × 10kΩ verticales (zona superior) y conectar legs a GND</td><td>10kΩ ×6</td></tr>
+      <tr><td><span class="step-num">4</span></td><td>Cables GPIO36–33 hacia nodos de los 10kΩ (señal FSR)</td><td>6 cables cortos</td></tr>
+      <tr><td><span class="step-num">5</span></td><td>Cables Dupont largos (M-F) desde nodos FSR y 3V3 hacia los sensores físicos</td><td>12 Dupont M-F</td></tr>
+      <tr><td><span class="step-num">6</span></td><td>Colocar 6 × 110Ω verticales (zona inferior derecha)</td><td>110Ω ×6</td></tr>
+      <tr><td><span class="step-num">7</span></td><td>Cables GPIO4,5,18,19,21,23 hacia legs de las 110Ω</td><td>6 cables cortos</td></tr>
+      <tr><td><span class="step-num">8</span></td><td>Dupont largos desde nodos post-resistor hacia ánodos de LEDs; Dupont desde cátodos a GND</td><td>24 Dupont</td></tr>
+      <tr><td><span class="step-num">9</span></td><td>Colocar DFPlayer; conectar VCC(5V), GND, RX(GPIO17), TX(GPIO16)</td><td>DFPlayer + 4 cables</td></tr>
+      <tr><td><span class="step-num">10</span></td><td>Verificar con multímetro: 3V3 entre riel+ y riel–, sin cortocircuitos</td><td>Multímetro</td></tr>
+      <tr><td><span class="step-num">11</span></td><td>Conectar USB-C → flashear sketch de prueba → verificar LEDs</td><td>USB-C</td></tr>
+    </table>
+  </div>
+
+</div>
+
+<p style="text-align:center; font-size:11px; color:#4b5563; margin-top:24px;">
+  Tapete Interactivo Terapéutico · Ingeniería Electrónica USC · 2026 ·
+  Pines ADC: GPIO36/39/34/35/32/33 (ADC1 únicamente — ADC2 inhabilitado por WiFi)
+</p>
+
+</body>
+</html>
