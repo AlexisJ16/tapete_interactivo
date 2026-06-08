@@ -19,6 +19,10 @@ struct IMotor {
     // Emite {"ev":"score",...}. El motor anade el 'mode' actual.
     virtual void score(int hits, int misses, int rt_ms, int round) = 0;
 
+    // Nivel actual de dificultad (1..nivelMax). Lo usan los modos para
+    // recalcular sus parametros por-ronda sin recrearse.
+    virtual int nivelActual() const = 0;
+
     // Generador pseudoaleatorio determinista compartido (semilla via set_seed).
     virtual Rng& rng() = 0;
 

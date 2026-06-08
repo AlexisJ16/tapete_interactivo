@@ -42,6 +42,7 @@ public:
     void led(int celda, int nivel) override;
     void sonido(int id) override;
     void score(int hits, int misses, int rt_ms, int round) override;
+    int nivelActual() const override { return nivel_; }
     Rng& rng() override { return rng_; }
 
 private:
