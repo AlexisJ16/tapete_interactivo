@@ -82,3 +82,17 @@ TEST_CASE("velocidad: ping responde con hello") {
     motor.procesar(Comando::parsear(R"({"cmd":"ping"})"));
     CHECK(contiene(col.eventos, Evento::hello("1.0.0", 6)));
 }
+
+TEST_CASE("set_level en RUNNING no recrea el modo (conserva la ronda en curso)") {
+    FakeHardware hw; Colector col;
+    GameEngine motor(hw, col.sink());
+    arrancar(motor);                       // modo 2, nivel 1, objetivo ronda1 = 3
+
+    hw.reloj = 100;
+    motor.procesar(Comando::parsear(R"({"cmd":"set_level","level":3})"));
+    CHECK(motor.estado() == Estado::RUNNING);   // sigue corriendo (no reinicia)
+    CHECK(motor.nivel() == 3);
+
+    hw.reloj = 200; motor.pisar(3);        // si el modo sigue vivo, es un acierto
+    CHECK(contieneScore(col.eventos, 2, 1, 0, 1));  // hit de la ronda 1
+}

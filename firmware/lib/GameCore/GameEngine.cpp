@@ -56,7 +56,11 @@ void GameEngine::procesar(const proto::Comando& c) {
             break;
         case T::SET_LEVEL:
             nivel_ = c.level;
-            crearModo(modoId_);  // re-crea el modo con el nuevo nivel
+            // Solo recrea el modo FUERA de una sesion activa. En RUNNING/PAUSED
+            // el modo sigue vivo y la proxima ronda recalcula sus parametros
+            // por-ronda con el nuevo nivel (corrige el bug de recrear sin iniciar).
+            if (estado_ == Estado::IDLE || estado_ == Estado::FINISHED)
+                crearModo(modoId_);
             break;
         case T::SET_SEED:
             rng_.sembrar(c.seed);
