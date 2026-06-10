@@ -69,9 +69,10 @@ pio run -e esp32dev -t upload && pio device monitor -b 115200
 
 ## Trampas conocidas (ya resueltas, no reintroducir)
 
-- **La ruta del proyecto tiene un espacio** ("Tapete Interactivo"): un `-I` sin
-  comillas se rompe por word-splitting. `run_all_tests.sh` usa rutas relativas y
-  arrays; al compilar a mano, `cd` al raíz y usa rutas relativas.
+- **La ruta del proyecto ya no tiene espacios** (movido a `~/code/tapete_interactivo/`;
+  antes vivía en `~/Documentos/` con espacio, lo que rompía un `-I` sin comillas por
+  word-splitting). `run_all_tests.sh` sigue usando rutas relativas y arrays; al
+  compilar a mano, `cd` al raíz y usa rutas relativas.
 - **PlatformIO instala Arduino-ESP32 core 2.0.17** (LEDC por *canal*). El código
   soporta ambas APIs vía `ESP_ARDUINO_VERSION` en `EspHardware.cpp`. No volver a
   asumir solo la API 3.x (`ledcAttach`/`ledcWrite(pin,...)`).
