@@ -79,12 +79,15 @@ echo
 echo "=============================================================="
 echo " 3) Tests Python (golden vectors + integracion + protocolo)"
 echo "=============================================================="
-if [ -f ".venv/bin/activate" ]; then
-  # shellcheck disable=SC1091
-  source ".venv/bin/activate"
+# Se usa el python del venv del proyecto via "-m pytest"; NO se depende de
+# 'activate' ni de los console scripts (.venv/bin/pytest): sus shebangs se
+# rompen si el proyecto cambia de ruta. PYBIN es overridable (para tests).
+PYBIN="${PYBIN:-}"
+if [ -z "$PYBIN" ]; then
+  if [ -x ".venv/bin/python" ]; then PYBIN=".venv/bin/python"; else PYBIN="python3"; fi
 fi
-if command -v pytest >/dev/null 2>&1; then
-  pytest -q . --ignore=.venv --rootdir=. 2>&1
+if "$PYBIN" -m pytest --version >/dev/null 2>&1; then
+  "$PYBIN" -m pytest -q . --ignore=.venv --rootdir=. 2>&1
   rc=$?
   if [ "$rc" -eq 0 ]; then
     echo "${GREEN}OK${NC} pytest"
@@ -94,7 +97,10 @@ if command -v pytest >/dev/null 2>&1; then
     echo "${RED}FALLO${NC} pytest (rc=$rc)"; FAILED=1
   fi
 else
-  echo "${YEL}AVISO:${NC} pytest no disponible. Crea el venv: python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt"
+  # Falso-verde evitado: si los tests Python no corren, es ROJO, no un aviso.
+  echo "${RED}FALLO:${NC} pytest no disponible (los tests Python NO se ejecutaron)."
+  echo "  Recrea el venv: python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt -r simulator/requirements.txt -r dashboard/requirements.txt"
+  FAILED=1
 fi
 
 echo
