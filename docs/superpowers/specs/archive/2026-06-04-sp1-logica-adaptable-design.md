@@ -1,5 +1,7 @@
 # SP1 — Lógica adaptable + instrumentación (diseño)
 
+> ✅ **SP1 IMPLEMENTADO Y VALIDADO — 2026-06-22.** Diseño materializado por completo; los 5 criterios de aceptación de §6 se verificaron empíricamente (suite C++ 43/2134 + pytest 21 + firmware SUCCESS). Plan de implementación archivado en `../plans/archive/2026-06-04-sp1-logica-adaptable.md` (lleva el cuadro Task→commit→evidencia). Diseño histórico; trabajo activo: SP2.
+
 - **Fecha:** 2026-06-04
 - **Sub-proyecto:** SP1 de 4 (ver "Mapa de sub-proyectos" al final)
 - **Estado de partida:** repositorio en verde (`./scripts/run_all_tests.sh` TODO

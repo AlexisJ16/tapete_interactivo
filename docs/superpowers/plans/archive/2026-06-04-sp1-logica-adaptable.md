@@ -1,5 +1,28 @@
 # SP1 — Lógica adaptable + instrumentación: Plan de implementación
 
+> ## ✅ COMPLETADO Y VALIDADO — 2026-06-22
+>
+> Las 10 tasks (54 steps) están implementadas y verificadas empíricamente, no por confianza en notas previas. Mapa Task → commit → evidencia:
+>
+> | Task | Commit | Evidencia empírica |
+> |---|---|---|
+> | 1 cfg::adaptacion | `b8e8131` | `namespace adaptacion` en Config.h; compila |
+> | 2 Recomendador | `1b1b14e` | test_recomendador 8 casos / 19 aserciones |
+> | 3 protocolo `suggest` | `d475553` | test_protocolo 7 / 40 (serial. canónica + round-trip) |
+> | 4 IMotor::nivelActual | `16bc7e9` | test_adaptacion 5 / 7 |
+> | 5 GameEngine suggest + de-dup | `c0d674e` | test_adaptacion + golden up/down |
+> | 6 set_level RUNNING (fix) | `8e716d1` | test_modo_velocidad 8 / 15 + golden strict |
+> | 7 nivel dinámico por ronda | `24f8d57` | modos velocidad/equilibrio/memoria verdes |
+> | 8 golden vectors | `4eb2517` | 3 escenarios nuevos en JSON + pytest verdes por nombre |
+> | 9 sim/dashboard suggest | `8f9ebbf` | test_sim_smoke + test_integracion verdes por nombre |
+> | 10 protocol.md + verificación | `d4fe38c` | doc presente; suite + firmware verdes |
+>
+> **Verificación global (2026-06-22):** `./scripts/run_all_tests.sh` → C++ **43 casos / 2134 aserciones** verdes · `pytest` **21 passed** (incluye `velocidad_suggest_up/down`, `velocidad_set_level_strict`, `test_suggest_no_rompe_el_sim`, `test_suggest_up_tras_cuatro_aciertos`) · `pio run -e esp32dev` → **SUCCESS** (Flash 60.2%, RAM 13.8%).
+>
+> Nota de honestidad: los sub-steps "verlo fallar" (TDD) se atestiguan por el historial de commits + el verde actual; **no** se re-ejecutaron (no se reproduce un rojo pasado). Marcar ✅ = "task ejecutada y verificada completa".
+>
+> Plan archivado junto a su spec de diseño (`docs/superpowers/specs/archive/`). Trabajo pendiente: **SP2** (ver `docs/ROADMAP.md` y la memoria `tapete-plan-mejora`).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Dotar al GameCore de una capa que evalúa el desempeño del niño tras cada ronda y **recomienda** (no aplica) subir/mantener/bajar el nivel, emitiendo un evento `suggest`; refactorizar los modos a "nivel dinámico por ronda" y corregir el bug latente de `set_level` en RUNNING.
@@ -363,14 +386,15 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 3: Evento de protocolo `suggest`
+## Task 3: Evento de protocolo `suggest` ✅
+<!-- DONE: git commit d475553 2026-06-08 · VALIDADO 2026-06-22 (test_protocolo 7/40 verde) -->
 
 **Files:**
 - Modify: `firmware/lib/GameCore/Protocol.h:16-45`
 - Modify: `firmware/lib/GameCore/Protocol.cpp` (Evento: factories, serializar, parsear, operator==)
 - Test: `firmware/test/test_protocolo/test_protocolo.cpp`
 
-- [ ] **Step 1: Escribir los tests que fallan (serialización canónica + round-trip)**
+- [x] **Step 1: Escribir los tests que fallan (serialización canónica + round-trip)**
 
 En `firmware/test/test_protocolo/test_protocolo.cpp`, **dentro** del `TEST_CASE("eventos se serializan en la forma canonica del protocolo")`, añadir tras la línea del `state` (línea 23, antes del `}` que cierra el case):
 
@@ -385,7 +409,7 @@ Y en el `TEST_CASE("round-trip de eventos: parsear(serializar(e)) == e")`, añad
         Evento::suggest(2, 2, 3, "up", 75, 4),
 ```
 
-- [ ] **Step 2: Ejecutar para ver el fallo (no compila: falta Evento::suggest)**
+- [x] **Step 2: Ejecutar para ver el fallo (no compila: falta Evento::suggest)**
 
 Run:
 ```bash
@@ -397,7 +421,7 @@ g++ -std=c++17 -Wall -Wextra -O1 \
 ```
 Expected: FALLA en compilación — `'suggest' is not a member of 'proto::Evento'`.
 
-- [ ] **Step 3: Añadir el tipo y los campos en `Protocol.h`**
+- [x] **Step 3: Añadir el tipo y los campos en `Protocol.h`**
 
 En `firmware/lib/GameCore/Protocol.h`:
 
@@ -420,7 +444,7 @@ En `firmware/lib/GameCore/Protocol.h`:
                           const std::string& dir, int rate, int window);
 ```
 
-- [ ] **Step 4: Implementar factory, serialización, parseo y `operator==` en `Protocol.cpp`**
+- [x] **Step 4: Implementar factory, serialización, parseo y `operator==` en `Protocol.cpp`**
 
 En `firmware/lib/GameCore/Protocol.cpp`:
 
@@ -467,7 +491,7 @@ bool Evento::operator==(const Evento& o) const {
 }
 ```
 
-- [ ] **Step 5: Ejecutar para ver pasar**
+- [x] **Step 5: Ejecutar para ver pasar**
 
 Run:
 ```bash
@@ -479,7 +503,7 @@ g++ -std=c++17 -Wall -Wextra -O1 \
 ```
 Expected: todos los TEST_CASE pasan (Status: SUCCESS), incluida la serialización canónica y el round-trip de `suggest`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add firmware/lib/GameCore/Protocol.h firmware/lib/GameCore/Protocol.cpp firmware/test/test_protocolo/
@@ -490,14 +514,15 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 4: `IMotor::nivelActual()` + override en `GameEngine`
+## Task 4: `IMotor::nivelActual()` + override en `GameEngine` ✅
+<!-- DONE: git commit 16bc7e9 2026-06-08 · VALIDADO 2026-06-22 (test_adaptacion 5/7 verde) -->
 
 **Files:**
 - Modify: `firmware/lib/GameCore/Motor.h:20-23`
 - Modify: `firmware/lib/GameCore/GameEngine.h:41-45`
 - Test: `firmware/test/test_adaptacion/test_adaptacion.cpp`
 
-- [ ] **Step 1: Escribir el test que falla**
+- [x] **Step 1: Escribir el test que falla**
 
 Crear `firmware/test/test_adaptacion/test_adaptacion.cpp`:
 
@@ -519,7 +544,7 @@ TEST_CASE("IMotor::nivelActual refleja el nivel actual del motor") {
 }
 ```
 
-- [ ] **Step 2: Ejecutar para ver el fallo (no compila: falta nivelActual)**
+- [x] **Step 2: Ejecutar para ver el fallo (no compila: falta nivelActual)**
 
 Run:
 ```bash
@@ -531,7 +556,7 @@ g++ -std=c++17 -Wall -Wextra -O1 \
 ```
 Expected: FALLA en compilación — `'class GameEngine' has no member named 'nivelActual'`.
 
-- [ ] **Step 3: Añadir el método puro a `IMotor` y el override a `GameEngine`**
+- [x] **Step 3: Añadir el método puro a `IMotor` y el override a `GameEngine`**
 
 En `firmware/lib/GameCore/Motor.h`, dentro de `struct IMotor`, tras el método `score(...)` (línea 20) y antes de `rng()` (línea 23), añadir:
 
@@ -547,7 +572,7 @@ En `firmware/lib/GameCore/GameEngine.h`, en la sección `// --- IMotor (usado po
     int nivelActual() const override { return nivel_; }
 ```
 
-- [ ] **Step 4: Ejecutar para ver pasar**
+- [x] **Step 4: Ejecutar para ver pasar**
 
 Run:
 ```bash
@@ -559,7 +584,7 @@ g++ -std=c++17 -Wall -Wextra -O1 \
 ```
 Expected: 1 test case, 2 CHECK, pasan (Status: SUCCESS).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add firmware/lib/GameCore/Motor.h firmware/lib/GameCore/GameEngine.h firmware/test/test_adaptacion/
@@ -570,14 +595,15 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 5: Cableado adaptable en `GameEngine` (suggest + de-dup)
+## Task 5: Cableado adaptable en `GameEngine` (suggest + de-dup) ✅
+<!-- DONE: git commit c0d674e 2026-06-08 · VALIDADO 2026-06-22 (test_adaptacion + golden up/down verdes) -->
 
 **Files:**
 - Modify: `firmware/lib/GameCore/GameEngine.h:8-12,47-63`
 - Modify: `firmware/lib/GameCore/GameEngine.cpp:64-71,121-123`
 - Test: `firmware/test/test_adaptacion/test_adaptacion.cpp`
 
-- [ ] **Step 1: Añadir los tests de integración que fallan**
+- [x] **Step 1: Añadir los tests de integración que fallan**
 
 En `firmware/test/test_adaptacion/test_adaptacion.cpp`, añadir al final (antes de nada — son TEST_CASE independientes). Primero, un helper local tras `using namespace proto;`:
 
@@ -636,7 +662,7 @@ TEST_CASE("adaptacion: en el nivel maximo dominar no emite suggest (keep)") {
 }
 ```
 
-- [ ] **Step 2: Ejecutar para ver el fallo (compila, pero no se emite suggest)**
+- [x] **Step 2: Ejecutar para ver el fallo (compila, pero no se emite suggest)**
 
 Run:
 ```bash
@@ -648,7 +674,7 @@ g++ -std=c++17 -Wall -Wextra -O1 \
 ```
 Expected: FALLAN los 3 casos nuevos que esperan `suggest` (el de "keep" pasa por casualidad: 0==0). `contiene(... suggest ...)` es falso porque aún no se emite.
 
-- [ ] **Step 3: Añadir miembros de la capa adaptable a `GameEngine.h`**
+- [x] **Step 3: Añadir miembros de la capa adaptable a `GameEngine.h`**
 
 En `firmware/lib/GameCore/GameEngine.h`:
 
@@ -666,7 +692,7 @@ En `firmware/lib/GameCore/GameEngine.h`:
     adapt::Direccion ultimaDirEmitida_ = adapt::Direccion::MANTENER;
 ```
 
-- [ ] **Step 4: Resetear al START y emitir `suggest` en `score()` (`GameEngine.cpp`)**
+- [x] **Step 4: Resetear al START y emitir `suggest` en `score()` (`GameEngine.cpp`)**
 
 En `firmware/lib/GameCore/GameEngine.cpp`:
 
@@ -711,7 +737,7 @@ void GameEngine::score(int hits, int misses, int rt_ms, int round) {
 }
 ```
 
-- [ ] **Step 5: Ejecutar el test de adaptación para verlo pasar**
+- [x] **Step 5: Ejecutar el test de adaptación para verlo pasar**
 
 Run:
 ```bash
@@ -723,7 +749,7 @@ g++ -std=c++17 -Wall -Wextra -O1 \
 ```
 Expected: 5 test cases, todos pasan (Status: SUCCESS).
 
-- [ ] **Step 6: Verificar que NO hay regresión en toda la suite**
+- [x] **Step 6: Verificar que NO hay regresión en toda la suite**
 
 Run:
 ```bash
@@ -731,7 +757,7 @@ Run:
 ```
 Expected: TODO VERDE (los 26 casos C++ existentes + los nuevos + pytest). Los golden/doctests previos siguen verdes: con `W=4` no emiten `suggest` espurios (≤2 scores antes de llenar la ventana; los de ≥4 scores son `subsequence` y toleran el evento extra).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add firmware/lib/GameCore/GameEngine.h firmware/lib/GameCore/GameEngine.cpp firmware/test/test_adaptacion/
@@ -742,13 +768,14 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 6: Refactor de `set_level` en RUNNING (corrige el bug latente)
+## Task 6: Refactor de `set_level` en RUNNING (corrige el bug latente) ✅
+<!-- DONE: git commit 8e716d1 2026-06-08 · VALIDADO 2026-06-22 (test_modo_velocidad 8/15 + golden strict verdes) -->
 
 **Files:**
 - Modify: `firmware/lib/GameCore/GameEngine.cpp:57-60`
 - Test: `firmware/test/test_modo_velocidad/test_modo_velocidad.cpp`
 
-- [ ] **Step 1: Escribir el test que falla**
+- [x] **Step 1: Escribir el test que falla**
 
 En `firmware/test/test_modo_velocidad/test_modo_velocidad.cpp`, añadir al final del archivo:
 
@@ -768,7 +795,7 @@ TEST_CASE("set_level en RUNNING no recrea el modo (conserva la ronda en curso)")
 }
 ```
 
-- [ ] **Step 2: Ejecutar para ver el fallo (comportamiento viejo: recrea el modo)**
+- [x] **Step 2: Ejecutar para ver el fallo (comportamiento viejo: recrea el modo)**
 
 Run:
 ```bash
@@ -780,7 +807,7 @@ g++ -std=c++17 -Wall -Wextra -O1 \
 ```
 Expected: FALLA el caso nuevo. Con el código actual, `set_level` recrea el modo (objetivo_=0, sin `iniciar`), por lo que `pisar(3)` se ignora y no hay score `(2,1,0,1)`.
 
-- [ ] **Step 3: Cambiar el `case T::SET_LEVEL` para no recrear en sesión activa**
+- [x] **Step 3: Cambiar el `case T::SET_LEVEL` para no recrear en sesión activa**
 
 En `firmware/lib/GameCore/GameEngine.cpp`, reemplazar el `case T::SET_LEVEL:` (líneas 57-60) por:
 
@@ -795,7 +822,7 @@ En `firmware/lib/GameCore/GameEngine.cpp`, reemplazar el `case T::SET_LEVEL:` (l
             break;
 ```
 
-- [ ] **Step 4: Ejecutar para ver pasar**
+- [x] **Step 4: Ejecutar para ver pasar**
 
 Run:
 ```bash
@@ -807,7 +834,7 @@ g++ -std=c++17 -Wall -Wextra -O1 \
 ```
 Expected: todos los TEST_CASE (incluido el nuevo) pasan (Status: SUCCESS).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add firmware/lib/GameCore/GameEngine.cpp firmware/test/test_modo_velocidad/
@@ -818,7 +845,8 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 7: Nivel dinámico por ronda (refactor de los 3 modos)
+## Task 7: Nivel dinámico por ronda (refactor de los 3 modos) ✅
+<!-- DONE: git commit 24f8d57 2026-06-08 · VALIDADO 2026-06-22 (modos velocidad/equilibrio/memoria verdes) -->
 
 **Files:**
 - Modify: `firmware/lib/GameCore/modes/ModoVelocidad.cpp:18-27`
@@ -827,7 +855,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 - Test: `firmware/test/test_modo_velocidad/test_modo_velocidad.cpp`
 - Test: `firmware/test/test_modo_equilibrio/test_modo_equilibrio.cpp`
 
-- [ ] **Step 1: Escribir los tests que fallan (velocidad: ventana por ronda + sesión congelada)**
+- [x] **Step 1: Escribir los tests que fallan (velocidad: ventana por ronda + sesión congelada)**
 
 En `firmware/test/test_modo_velocidad/test_modo_velocidad.cpp`, añadir al final:
 
@@ -883,7 +911,7 @@ TEST_CASE("equilibrio: la ronda siguiente usa el k del nuevo nivel") {
 }
 ```
 
-- [ ] **Step 2: Ejecutar ambos para ver el fallo (los parámetros aún vienen del constructor)**
+- [x] **Step 2: Ejecutar ambos para ver el fallo (los parámetros aún vienen del constructor)**
 
 Run:
 ```bash
@@ -897,7 +925,7 @@ done
 ```
 Expected: FALLAN los dos casos *driver* — velocidad "ventana del nuevo nivel" (la ventana sigue en 3000, sin timeout a 1400) y equilibrio "k del nuevo nivel" (la ronda 2 enciende 2 LEDs, no 3). El caso "cambiar el nivel a mitad NO cambia el numero de rondas" es un *guard* y ya PASA (los `rondas_` siempre estuvieron congelados en el constructor); protege contra mover `rondas_` a por-ronda por error.
 
-- [ ] **Step 3: Recalcular la ventana por ronda en `ModoVelocidad.cpp`**
+- [x] **Step 3: Recalcular la ventana por ronda en `ModoVelocidad.cpp`**
 
 En `firmware/lib/GameCore/modes/ModoVelocidad.cpp`, en `nuevoObjetivo(...)`, tras el bloque `if (ronda_ > rondas_) {...}` (línea 23), añadir como primera línea operativa:
 
@@ -915,7 +943,7 @@ void ModoVelocidad::nuevoObjetivo(uint32_t ms) {
 }
 ```
 
-- [ ] **Step 4: Recalcular `k_` y `limite_` por ronda en `ModoEquilibrio.cpp`**
+- [x] **Step 4: Recalcular `k_` y `limite_` por ronda en `ModoEquilibrio.cpp`**
 
 En `firmware/lib/GameCore/modes/ModoEquilibrio.cpp`, en `nuevoPatron(...)`, tras el bloque `if (ronda_ > rondas_) {...}` (línea 21), añadir:
 
@@ -942,7 +970,7 @@ void ModoEquilibrio::nuevoPatron(uint32_t ms) {
 }
 ```
 
-- [ ] **Step 5: Recalcular `onMs_`/`gapMs_` por exhibición en `ModoMemoria.cpp`**
+- [x] **Step 5: Recalcular `onMs_`/`gapMs_` por exhibición en `ModoMemoria.cpp`**
 
 En `firmware/lib/GameCore/modes/ModoMemoria.cpp`, en `iniciarExhibicion(...)` (líneas 24-32), añadir como primeras líneas (la longitud de la secuencia es parámetro de SESIÓN y NO se recalcula aquí):
 
@@ -960,7 +988,7 @@ void ModoMemoria::iniciarExhibicion(uint32_t ms) {
 }
 ```
 
-- [ ] **Step 6: Ejecutar los tests de los modos para verlos pasar**
+- [x] **Step 6: Ejecutar los tests de los modos para verlos pasar**
 
 Run:
 ```bash
@@ -974,7 +1002,7 @@ done
 ```
 Expected: los 3 binarios pasan todos sus TEST_CASE (incluidos los nuevos de velocidad y equilibrio; memoria sin cambios de test, debe seguir verde).
 
-- [ ] **Step 7: Verificar la suite completa (no regresión de golden ni modos)**
+- [x] **Step 7: Verificar la suite completa (no regresión de golden ni modos)**
 
 Run:
 ```bash
@@ -982,7 +1010,7 @@ Run:
 ```
 Expected: TODO VERDE. Los golden `subsequence` de memoria/equilibrio siguen verdes (los parámetros de sesión no cambiaron; el comportamiento por defecto en cada nivel es idéntico al previo).
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add firmware/lib/GameCore/modes/ firmware/test/test_modo_velocidad/ firmware/test/test_modo_equilibrio/
@@ -993,7 +1021,8 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 8: Golden vectors (suggest up, suggest down, set_level strict)
+## Task 8: Golden vectors (suggest up, suggest down, set_level strict) ✅
+<!-- DONE: git commit 4eb2517 2026-06-08 · VALIDADO 2026-06-22 (3 escenarios en JSON + pytest golden verdes) -->
 
 **Files:**
 - Modify: `shared/golden_vectors.json:111-120`
@@ -1004,7 +1033,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 > exacto del refactor de `set_level`. El runner compara **dicts** (json.loads), así
 > que el orden de claves del `expected` no importa, solo los valores.
 
-- [ ] **Step 1: Añadir los 3 escenarios a `shared/golden_vectors.json`**
+- [x] **Step 1: Añadir los 3 escenarios a `shared/golden_vectors.json`**
 
 Reemplazar el final del escenario `equilibrio_juego_completo` y el cierre del arreglo (líneas 111-120):
 
@@ -1098,7 +1127,7 @@ por:
 }
 ```
 
-- [ ] **Step 2: Reconstruir el `.so` y correr los golden vectors**
+- [x] **Step 2: Reconstruir el `.so` y correr los golden vectors**
 
 Run:
 ```bash
@@ -1113,7 +1142,7 @@ Si `velocidad_set_level_strict` falla, capturar el stream real para reconciliar 
 ```
 Verificar el stream contra el diseño (§4.2/§4.4 de la spec) antes de ajustar el `expected`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add shared/golden_vectors.json
@@ -1124,7 +1153,8 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 9: Reconocer `suggest` en simulador y dashboard (sin UI)
+## Task 9: Reconocer `suggest` en simulador y dashboard (sin UI) ✅
+<!-- DONE: git commit 8f9ebbf 2026-06-08 · VALIDADO 2026-06-22 (test_sim_smoke + test_integracion verdes) -->
 
 **Files:**
 - Modify: `simulator/tapete_sim.py:66,84-87`
@@ -1132,7 +1162,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 - Test: `simulator/test_sim_smoke.py`
 - Test: `dashboard/test_integracion.py`
 
-- [ ] **Step 1: Escribir los tests que fallan**
+- [x] **Step 1: Escribir los tests que fallan**
 
 En `simulator/test_sim_smoke.py`, añadir al final:
 
@@ -1178,7 +1208,7 @@ def test_suggest_up_tras_cuatro_aciertos():
     }
 ```
 
-- [ ] **Step 2: Ejecutar para ver el fallo (no existe `ultima_sugerencia`)**
+- [x] **Step 2: Ejecutar para ver el fallo (no existe `ultima_sugerencia`)**
 
 Run:
 ```bash
@@ -1187,7 +1217,7 @@ rm -f build/libgamecore.so
 ```
 Expected: FALLAN con `AttributeError: 'Simulador'/'Sesion' object has no attribute 'ultima_sugerencia'`.
 
-- [ ] **Step 3: Capturar `suggest` en el simulador (`tapete_sim.py`)**
+- [x] **Step 3: Capturar `suggest` en el simulador (`tapete_sim.py`)**
 
 En `simulator/tapete_sim.py`:
 
@@ -1202,7 +1232,7 @@ En `simulator/tapete_sim.py`:
                 self.ultima_sugerencia = ev
 ```
 
-- [ ] **Step 4: Capturar `suggest` en el dashboard (`sesion.py`)**
+- [x] **Step 4: Capturar `suggest` en el dashboard (`sesion.py`)**
 
 En `dashboard/sesion.py`:
 
@@ -1217,7 +1247,7 @@ En `dashboard/sesion.py`:
             self.ultima_sugerencia = ev   # se reconoce; la vista en vivo es SP2
 ```
 
-- [ ] **Step 5: Ejecutar para ver pasar**
+- [x] **Step 5: Ejecutar para ver pasar**
 
 Run:
 ```bash
@@ -1226,7 +1256,7 @@ rm -f build/libgamecore.so
 ```
 Expected: todos los tests pasan (incluidos los previos de smoke e integración, sin regresión).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add simulator/tapete_sim.py dashboard/sesion.py simulator/test_sim_smoke.py dashboard/test_integracion.py
@@ -1237,12 +1267,13 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 10: Documentación del protocolo + verificación final
+## Task 10: Documentación del protocolo + verificación final ✅
+<!-- DONE: git commit d4fe38c 2026-06-08 · VALIDADO 2026-06-22 (protocol.md documenta suggest; suite + firmware verdes) -->
 
 **Files:**
 - Modify: `shared/protocol.md:55-66`
 
-- [ ] **Step 1: Documentar `suggest` en `shared/protocol.md`**
+- [x] **Step 1: Documentar `suggest` en `shared/protocol.md`**
 
 1. En la tabla de eventos (sección 3), tras la fila de `state` (línea 55), añadir:
 ```
@@ -1254,7 +1285,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 suggest : ev, mode, from, level, dir, rate, window
 ```
 
-- [ ] **Step 2: Verificación completa de la suite (C++ + .so + pytest)**
+- [x] **Step 2: Verificación completa de la suite (C++ + .so + pytest)**
 
 Run:
 ```bash
@@ -1262,7 +1293,7 @@ Run:
 ```
 Expected: **TODO VERDE** — los casos C++ doctest (incluidos `test_recomendador`, `test_adaptacion` y los añadidos a los modos/protocolo) + el build del `.so` + los pytest (golden, smoke, integración).
 
-- [ ] **Step 3: Verificación del firmware ESP32 (compila con los cambios)**
+- [x] **Step 3: Verificación del firmware ESP32 (compila con los cambios)**
 
 Run:
 ```bash
@@ -1270,7 +1301,7 @@ cd firmware && pio run -e esp32dev
 ```
 Expected: **SUCCESS** (Flash ~60%, RAM ~14%). `Recomendador.cpp` y el override `nivelActual()` compilan en el target real; `EspHardware` (implementa `IHardware`, no `IMotor`) no se ve afectado.
 
-- [ ] **Step 4: Commit final**
+- [x] **Step 4: Commit final**
 
 ```bash
 git add shared/protocol.md
@@ -1279,7 +1310,7 @@ git commit -m "SP1: documenta el evento suggest en protocol.md
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 ```
 
-- [ ] **Step 5: Cierre — verificar criterios de aceptación de la spec (§6)**
+- [x] **Step 5: Cierre — verificar criterios de aceptación de la spec (§6)**
 
 Confirmar manualmente contra `docs/superpowers/specs/2026-06-04-sp1-logica-adaptable-design.md` §6:
 1. `./scripts/run_all_tests.sh` → TODO VERDE. ✓ (Task 10 Step 2)
