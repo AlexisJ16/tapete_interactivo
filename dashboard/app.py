@@ -19,6 +19,7 @@ import sys
 DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, DIR)
 
+from analitica import serie_evolucion  # noqa: E402
 from fuente import FuenteCore, FuenteTCP  # noqa: E402
 from reports import exportar_csv, exportar_pdf  # noqa: E402
 from sesion import Sesion  # noqa: E402
@@ -70,6 +71,103 @@ class CeldaLed:
         return _Celda()
 
 
+class PanelAnalitica:
+    """Vista de evidencia/historial: evolucion del desempeno por perfil con
+    matplotlib embebido. LEE del Almacen via analitica.serie_evolucion (no
+    duplica logica de juego). Encapsula el widget para poder probarla headless."""
+
+    def __init__(self, almacen):
+        QtCore, QtGui, QtWidgets = _qt()
+        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+        from matplotlib.figure import Figure
+
+        self.almacen = almacen
+        self.widget = QtWidgets.QWidget()
+        lay = QtWidgets.QVBoxLayout(self.widget)
+
+        barra = QtWidgets.QHBoxLayout()
+        self.cb_perfil = QtWidgets.QComboBox()
+        b_refrescar = QtWidgets.QPushButton("Refrescar")
+        b_png = QtWidgets.QPushButton("Exportar PNG")
+        barra.addWidget(QtWidgets.QLabel("Perfil")); barra.addWidget(self.cb_perfil)
+        barra.addWidget(b_refrescar); barra.addStretch(1); barra.addWidget(b_png)
+        lay.addLayout(barra)
+
+        self.fig = Figure(figsize=(7, 7.5))
+        self.canvas = FigureCanvasQTAgg(self.fig)
+        lay.addWidget(self.canvas)
+        self.lbl = QtWidgets.QLabel("")
+        lay.addWidget(self.lbl)
+
+        b_refrescar.clicked.connect(self.refrescar)
+        b_png.clicked.connect(self._exportar_dialogo)
+        self.cb_perfil.currentIndexChanged.connect(self._graficar_actual)
+        self.refrescar()
+
+    def refrescar(self):
+        """Recarga el combo de perfiles desde el almacen y redibuja."""
+        actual = self.cb_perfil.currentData()
+        self.cb_perfil.blockSignals(True)
+        self.cb_perfil.clear()
+        for p in self.almacen.perfiles():
+            self.cb_perfil.addItem(f"{p['id']} - {p['nombre']}", p["id"])
+        if self.cb_perfil.count():
+            idx = self.cb_perfil.findData(actual)
+            self.cb_perfil.setCurrentIndex(idx if idx >= 0 else 0)
+        self.cb_perfil.blockSignals(False)
+        self._graficar_actual()
+
+    def _graficar_actual(self):
+        pid = self.cb_perfil.currentData()
+        if pid:
+            self.graficar(pid)
+
+    def graficar(self, perfil_id):
+        serie = serie_evolucion(self.almacen, perfil_id)
+        self.fig.clear()
+        ax1 = self.fig.add_subplot(3, 1, 1)
+        ax2 = self.fig.add_subplot(3, 1, 2)
+        ax3 = self.fig.add_subplot(3, 1, 3)
+        x = serie["indices"]
+        if x:
+            ax1.plot(x, serie["hits"], "-o", color="tab:green", label="aciertos")
+            ax1.plot(x, serie["misses"], "-o", color="tab:red", label="errores")
+            ax1.set_ylabel("conteo"); ax1.legend(loc="upper left")
+            ax1.grid(True, alpha=0.3)
+            ax1.set_title(f"Evolucion por sesion — perfil {perfil_id}")
+
+            ax2.plot(x, serie["rt_prom_ms"], "-o", color="tab:purple")
+            ax2.set_ylabel("t. respuesta (ms)")
+            ax2.grid(True, alpha=0.3)
+            ax2.set_title("Tiempo de respuesta promedio")
+
+            ax3.plot(x, serie["tasas"], "-o", color="tab:blue", label="acierto (%)")
+            ax3b = ax3.twinx()
+            ax3b.plot(x, serie["niveles"], "--s", color="tab:orange", label="nivel")
+            ax3.set_xlabel("sesion"); ax3.set_ylabel("acierto (%)")
+            ax3b.set_ylabel("nivel")
+            ax3.set_ylim(0, 105); ax3b.set_ylim(0.5, 4.5); ax3b.set_yticks([1, 2, 3, 4])
+            ax3.grid(True, alpha=0.3)
+            ax3.set_title("Adaptacion: acierto vs nivel sugerido")
+        else:
+            for ax in (ax1, ax2, ax3):
+                ax.set_axis_off()
+            ax1.text(0.5, 0.5, "Sin sesiones para este perfil",
+                     ha="center", va="center")
+        self.fig.tight_layout()
+        self.canvas.draw()
+
+    def exportar(self, ruta):
+        self.fig.savefig(ruta, dpi=120)
+
+    def _exportar_dialogo(self):
+        os.makedirs(os.path.join(DIR, "reportes"), exist_ok=True)
+        pid = self.cb_perfil.currentData() or "perfil"
+        ruta = os.path.join(DIR, "reportes", f"evolucion_{pid}.png")
+        self.exportar(ruta)
+        self.lbl.setText(f"Exportado: {ruta}")
+
+
 class VentanaDashboard:
     """Encapsula la ventana principal (sin heredar de Qt para facilitar el smoke)."""
 
@@ -84,9 +182,11 @@ class VentanaDashboard:
 
         self.win = QtWidgets.QMainWindow()
         self.win.setWindowTitle("Tapete Interactivo — Dashboard del terapeuta")
-        central = QtWidgets.QWidget()
-        self.win.setCentralWidget(central)
-        layout = QtWidgets.QVBoxLayout(central)
+        self.tabs = QtWidgets.QTabWidget()
+        self.win.setCentralWidget(self.tabs)
+        en_vivo = QtWidgets.QWidget()
+        self.tabs.addTab(en_vivo, "En vivo")
+        layout = QtWidgets.QVBoxLayout(en_vivo)
 
         # --- barra de controles ---
         ctrl = QtWidgets.QHBoxLayout()
@@ -139,6 +239,14 @@ class VentanaDashboard:
         b_pdf.clicked.connect(lambda: self._exportar("pdf"))
 
         self._configurar()
+
+        # --- pestaña de analitica (historico por perfil) ---
+        self.panel = PanelAnalitica(self.almacen)
+        self.tabs.addTab(self.panel.widget, "Analitica")
+        # al entrar a la pestaña, recarga con las sesiones nuevas
+        self.tabs.currentChanged.connect(
+            lambda i: self.panel.refrescar() if self.tabs.tabText(i) == "Analitica" else None
+        )
 
         # --- temporizador de sondeo ---
         self.timer = QtCore.QTimer()
