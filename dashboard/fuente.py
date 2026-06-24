@@ -70,6 +70,11 @@ class FuenteTCP(Fuente):
     y los siguientes enviar()/recibir() reintentan con backoff exponencial
     acotado (no bloqueante). El primer intento, en cambio, propaga el error: si
     al arrancar no hay nada en la IP/puerto, conviene fallar ruidoso.
+
+    Limitacion conocida: la reconexion es solo de transporte. Al reconectar NO
+    re-sincroniza el estado de juego (modo/nivel), asi que tras una caida real
+    el ESP32 arranca en su estado por defecto mientras el dashboard cree que la
+    sesion sigue. Re-emitir set_mode/start tras reconectar queda fuera de alcance.
     """
 
     def __init__(self, host: str, puerto: int = 3333, timeout: float = 2.0,
