@@ -15,7 +15,7 @@ habla con un **dashboard** de PC en tiempo real.
 Las 6 fases del plan (`Tapete Interactivo Terapéutico — Especificación maestra
 para Claude Code.md`) están **completas y validadas**:
 
-- GameCore (RNG, protocolo, motor, 3 modos) — tests doctest, ~2118 aserciones.
+- GameCore (RNG, protocolo, motor, 3 modos) — tests doctest, ~2134 aserciones.
 - Simulador Pygame + puente ctypes + servidor TCP + golden runner.
 - Dashboard PyQt6 + SQLite + export CSV/PDF + integración (FuenteCore y FuenteTCP).
 - Firmware ESP32 (`EspHardware` + WiFi/TCP) — **compila para `esp32dev`**.
