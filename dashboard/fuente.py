@@ -64,27 +64,85 @@ class FuenteCore(Fuente):
 
 
 class FuenteTCP(Fuente):
-    """Cliente TCP line-JSON hacia el ESP32 (o un simulador en red)."""
+    """Cliente TCP line-JSON hacia el ESP32 (o un simulador en red).
 
-    def __init__(self, host: str, puerto: int = 3333, timeout: float = 2.0):
-        self.sock = socket.create_connection((host, puerto), timeout=timeout)
-        self.sock.setblocking(False)
+    Si el ESP32 cae estando conectado, reconecta sola: el socket caido se marca
+    y los siguientes enviar()/recibir() reintentan con backoff exponencial
+    acotado (no bloqueante). El primer intento, en cambio, propaga el error: si
+    al arrancar no hay nada en la IP/puerto, conviene fallar ruidoso.
+    """
+
+    def __init__(self, host: str, puerto: int = 3333, timeout: float = 2.0,
+                 backoff: float = 0.5, backoff_max: float = 5.0):
+        self.host = host
+        self.puerto = puerto
+        self.timeout = timeout
+        self._backoff = backoff
+        self._backoff_max = backoff_max
+        self._espera = backoff
+        self.sock: socket.socket | None = None
         self._buf = b""
+        self._proximo = 0.0  # instante monotonico a partir del cual reintentar
+        self._conectar(propagar=True)
+
+    def _conectar(self, propagar: bool = False) -> bool:
+        try:
+            self.sock = socket.create_connection((self.host, self.puerto), timeout=self.timeout)
+            self.sock.setblocking(False)
+            self._espera = self._backoff  # exito: resetea el backoff
+            return True
+        except OSError:
+            self.sock = None
+            self._programar_reintento()
+            if propagar:
+                raise
+            return False
+
+    def _programar_reintento(self) -> None:
+        self._proximo = time.monotonic() + self._espera
+        self._espera = min(self._espera * 2, self._backoff_max)
+
+    def _asegurar(self) -> bool:
+        if self.sock is not None:
+            return True
+        if time.monotonic() < self._proximo:
+            return False  # aun en backoff: no martillar el socket
+        return self._conectar()
+
+    def _caer(self) -> None:
+        if self.sock is not None:
+            try:
+                self.sock.close()
+            except OSError:
+                pass
+        self.sock = None
+        self._buf = b""
+        self._programar_reintento()
 
     def enviar(self, linea: str) -> None:
+        if not self._asegurar():
+            return
         if not linea.endswith("\n"):
             linea += "\n"
-        self.sock.sendall(linea.encode("utf-8"))
+        try:
+            self.sock.sendall(linea.encode("utf-8"))
+        except OSError:
+            self._caer()
 
     def recibir(self) -> list[str]:
+        if not self._asegurar():
+            return []
         try:
             while True:
                 trozo = self.sock.recv(4096)
                 if not trozo:
+                    self._caer()  # el peer cerro la conexion
                     break
                 self._buf += trozo
-        except (BlockingIOError, socket.timeout):
+        except BlockingIOError:
             pass
+        except OSError:
+            self._caer()
         lineas: list[str] = []
         while b"\n" in self._buf:
             linea, self._buf = self._buf.split(b"\n", 1)
@@ -94,7 +152,9 @@ class FuenteTCP(Fuente):
         return lineas
 
     def cerrar(self) -> None:
-        try:
-            self.sock.close()
-        except OSError:
-            pass
+        if self.sock is not None:
+            try:
+                self.sock.close()
+            except OSError:
+                pass
+        self.sock = None
