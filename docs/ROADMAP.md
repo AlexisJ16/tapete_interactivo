@@ -6,22 +6,23 @@ sigue, para retomarlo en una conversación nueva. Mantener siempre la disciplina
 del proyecto: **TDD**, **una sola fuente de verdad** (`GameCore`), tests en
 verde antes de avanzar (ver `CLAUDE.md`).
 
-> **PUNTO DE CONTINUACIÓN:** SP1 está completo en la rama `sp1-logica-adaptable`
-> (lista para merge a `main`). El **siguiente paso es SP2** — evidencia funcional
-> + analítica + CI. Crear rama `sp2-evidencia-analitica` desde `main` tras el
-> merge. Plan detallado en la memoria del proyecto.
+> **PUNTO DE CONTINUACIÓN:** SP1 está **mergeado a `main`** (commit `4cf3543`,
+> 2026-06-24; rama `sp1-logica-adaptable` conservada y sincronizada). El
+> **siguiente paso es SP2** — evidencia funcional + analítica + CI — en definición
+> (brainstorming → spec → plan). Crear rama `sp2-evidencia-analitica` desde `main`
+> al arrancar la implementación.
 
 ## 1. Puesta en marcha del hardware físico (lo único no validable en software)
 
-- [ ] Conseguir **6 resistencias de 10 kΩ** (pull-down de los FSR — NO las de
-      110 Ω, que son para los LEDs).
+- [x] **6 resistencias de 10 kΩ** (pull-down de los FSR — NO las de 110 Ω, que
+      son para los LEDs) — **conseguidas (2026-06-22)**, junto con la microSD.
 - [ ] Montar en protoboard según **`docs/diagrama-conexiones.html`** (guía visual
       principal: pinout CSS + circuitos SVG + tablas + secuencia de 11 pasos).
       Referencia textual adicional: `docs/wiring.md`.
 - [ ] LEDs a brillo pleno: alimentar desde **5 V** con transistor por grupo
       (2N2222) o **ULN2803**; el GPIO solo controla.
-- [ ] microSD FAT32 con `/mp3/0001.mp3`..`/mp3/0004.mp3` (instrucción, acierto,
-      error, éxito). Ver `audio/README.md`.
+- [ ] Grabar la **microSD** (ya en mano) en FAT32 con `/mp3/0001.mp3`..`/mp3/0004.mp3`
+      (instrucción, acierto, error, éxito). Ver `audio/README.md`.
 - [ ] `cp firmware/src/secrets.h.example firmware/src/secrets.h` + credenciales.
 - [ ] Flashear y **calibrar `cfg::UMBRAL_PISADA`** observando el Serial al pisar
       (`docs/flashing.md`).
