@@ -20,7 +20,7 @@ Las 6 fases del plan base están **completas y validadas**:
 - Firmware ESP32 (`EspHardware` + WiFi/TCP) — **compila para `esp32dev`**.
 - Documentación completa en `docs/` y `README.md`.
 
-`./scripts/run_all_tests.sh` → **TODO VERDE** (43 casos C++ / 2134 aserciones + 21 pytest).
+`./scripts/run_all_tests.sh` → **TODO VERDE** (43 casos C++ / 2134 aserciones + 36 pytest).
 `pio run -e esp32dev` → **SUCCESS** (Flash ~60%, RAM ~14%).
 
 Próximos pasos y mejoras: ver `docs/ROADMAP.md`.
