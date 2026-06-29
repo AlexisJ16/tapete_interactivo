@@ -12,8 +12,7 @@ habla con un **dashboard** de PC en tiempo real.
 
 ## Estado actual (todo verde)
 
-Las 6 fases del plan (`Tapete Interactivo Terapéutico — Especificación maestra
-para Claude Code.md`) están **completas y validadas**:
+Las 6 fases del plan base están **completas y validadas**:
 
 - GameCore (RNG, protocolo, motor, 3 modos) — tests doctest, ~2134 aserciones.
 - Simulador Pygame + puente ctypes + servidor TCP + golden runner.
@@ -88,7 +87,8 @@ firmware/test/           doctest (test_core, test_protocolo, test_modo_*)
 simulator/               tapete_sim.py, core_bridge.py, golden_runner.py, servidor.py
 dashboard/               app.py, sesion.py, storage.py, reports.py, fuente.py
 shared/                  protocol.md, golden_vectors.json
-docs/                    diagrama-conexiones.html, wiring.md, flashing.md, validation.md, ROADMAP.md
+docs/                    ROADMAP.md · articulo/ (artículo + anteproyecto) · hardware/
+                         (wiring, flashing, validation, diagrama, planos) · evidencia/
 scripts/                 run_all_tests.sh, demo_visual.py
 audio/                   000X.mp3 (simulador) — ver audio/README.md
 ```

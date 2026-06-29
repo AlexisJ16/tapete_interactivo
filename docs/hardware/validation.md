@@ -86,4 +86,4 @@ cd firmware
 pio run -e esp32dev
 ```
 
-Ver `docs/flashing.md` para flashear y conectar el dashboard al hardware.
+Ver `flashing.md` para flashear y conectar el dashboard al hardware.

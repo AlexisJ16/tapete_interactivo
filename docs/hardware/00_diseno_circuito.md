@@ -5,8 +5,8 @@
 > `grafico-tapete.svg`) y la guía Fritzing derivan de aquí. Si algo cambia, se
 > cambia primero acá.
 >
-> Cruza con: `firmware/lib/GameCore/Config.h` (mapa de pines), `docs/wiring.md`
-> (intención eléctrica), `docs/DiseñoProtoboard.html` (geometría del protoboard
+> Cruza con: `firmware/lib/GameCore/Config.h` (mapa de pines), `wiring.md`
+> (intención eléctrica), `DiseñoProtoboard.html` (geometría del protoboard
 > diseñada por el autor).
 
 ## 1. Resumen del sistema

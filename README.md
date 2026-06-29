@@ -29,7 +29,7 @@ simulator/  Simulador visual (Pygame) + servidor TCP, cargan GameCore.so vía ct
 dashboard/  Interfaz del terapeuta (PyQt6 + SQLite + export CSV/PDF).
 shared/     protocol.md + golden_vectors.json (contrato común C++/Python).
 audio/      MP3 para el DFPlayer (000X.mp3).
-docs/       wiring.md, flashing.md, validation.md.
+docs/       hardware/ (wiring, flashing, validation, planos), articulo/, evidencia/.
 scripts/    run_all_tests.sh (corre TODOS los tests).
 ```
 
@@ -101,13 +101,13 @@ tapete → PC:    {"ev":"led","cell":3,"level":255}        {"ev":"press","cell":
 
 ## Documentación
 
-- `docs/wiring.md` — mapa de pines, protoboard, divisor FSR (10 kΩ), LEDs a 5 V, DFPlayer.
-- `docs/flashing.md` — flasheo, WiFi y calibración del umbral de pisada.
-- `docs/validation.md` — cómo correr simulador, dashboard y todos los tests.
+- `docs/hardware/wiring.md` — mapa de pines, protoboard, divisor FSR (10 kΩ), LEDs a 5 V, DFPlayer.
+- `docs/hardware/flashing.md` — flasheo, WiFi y calibración del umbral de pisada.
+- `docs/hardware/validation.md` — cómo correr simulador, dashboard y todos los tests.
 - `audio/README.md` — qué MP3 poner en la microSD.
 
 ## Hardware
 
 ESP32 DevKit V1 · 6× FSR 402 (+ 6× 10 kΩ pull-down) · 18 LED blancos
 (3 por botón) · 12× 110 Ω · DFPlayer Mini + parlante · protoboard. Detalle y
-notas de montaje en `docs/wiring.md`.
+notas de montaje en `docs/hardware/wiring.md`.

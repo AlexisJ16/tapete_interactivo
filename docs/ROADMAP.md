@@ -16,16 +16,16 @@ verde antes de avanzar (ver `CLAUDE.md`).
 
 - [x] **6 resistencias de 10 kΩ** (pull-down de los FSR — NO las de 110 Ω, que
       son para los LEDs) — **conseguidas (2026-06-22)**, junto con la microSD.
-- [ ] Montar en protoboard según **`docs/diagrama-conexiones.html`** (guía visual
+- [ ] Montar en protoboard según **`docs/hardware/diagrama-conexiones.html`** (guía visual
       principal: pinout CSS + circuitos SVG + tablas + secuencia de 11 pasos).
-      Referencia textual adicional: `docs/wiring.md`.
+      Referencia textual adicional: `docs/hardware/wiring.md`.
 - [ ] LEDs a brillo pleno: alimentar desde **5 V** con transistor por grupo
       (2N2222) o **ULN2803**; el GPIO solo controla.
 - [ ] Grabar la **microSD** (ya en mano) en FAT32 con `/mp3/0001.mp3`..`/mp3/0004.mp3`
       (instrucción, acierto, error, éxito). Ver `audio/README.md`.
 - [ ] `cp firmware/src/secrets.h.example firmware/src/secrets.h` + credenciales.
 - [ ] Flashear y **calibrar `cfg::UMBRAL_PISADA`** observando el Serial al pisar
-      (`docs/flashing.md`).
+      (`docs/hardware/flashing.md`).
 - [ ] Verificar end-to-end con el dashboard: `app.py --tcp <IP>`.
 
 ## 2. Mejoras de funcionalidad (lógica → siempre con tests/golden primero)

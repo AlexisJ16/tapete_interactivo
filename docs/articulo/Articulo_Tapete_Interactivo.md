@@ -140,7 +140,7 @@ Dos ejecuciones independientes de una misma sesión (modo velocidad de respuesta
 
 Se ejecutó un barrido de la habilidad del jugador simulado de 0 % a 100 % en el nivel 2. La tasa de acierto de la sesión creció de forma monótona con la habilidad: 0 % para habilidades de 0–10 %, 50 % para 20–30 %, entre 62,5 % y 87,5 % para 40–80 %, y 100 % para 90–100 %. La recomendación de nivel emitida por el sistema siguió coherentemente al desempeño: sugirió **bajar** el nivel para habilidades de 0–10 %, **mantenerlo** para 20–30 % y **subirlo** a partir del 40 %. Esto evidencia que el mecanismo de adaptación responde al desempeño observado en la dirección esperada (Figura 1).
 
-![Figura 1](evidencia/E2_adaptacion.png)
+![Figura 1](../evidencia/E2_adaptacion.png)
 
 *Figura 1. Recomendación adaptativa frente al desempeño (modo velocidad, nivel 2). La curva muestra la tasa de acierto según la habilidad; el color de cada punto indica la recomendación del sistema (bajar/mantener/subir). Simulación determinista.*
 
@@ -148,7 +148,7 @@ Se ejecutó un barrido de la habilidad del jugador simulado de 0 % a 100 % en el
 
 Para una habilidad fija del 80 %, se evaluaron los cuatro niveles del modo de velocidad. El número de rondas por sesión crece con el nivel (5, 8, 10 y 12 rondas para los niveles 1 a 4), mientras que el desempeño del jugador simulado se mantiene estable (un error por sesión en los cuatro niveles, acorde con la habilidad fijada). Esto confirma que el nivel controla de forma predecible la longitud y la exigencia de la sesión, manteniendo constante la mecánica de juego (Figura 2, Tabla 2).
 
-![Figura 2](evidencia/E3_niveles.png)
+![Figura 2](../evidencia/E3_niveles.png)
 
 *Figura 2. Aciertos y errores por nivel (modo velocidad, habilidad 80 %). Simulación determinista.*
 
@@ -165,7 +165,7 @@ Para una habilidad fija del 80 %, se evaluaron los cuatro niveles del modo de ve
 
 Encadenando sesiones y aplicando en cada una la recomendación de nivel, un jugador hábil (habilidad 95 %) que inicia en el nivel 1 escala progresivamente hasta el nivel máximo (1→2→3→4) y se estabiliza, mientras que un jugador con dificultad (habilidad 10 %) que inicia en el nivel 4 desciende hasta el nivel mínimo (4→3→2→1) y se estabiliza. Esto demuestra la convergencia del nivel de dificultad hacia el desempeño del usuario (Figura 3).
 
-![Figura 3](evidencia/E4_trayectoria.png)
+![Figura 3](../evidencia/E4_trayectoria.png)
 
 *Figura 3. Trayectoria del nivel a lo largo de sesiones sucesivas para un jugador hábil y uno con dificultad. Simulación determinista.*
 

@@ -20,7 +20,7 @@ constexpr int SONIDO_ACIERTO     = 2;  // tono ascendente alegre
 constexpr int SONIDO_ERROR       = 3;  // tono grave
 constexpr int SONIDO_EXITO       = 4;  // secuencia/sesion completada
 
-// --- Mapa de pines ESP32 (ver shared/protocol.md y docs/wiring.md) ----------
+// --- Mapa de pines ESP32 (ver shared/protocol.md y docs/hardware/wiring.md) -
 // FSR en ADC1 (GPIO 34-39 y 32-33). LEDs por LEDC/PWM.
 constexpr int PIN_FSR[CELDAS]  = {36, 39, 34, 35, 32, 33};
 constexpr int PIN_LED[CELDAS]  = {4, 5, 18, 19, 21, 23};

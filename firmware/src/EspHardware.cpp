@@ -63,7 +63,7 @@ void EspHardware::reproducirSonido(int id) {
     if (audioOk_) {
         // playMp3Folder reproduce /mp3/000{id}.mp3 por NUMERO (fiable), a
         // diferencia de play(), que depende del orden en que se copiaron los
-        // archivos a la SD. Ver audio/README.md y docs/flashing.md.
+        // archivos a la SD. Ver audio/README.md y docs/hardware/flashing.md.
         player_.playMp3Folder(id);
     }
 }
