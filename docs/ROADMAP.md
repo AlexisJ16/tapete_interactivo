@@ -20,8 +20,8 @@ verde antes de avanzar (ver `CLAUDE.md`).
       (maestro — net list, zonificación, secuencia de armado, checklist con multímetro) y los
       planos `plano-A-protoboard.svg` / `plano-A-esquematico.svg`. Referencia textual adicional:
       `docs/hardware/wiring.md`.
-- [ ] LEDs a brillo pleno: alimentar desde **5 V** con transistor por grupo
-      (2N2222) o **ULN2803**; el GPIO solo controla.
+- [ ] LEDs a brillo pleno: alimentar desde **5 V** con **1× ULN2803A** (driver de
+      8 canales); los 6 GPIO PWM entran directo al chip, que conmuta a 5 V.
 - [ ] Grabar la **microSD** (ya en mano) en FAT32 con `/mp3/0001.mp3`..`/mp3/0004.mp3`
       (instrucción, acierto, error, éxito). Ver `audio/README.md`.
 - [ ] `cp firmware/src/secrets.h.example firmware/src/secrets.h` + credenciales.
