@@ -8,6 +8,14 @@
 > Cruza con: `firmware/lib/GameCore/Config.h` (mapa de pines), `wiring.md`
 > (intención eléctrica), `DiseñoProtoboard.html` (geometría del protoboard
 > diseñada por el autor).
+>
+> ⚠ **Armado físico — fuente AUTORITATIVA:** `mapa_armado_protoboard.xlsx` (hoja de
+> cálculo, cada celda = un hueco real; generador `generar_mapa_armado.py`), validada
+> con el autor (2026-06-29): **ESP32 cuerpo cols 22–41, pines 25–39; USB-C col 21
+> (F–G); zonas libres 1–21 y 42–64.** Las columnas absolutas de §3/§5 abajo y los
+> SVG quedaron **DESACTUALIZADOS** (decían 24–38); la lógica de conexión (qué pin va
+> con qué) sí coincide. Reconciliación completa de §3/§5/SVG: **pendiente (próxima
+> sesión)**. Para montar el circuito, usar **la hoja de cálculo**.
 
 ## 1. Resumen del sistema
 
@@ -36,8 +44,13 @@ ESP32 al centro del piso corre la lógica y se comunica con el dashboard de PC.
 ## 3. Mapa de pines (verificado contra el plano físico del autor)
 
 El ESP32 DevKit (30 pines) está montado a caballo sobre el canal central,
-ocupando las columnas ~24–38. **El header izquierdo se accede por la Fila A**
-(arriba) y **el derecho por la Fila J** (abajo). Asignación columna→pin:
+ocupando las columnas **22–41 (los 15 pines de cada lado en cols 25–39)**.
+**El header superior se accede por la Fila A** (arriba) y **el inferior por la
+Fila J** (abajo). Asignación columna→pin:
+
+> ⚠ Las columnas absolutas de las tablas de §3 y §5 (24–38) están **DESACTUALIZADAS**.
+> La geometría correcta vive en `mapa_armado_protoboard.xlsx`. El **orden** de pines y
+> la lógica de conexión siguen siendo válidos; solo cambian los números de columna.
 
 ### Header izquierdo — Fila A (accesible directo)
 | Col | 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35 | 36 | 37 | 38 |

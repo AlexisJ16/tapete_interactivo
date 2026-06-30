@@ -1,10 +1,17 @@
 # Planos del hardware — Tapete Interactivo
 
-Paquete de diseño para materializar el circuito y el prototipo físico. Fuente de
-verdad: **`00_diseno_circuito.md`** (todos los planos derivan de ahí).
+Paquete de diseño para materializar el circuito y el prototipo físico.
+
+> **Para MONTAR el circuito, la fuente AUTORITATIVA es la hoja de cálculo
+> `mapa_armado_protoboard.xlsx`** (cada celda = un hueco real; geometría exacta
+> validada con el autor: ESP32 cols 22–41, pines 25–39, USB-C col 21). El documento
+> maestro `00_diseno_circuito.md` aporta la intención eléctrica y el net list lógico;
+> sus columnas absolutas y los SVG están **desactualizados** (reconciliación pendiente).
 
 | Archivo | Qué es |
 |---|---|
+| `mapa_armado_protoboard.xlsx` | **MAPA DE ARMADO (plano para montar)**: hoja 1 = protoboard hueco-por-hueco; hoja 2 = cableado, leyenda, ⚠ seguridad y pendientes. |
+| `generar_mapa_armado.py` | Generador reproducible del mapa (Python + `openpyxl`), derivado de la geometría real + `Config.h`. |
 | `00_diseno_circuito.md` | **Documento maestro**: net list, zonificación, receta mecánica, secuencia de armado, checklist con multímetro, materiales. |
 | `plano-A-esquematico.svg` | Esquema eléctrico (lógico) — para el documento final. |
 | `plano-A-protoboard.svg` | Mapa de armado hueco-por-hueco sobre el protoboard. |
