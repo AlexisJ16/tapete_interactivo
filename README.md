@@ -101,13 +101,17 @@ tapete → PC:    {"ev":"led","cell":3,"level":255}        {"ev":"press","cell":
 
 ## Documentación
 
-- `docs/hardware/wiring.md` — mapa de pines, protoboard, divisor FSR (10 kΩ), LEDs a 5 V, DFPlayer.
+- `docs/hardware/00_diseno_circuito.md` — **documento maestro** del circuito: net
+  list, zonificación del protoboard, secuencia de armado y checklist con multímetro
+  (todos los planos derivan de aquí).
+- `docs/hardware/wiring.md` — referencia textual: mapa de pines, divisor FSR (10 kΩ), LEDs a 5 V, DFPlayer.
 - `docs/hardware/flashing.md` — flasheo, WiFi y calibración del umbral de pisada.
 - `docs/hardware/validation.md` — cómo correr simulador, dashboard y todos los tests.
-- `audio/README.md` — qué MP3 poner en la microSD.
+- `audio/README.md` — qué MP3 poner en la microSD (los binarios no se versionan).
 
 ## Hardware
 
-ESP32 DevKit V1 · 6× FSR 402 (+ 6× 10 kΩ pull-down) · 18 LED blancos
-(3 por botón) · 12× 110 Ω · DFPlayer Mini + parlante · protoboard. Detalle y
-notas de montaje en `docs/hardware/wiring.md`.
+ESP32 DevKit V1 (30 pines) · 6× FSR 402 (+ 6× 10 kΩ pull-down) · 18 LED blancos
+(3 por botón, a 5 V vía 1× ULN2803A) · 10× 110 Ω (1 por grupo en uso + reserva) ·
+DFPlayer Mini + microSD (sin parlante en esta build) · protoboard. Diseño maestro
+y secuencia de montaje en `docs/hardware/00_diseno_circuito.md`.

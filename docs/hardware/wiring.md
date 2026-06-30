@@ -81,13 +81,15 @@ GPIO PWM ──[ 1kΩ ]── Base (2N2222)   |  o directo a la entrada del ULN2
 Cada **grupo de 3 LEDs** se controla con **un solo pin PWM** (encienden/atenúan
 juntos). El brillo lo fija el firmware vía LEDC (0..255).
 
-## 4. DFPlayer Mini + parlante
+## 4. DFPlayer Mini (audio)
 
 - Alimentación: **5 V** y GND.
 - `RX` del DFPlayer ← **GPIO 17 (TX2)** del ESP32, con **1 kΩ en serie**
   recomendada (protege la entrada del módulo).
 - `TX` del DFPlayer → **GPIO 16 (RX2)** del ESP32.
-- Parlante a `SPK_1`/`SPK_2` (3 W) o salida `DAC` a un amplificador.
+- **Sin parlante en esta build** (decisión por presupuesto): el sistema funciona
+  igual, sin sonido audible. Para audio real, conectar un parlante 8 Ω a
+  `SPK_1`/`SPK_2` o la salida `DAC` a un amplificador (opcional, trabajo futuro).
 - **microSD** (FAT32) con los audios en la carpeta `/mp3/`: `/mp3/0001.mp3` …
   `/mp3/0004.mp3` (ver `audio/README.md`).
 
