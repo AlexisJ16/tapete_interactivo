@@ -1,0 +1,7 @@
+# Estado local de KiCad y transitorios (regenerables)
+*.kicad_prl
+*-erc.rpt
+erc.rpt
+*-backups/
+_autosave-*
+__pycache__/

@@ -1,0 +1,4 @@
+(sym_lib_table
+	(version 7)
+	(lib (name "tapete")(type "KiCad")(uri "${KIPRJMOD}/tapete.kicad_sym")(options "")(descr "Simbolos del Tapete"))
+)

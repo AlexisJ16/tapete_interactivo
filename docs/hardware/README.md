@@ -10,6 +10,8 @@ una por tema:
 | `00_diseno_circuito.md` | **Diseño**: decisiones, arquitectura de potencia y prototipo físico (caja/tapa). |
 | `flashing.md` | Flasheo del ESP32, credenciales WiFi y conexión del dashboard. |
 | `validation.md` | Validación por software (simulador, dashboard y tests). |
+| `spice/` | Validación analógica con **ngspice** (divisor FSR, grupo LED). |
+| `kicad/` | **Esquemático eléctrico** KiCad 10 (ERC significativo en verde + PDF/BOM/netlist). Cruza net-por-net con `cableado.md` y `Config.h`. |
 | `grafico-tapete.svg` | Arte de la tapa (6 ventanas, paleta accesible). |
 
 ## Impresión del gráfico de la tapa (`grafico-tapete.svg`)
