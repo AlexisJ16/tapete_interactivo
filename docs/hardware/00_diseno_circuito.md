@@ -44,7 +44,7 @@ superior y el mundo 5V (LEDs/audio) en la inferior**, separados por el canal cen
 - Los **dos rieles `−`** se puentean entre sí (GND común).
 - Los **dos `+` NUNCA** se puentean (uno es 3V3, otro 5V → corto).
 
-El net list exacto de energía (P1–P5) y las columnas están en `cableado.md` §3–4.1.
+El net list exacto de energía (P1–P5) y las columnas están en `cableado.md` §6.1.
 
 ## 4. Prototipo físico (caja + tapa)
 
@@ -96,6 +96,7 @@ para levantar la tapa. Protoboard fijada al piso con doble faz / velcro.
 ## 5. Armado y verificación
 
 El **orden de armado** (rieles → energizar en vacío → FSR → ULN+LEDs → DFPlayer →
-tapa) y el **checklist con multímetro** están en `cableado.md` §6–7. La regla que
+tapa) y el **checklist con multímetro** están en `cableado.md` §8 (checklist) y §9
+(secuencia). La regla que
 evita el corto: **3V3 y 5V nunca con continuidad entre sí ni a GND**; los dos rieles
 `−` sí van unidos.

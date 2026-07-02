@@ -82,7 +82,7 @@ presentar el presupuesto.
   (6 de las 9 de reserva). Cada LED recibe **<1 mA** (exacto: ngspice + multímetro):
   **brillo tenue pero visible** (los LEDs van directo en la superficie, por los
   huecos que se hacen en el acrílico). Es el máximo alcanzable con el inventario
-  actual (decisión del autor: no comprar más). Ver `cableado.md` §LEDs.
+  actual (decisión del autor: no comprar más). Ver `cableado.md` §6.3.
 - **Energía:** única fuente = **el PC al ESP32 por cable USB** (5 V). No se usa
   power bank ni toma de red. Con LEDs tenues + volumen moderado, el puerto USB
   del PC alcanza para todo el circuito.

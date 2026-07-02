@@ -25,6 +25,16 @@ botón** (FSR_alto, FSR_bajo, LED_ánodo común, LED_cátodo común) — ver §6
 
 ## 1. Geometría del protoboard (bloqueada)
 
+> **Cómo funciona un protoboard (regla base — léela primero).** Los **5 huecos de una
+> misma columna en la mitad superior** (A, B, C, D, E) están **unidos por dentro = 1 solo
+> nodo eléctrico**; lo mismo los 5 de la mitad inferior (F, G, H, I, J) = **otro** nodo. El
+> **canal central separa** las dos mitades (A–E y F–J de la misma columna **no** se tocan,
+> salvo por un componente que cruce el canal). Los **rieles `+` y `−` corren horizontales**
+> a lo largo de todo el borde (toda la línea es el mismo nodo). Por eso, cuando el doc dice
+> *"conecta en la col 20"*, da igual en cuál de A20/B20/C20/D20/E20 pinches: es el mismo
+> nodo. Una **resistencia o un LED** ocupa **dos** nodos (una pata en cada columna); un
+> **jumper** copia un nodo a otro.
+
 - Protoboard de **830 puntos**. Filas **A–E** (mitad superior) / **canal central** /
   **F–J** (mitad inferior). Columnas **1–64**. Rieles `+/−` arriba y abajo.
 - **ESP32 (DevKit 30 pines):** el módulo se monta **a caballo del canal central**,
@@ -48,6 +58,24 @@ botón** (FSR_alto, FSR_bajo, LED_ánodo común, LED_cátodo común) — ver §6
 > por **puente lateral a la derecha** (§5). Solo la **Fila A** (header superior) queda
 > libre para conexión directa. Las dos mitades **A–E** (mundo 3V3, arriba) y **F–J**
 > (mundo 5V, abajo) están separadas por el canal central.
+
+### Orientación del ESP32 (CRÍTICA — hazla antes de nada)
+
+> 🛑 **Coloca el ESP32 con el conector USB apuntando a la IZQUIERDA** (sobresaliendo hacia
+> la col 21). Con esa orientación, leyendo la **serigrafía** (los textos impresos en la
+> placa), el pin **VIN** queda en la **columna 25 del header superior** (arriba-izquierda; se conecta
+> por el **hueco libre de la Fila A25**, mismo nodo que el pin — ver §1) y el **3V3** en la
+> **columna 25 del header inferior** (abajo, Fila J). **Verifícalo con los ojos en tu módulo:** si "VIN" no queda arriba a
+> la izquierda (col 25), el módulo está **girado 180°** → gíralo antes de continuar. Un
+> ESP32 al revés mete **5 V al mundo 3V3** y quema el regulador de la placa (§3, el cruce de
+> la col 25).
+
+> ✅ **Confirma también que la Fila A queda con huecos LIBRES por encima de los pines
+> superiores** del ESP32 (ahí se conecta todo el header superior: VIN, GND y los 6 ADC de los
+> FSR). En casi todos los módulos así es. **Si en tu placa los pines superiores ocupan la
+> propia Fila A** (no hay hueco libre encima), **detente**: entonces el header superior
+> necesita el **mismo pre-cableado por debajo del módulo** (por las Filas B–E, antes de
+> asentarlo) que la Fila J en §5.
 
 ### Mapa de pines del ESP32
 
@@ -126,7 +154,7 @@ Cada arnés Bk lleva **4 hilos**: FSR_alto, FSR_bajo, LED_ánodo común, LED_cá
 | Inferior `−` | **GND** | ESP32 GND (Fila J, col 26) |
 
 **Reglas invariables:**
-- Se **puentean los dos rieles `−`** (GND común): 1 jumper en un extremo.
+- Se **puentean los dos rieles `−`** (GND común): 1 jumper en un extremo (p. ej. col 1 o col 64).
 - **NUNCA** se puentean los dos `+` (uno es 3V3, otro 5V → cortocircuito).
 - El **mundo 3V3 vive arriba** (sensores); el **mundo 5V abajo** (LEDs/audio). El
   canal central los separa. Los módulos DIP (ESP32, ULN, DFPlayer) cruzan el canal por
@@ -156,18 +184,21 @@ F–J. Coordenada = **columna + fila** (p. ej. `C20` = fila C, columna 20).
 Los **dos rieles de arriba** (3V3 `+` y GND `−`) están AMBOS **sobre la Fila A**. **No
 hay riel bajo la Fila E**: ahí está el canal central.
 
+> Diagrama **esquemático** (no es la posición literal hueco por hueco; las columnas exactas
+> están en la tabla §6.2). `[R]` = **una** resistencia de 10 kΩ; hay **6**, una por canal.
+
 ```
  Riel + (3V3) ══●═══●═══●═══●═══●═══●══   FSR_alto de los 6 botones → aquí (naranja)
  Riel − (GND) ══●═══●═══●═══●═══●═══●══   pata GND de cada 10 kΩ → aquí (negro)
-       col:     10   12   14   16   18   20
-      botón:   FSR6 FSR5 FSR4 FSR3 FSR2 FSR1
-   ┌────────────────────────────────────────
- A │  [10kΩ]  [R]  [R]  [R]  [R]  [R]  [R]   una pata al nodo, la otra SUBE al riel −
- B │   nodo    n    n    n    n    n    n    ← FSR_bajo del botón (azul)
- C │   →ADC    ↗    ↗    ↗    ↗    ↗    ↗    jumper AZUL: nodo → Fila A del ADC
- D │          A33  A34  A35  A36  A37  A38   (FSR6→A33 … FSR1→A38)
- E │           ·    ·    ·    ·    ·    ·
-   └────────────────────────────────────────
+        col:    10    12    14    16    18    20
+       botón:  FSR6  FSR5  FSR4  FSR3  FSR2  FSR1
+   ┌───────────────────────────────────────────
+ A │  [R]   [R]   [R]   [R]   [R]   [R]    una pata en el nodo, la otra SUBE al riel −
+ B │   n     n     n     n     n     n     ← nodo: aquí llega el FSR_bajo del botón (azul)
+ C │   ↗     ↗     ↗     ↗     ↗     ↗     jumper AZUL: del nodo a la Fila A del ADC…
+   └───────────────────────────────────────────
+   … destino del jumper (Fila A de OTRA columna): FSR6→A33 · FSR5→A34 · FSR4→A35 ·
+     FSR3→A36 · FSR2→A37 · FSR1→A38
       ═══ canal central ═══  (mitad inferior / mundo 5V → §4.3)
 ```
 
@@ -205,8 +236,12 @@ intermedias.
 
 **ULN2803A (DIP-18) — se monta A CABALLO del canal central** (una hilera en Fila E,
 otra en Fila F). Si lo montas en un solo lado, sus dos hileras se cortocircuitan.
-**Notch/muesca hacia la derecha** (pin 1 arriba-derecha) para que las **salidas queden
-en la Fila F** (mitad inferior, junto a los LEDs):
+**Muesca (notch) hacia la derecha** — la muesca es la **hendidura semicircular** en un
+extremo del chip; el **pin 1** es el más cercano a ella (a veces marcado con un punto) y
+debe quedar **arriba-derecha**, para que las **salidas queden en la Fila F** (mitad
+inferior, junto a los LEDs). *(En la hilera inferior del diagrama, las salidas usadas son
+`OUT1..OUT6` = cols 58..53; `O7`/`O8` = pines 12/11 quedan sin usar; las columnas exactas
+están en la tabla de abajo.)*
 
 | Pin ULN | Señal | Hueco | Conexión |
 |---|---|---|---|
@@ -237,7 +272,9 @@ La **Fila J (cols 25–39) está ocupada por los pines inferiores del ESP32 y NO
 huecos libres** (debajo solo están los rieles). Para conectar cada pin inferior se toma
 un **hueco de las Filas F–I de su misma columna** (bajo el módulo, mismo nodo eléctrico
 que el pin) y se **saca un puente/cable lateral hacia la derecha** (**cols 42–64**), donde
-viven el ULN, los LEDs y el DFPlayer.
+viven el ULN, los LEDs y el DFPlayer. **Excepción — P1 y P4** (energía): no van a la
+derecha sino a los **rieles** — P1 (3V3) **sube** al riel superior, P4 (GND) **baja** al
+inferior (ver las dos primeras filas de la tabla).
 
 > ⚠️ **Cablea la mitad inferior con el ESP32 LEVANTADO (o antes de asentarlo a fondo).**
 > Los huecos F–I quedan bajo el cuerpo del módulo: inserta ahí los puentes de los pines
@@ -248,6 +285,8 @@ En concreto:
 
 | Pin (Fila J) | Sale hacia | Señal |
 |---|---|---|
+| **3V3 · c25 (P1)** | riel **superior +** — tómalo en **I25** (bajo el módulo) y SUBE | 3V3 (naranja) |
+| **GND · c26 (P4)** | riel **inferior −** — tómalo en **I26** (bajo el módulo) | GND (negro) |
 | LED1 · c29 | IN1 del ULN (**E58**) | GPIO → IN (verde) |
 | LED2 · c32 | IN2 del ULN (**E57**) | GPIO → IN (verde) |
 | LED3 · c33 | IN3 del ULN (**E56**) | GPIO → IN (verde) |
@@ -277,8 +316,9 @@ superior viene del header inferior J25 y **sube** —P1, §6.1—; no está en l
 
 Alimentación: **solo el PC al ESP32 por cable USB** (5 V). Sin power bank ni red.
 **Cap de bus:** **1×** **1000 µF / 16 V** entre riel **inferior +** (5 V) y riel inferior −
-(el inventario trae 2; usa 1, el otro es reserva); la **pata `+` (larga, lado sin banda)
-al 5 V**, la banda `−` a GND. Invertirlo lo revienta.
+(colócalo sobre los rieles inferiores, cerca de donde entra el 5 V; el inventario trae 2,
+usa 1, el otro es reserva); la **pata `+` (larga, lado sin banda) al 5 V**, la banda `−` a
+GND. Invertirlo lo revienta.
 
 ### 6.2 Sensores FSR (mitad superior-izquierda, cols 8–21)
 
@@ -294,6 +334,9 @@ Topología por canal: `3V3 ─[FSR]─ nodo ─→ ADC ; nodo ─[10 kΩ]─ GND
 | FSR6 | **col 10** | GPIO33 (c33) | 10 kΩ→GND · FSR_bajo(B6) · jumper→A33 |
 
 El hilo **FSR_alto** de cada botón va al **riel + (3V3)**; el **FSR_bajo** al nodo.
+**El FSR no tiene polaridad:** sus dos patas son iguales — elige una como "FSR_alto" (irá a
+3V3) y la otra como "FSR_bajo" (irá al nodo); da igual cuál sea cuál, pero **rotúlalas al
+soldar el arnés** para no confundirlas después.
 **Trenza cada par de hilos FSR** (alto + bajo) a lo largo de los ~25–30 cm para
 inmunizar el ruido.
 
@@ -302,6 +345,13 @@ inmunizar el ruido.
 Por grupo (3 LEDs en paralelo, en la tapa): `5V ─[2.2 kΩ]─ ánodo` (columnas 59–64) y
 `cátodo ─ OUTk del ULN`. La entrada `INk` llega del GPIO por puente lateral (§5).
 El ULN (pines, huecos y orientación) está en **§4.3**.
+
+> **Cómo se arma cada grupo LED (en la tapa).** Un grupo = **3 LEDs blancos en paralelo**.
+> En un LED, la **pata larga es el ánodo (+)** y la corta (del lado con el borde plano del
+> encapsulado) es el **cátodo (−)**. Une las **3 patas largas** entre sí → un solo hilo =
+> **ánodo común**; une las **3 patas cortas** → **cátodo común**. Rotula ambos hilos por
+> botón (B1..B6). El **ánodo común** va a la 2.2 kΩ (a 5 V) y el **cátodo común** a la salida
+> OUTk del ULN.
 
 | Grupo | 2.2 kΩ (desde 5V) → ánodo | Ánodo común (tapa) | Cátodo común (tapa) → OUT |
 |---|---|---|---|
@@ -319,11 +369,12 @@ por fila para no cruzarlos.
 > **Brillo esperado = tenue pero visible.** Los 6 grupos usan **2.2 kΩ** (las 2× 1 kΩ
 > del inventario van al DFPlayer; ver `materiales.md §3`). Con 2.2 kΩ desde 5 V vía el
 > ULN, cada LED recibe **~0.19 mA** (≈ 3.5 mA los 6 grupos) según ngspice
-> (`../spice/`); **confirmar con multímetro al energizar**. Es el máximo alcanzable
+> (`spice/`); **confirmar con multímetro al energizar**. Es el máximo alcanzable
 > con el inventario; los LEDs van directo en la superficie (huecos en el acrílico), así
 > que a esa corriente se ven.
 >
-> ⚠️ **GPIO5 (LED2) es strapping pin.** Si tras cablear LED2 el ESP32 **no arranca**,
+> ⚠️ **GPIO5 (LED2) es un strapping pin** (un pin que el ESP32 lee al encender para decidir
+> cómo arranca; una carga puede alterarlo). Si tras cablear LED2 el ESP32 **no arranca**,
 > reasigna **LED2 → GPIO22** (D22, Fila J **col 38**, libre y no strapping): (1) edita
 > `firmware/lib/GameCore/Config.h` → `PIN_LED[1]` de `5` a `22`, (2) **recompila y
 > reflashea**, (3) mueve el puente de IN2 desde la col 32 a la **col 38** (Fila J).
@@ -356,7 +407,7 @@ Solo se usan **VCC, RX, TX, SPK_1, SPK_2 y GND** (todos en la columna izquierda)
 | GND (izq-7) | riel **inferior −** |
 | RX (izq-2) | ← **1 kΩ** en serie ← ESP32 **TX2/GPIO17** (pin inferior c31, por puente lateral) |
 | TX (izq-3) | → ESP32 **RX2/GPIO16** (pin inferior c30, por puente lateral) — **medir antes** (abajo) |
-| SPK_1 (izq-6) / SPK_2 (izq-8) | **parlante 4 Ω** (par diferencial, **NO aterrizar** ninguno; ojo: **GND (izq-7) va EN MEDIO** de ambos) |
+| SPK_1 (izq-6) / SPK_2 (izq-8) | **parlante 4 Ω** (par diferencial = los dos hilos llevan la señal **entre sí**; **NO aterrizar** ninguno a GND; ojo: **GND (izq-7) va EN MEDIO** de ambos) |
 
 **Desacople (junto al módulo, cols 42–44, mitad inferior):** **1×** **100 µF / 16 V**
 electrolítico entre VCC y GND (**pata `+` larga al VCC**, banda `−` a GND; trae 2, usa 1)
@@ -383,42 +434,62 @@ electrolítico entre VCC y GND (**pata `+` larga al VCC**, banda `−` a GND; tr
 | Azul | señal FSR (FSR_bajo / nodo → ADC) |
 | Verde | GPIO → IN del ULN |
 | Violeta | OUT del ULN → cátodo del grupo LED |
-| Blanco/rojo | ánodo común del grupo LED (a 2.2 kΩ / 5 V) |
+| Amarillo | ánodo común del grupo LED (a 2.2 kΩ / 5 V) |
 | Marrón | línea UART del DFPlayer |
 
 ---
 
-## 8. Checklist con multímetro (ANTES de energizar cada vez)
+## 8. Checklist con multímetro
+
+> 🛑 **La PRIMERA vez se energiza con la placa DESNUDA: solo el ESP32 y los rieles, nada
+> más conectado.** No conectes FSR, LEDs ni DFPlayer hasta pasar el **Bloque B en vacío**.
+> El orden completo de armado está en **§9 — síguelo paso a paso; no uses esta lista suelta
+> como secuencia.** El **Bloque A** se corre cada vez que vayas a energizar (placa sin
+> corriente); el **Bloque B** es la medición inmediatamente **después** de dar corriente.
+
+### Bloque A — con la placa SIN energizar (multímetro en continuidad)
 
 - [ ] Rieles `−` con continuidad entre sí y con GND del ESP32.
 - [ ] Riel 3V3 y riel 5V **sin** continuidad entre ellos ni con GND (aislación).
 - [ ] Cada riel continuo de extremo a extremo (puentear si está partido).
+- [ ] Ningún FSR a 5 V (solo a 3V3); ningún ADC a 5 V (ojo: **VIN**=5 V en c25 ≠ **VN**=GPIO39/ADC en c37).
+- [ ] ULN **a caballo del canal**, muesca a la derecha; pin 9 (E50) a GND (**riel superior −**),
+      pin 10 (F50) a 5 V.
+- [ ] LEDs: polaridad (ánodo a 2.2 kΩ/5 V en cols 59–64, cátodo a OUT del ULN cols 53–58).
+- [ ] Electrolíticos (1000 µF, 100 µF) con la **polaridad correcta** (banda `−` a GND).
+- [ ] Nada en ADC2 / pines de WiFi. GPIO12 libre (no cablear).
+- [ ] **DFPlayer TX medido ≤ 3.3 V** antes de conectarlo a GPIO16 (si 5 V → divisor).
+- [ ] Arneses rotulados **B1..B6** sin cruzar (§2). microSD FAT32 con los 4 MP3.
+
+### Bloque B — recién energizada (multímetro en tensión, en los rieles)
+
 - [ ] **Voltaje EN LOS RIELES tras energizar** (la prueba que caza el cruce de la col 25):
       **riel superior + ≈ 3.3 V** y **riel inferior + ≈ 4.6–5.0 V** (muchos DevKit meten
       VIN por un diodo Schottky → el riel de 5 V puede leer ~4.6–4.7 V; es normal). Lo que
       **NUNCA** debe pasar: el **riel superior marcando ~5 V** → estaría alimentado con VIN
       por error: **desconecta YA** y corrige P1/P2 (§3).
-- [ ] Ningún FSR a 5 V (solo a 3V3); ningún ADC a 5 V (¡el doble "VN": c25 vs c37!).
-- [ ] ULN **a caballo del canal**, muesca a la derecha; pin 9 (E50) a GND, pin 10 (F50) a 5 V.
-- [ ] LEDs: polaridad (ánodo a 2.2 kΩ/5 V en cols 59–64, cátodo a OUT del ULN cols 53–58).
-- [ ] Electrolíticos (1000 µF, 100 µF) con la **polaridad correcta** (banda `−` a GND).
-- [ ] Nada en ADC2 / pines de WiFi. GPIO12 libre (no cablear).
-- [ ] **DFPlayer TX medido ≤ 3.3 V** antes de conectarlo a GPIO16 (si 5 V → divisor).
-- [ ] Tras cablear LED2, el ESP32 **arranca** (GPIO5 strapping; si no, LED2→GPIO22).
-- [ ] Arneses rotulados **B1..B6** sin cruzar (§2). microSD FAT32 con los 4 MP3.
+- [ ] Tras cablear LED2, el ESP32 **arranca** (GPIO5 es un *strapping pin* — un pin que el
+      chip lee al encender para decidir cómo arranca; si no arranca, LED2→GPIO22).
 
 ---
 
 ## 9. Secuencia de armado (orden seguro)
 
-1. **Rieles primero.** Montar P1–P5 (§6.1) y el cap de bus 1000 µF. Verificar
-   continuidad y **aislación** con el multímetro (§8, primeros 3 ítems).
-2. **Energizar en vacío** (solo ESP32, por USB). Medir **en los rieles**: superior + ≈
-   **3.3 V**, inferior + ≈ **4.6–5.0 V** (§8). Confirmar arranque (Serial 115200). *Si el
-   riel superior marca ~5 V, desconecta y corrige el cruce de la col 25 antes de seguir.*
+1. **Rieles primero.** Montar P1–P5 (§6.1) y el cap de bus 1000 µF. **Ojo:** **P1 (3V3,
+   J25) y P4 (GND, J26) salen de pines del ESP32 en la Fila J**, que quedan bajo el módulo →
+   se toman por las **Filas F–I con el ESP32 LEVANTADO**, antes de prensarlo (ver §5); si ya
+   lo prensaste, no entrará el cable. **P2 (VIN, A25) y P3 (GND, A26)** salen del header
+   superior (Fila A libre): directos. Verificar continuidad y **aislación** con el multímetro
+   (§8, Bloque A).
+2. **Energizar en vacío** (solo ESP32, por USB). **(a)** Con el multímetro, medir **en los
+   rieles**: superior + ≈ **3.3 V**, inferior + ≈ **4.6–5.0 V** (§8, Bloque B) — esto **no
+   necesita firmware**. *Si el riel superior marca ~5 V, desconecta y corrige el cruce de la
+   col 25 antes de seguir.* **(b)** Para confirmar el arranque por **Serial (115200)**
+   necesitas el **firmware flasheado**: ver `flashing.md`.
 3. **FSR uno por uno.** Montar el divisor del canal (nodo en su columna, 10 kΩ a GND,
    FSR_alto a 3V3, jumper a la Fila A). Ver la lectura ADC en el Serial en reposo y al
-   pisar. Ajustar `cfg::UMBRAL_PISADA`. Repetir los 6 (B1..B6).
+   pisar. **Ajustar `cfg::UMBRAL_PISADA`** = editar `firmware/lib/GameCore/Config.h`,
+   recompilar y reflashear (ver `flashing.md`). Repetir los 6 (B1..B6).
 4. **ULN + LEDs por grupo.** Montar el ULN a caballo del canal (cols 50–58, muesca
    derecha; pin 9→GND, pin 10→5 V). Por grupo: 2.2 kΩ (5V→ánodo), ánodo y cátodo de la
    tapa, IN←GPIO por puente lateral. Probar encendido (brillo tenue esperado).
