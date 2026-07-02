@@ -56,15 +56,16 @@ ngspice -b docs/hardware/spice/grupo_led.cir
 
 Registrados con `claude mcp add`. Verificar con `claude mcp list`.
 
-### Wokwi MCP — scope `project` (`.mcp.json`, commiteado)
+### Wokwi MCP — scope `local` (wrapper; registro no commiteado)
 ```bash
-claude mcp add wokwi -s project -e WOKWI_CLI_TOKEN='${WOKWI_CLI_TOKEN}' -- wokwi-cli mcp
+claude mcp add wokwi -s local -- /home/alexis/code/tapete_interactivo/scripts/wokwi-mcp.sh
 ```
-- El token va como **referencia** `${WOKWI_CLI_TOKEN}` (nunca el valor; `.mcp.json` es seguro).
-- **Activación (2 pasos):** (1) lanzar Claude Code desde una terminal donde `~/.secrets`
-  esté sourceado (así el proceso de CC hereda `WOKWI_CLI_TOKEN`; el `.zshrc` lo sourcea),
-  y (2) **aprobar** el MCP de proyecto (`claude` → aprobar; los MCP `project` requieren
-  aprobación por seguridad). Sin (1), CC avisa `Missing environment variables`.
+- `scripts/wokwi-mcp.sh` (commiteado) sourcea `~/.secrets` y ejecuta `wokwi-cli mcp`,
+  así **el token está garantizado** sin depender de cómo se lanzó CC. WHY: se verificó que
+  el proceso de CC a menudo **NO** hereda `WOKWI_CLI_TOKEN` aunque el humano lo sourceara
+  antes (por eso NO se usa `.mcp.json` project con `${WOKWI_CLI_TOKEN}`: avisaba `Missing
+  environment variables` y quedaba `Pending approval`). Scope local = sin aprobación.
+- Verificado `✔ Connected` **sin** warning de env. El pin IPv4 (abajo) cubre su red.
 
 ### KiCad MCP — scope `local` (no commiteado; máquina-específico)
 ```bash
