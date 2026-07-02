@@ -1,0 +1,32 @@
+* ==========================================================================
+*  Divisor FSR del Tapete Interactivo  (validacion analogica, ngspice -b)
+* ==========================================================================
+*  Topologia (docs/hardware/cableado.md 4.2):
+*     3V3 --[R_FSR]-- nodo(ADC) --[R_M = 10k]-- GND
+*  El FSR baja su resistencia con la fuerza -> V_nodo SUBE con la pisada.
+*     V_nodo = 3.3 * R_M / (R_FSR + R_M)
+*  Ventana util del ADC del ESP32 (atenuacion 11/12 dB): ~150..2450 mV.
+*  cfg::UMBRAL_PISADA = 2000 cuentas (de 4095, ref 3.3 V) ~ 1.61 V.
+*
+*  Barremos R_FSR de 250 ohm (pisada fuerte) a 10 Mohm (sin carga) y
+*  tabulamos V_nodo y su equivalente aproximado en cuentas de ADC.
+* --------------------------------------------------------------------------
+
+V3V3 vcc 0 DC 3.3
+R_FSR vcc nodo 10k
+R_M   nodo 0 10k
+
+.control
+echo " "
+echo "R_FSR(ohm)   V_nodo(V)   ADC(~cuentas 0..4095)"
+echo "-----------------------------------------------"
+foreach rf 250 500 1000 2200 4700 10000 22000 47000 100000 1e6 10e6
+  alter R_FSR = $rf
+  op
+  let vn = v(nodo)
+  let adc = vn/3.3 * 4095
+  echo "$rf   $&vn   $&adc"
+end
+echo "-----------------------------------------------"
+.endc
+.end

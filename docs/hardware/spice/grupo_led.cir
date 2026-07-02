@@ -1,0 +1,41 @@
+* ==========================================================================
+*  Grupo LED del Tapete Interactivo  (validacion analogica, ngspice -b)
+* ==========================================================================
+*  Topologia (docs/hardware/cableado.md 4.3):
+*     5V --[Rg = 2.2k]-- anodo --( 3x LED blanco en paralelo )-- catodo
+*         -- [ULN2803A Darlington, V_CE(sat)] -- GND
+*
+*  Objetivo: estimar la corriente por grupo y por LED con la R real (2.2 k)
+*  del inventario, para cuantificar que tan tenue queda el brillo.
+*
+*  Modelo LED blanco: diodo con Vf ~ 3.0 V a 5 mA (IS, N ajustados).
+*  V_CE(sat) del Darlington a baja corriente: fuente fija ~0.9 V (conservador;
+*  el valor real se confirma con multimetro sobre el circuito armado).
+*
+*  Nota: en la simulacion los 3 LEDs son identicos y comparten por igual;
+*  en la realidad, con 1 sola R por grupo, el de menor Vf "acapara" corriente
+*  (current-hogging). El promedio por LED sirve como orden de magnitud.
+* --------------------------------------------------------------------------
+
+V5   vcc 0 DC 5
+Rg   vcc anodo 2.2k
+D1 anodo catodo LEDW
+D2 anodo catodo LEDW
+D3 anodo catodo LEDW
+Vce  catodo 0 DC 0.9
+
+.model LEDW D(IS=3.3e-28 N=2 RS=2)
+
+.control
+op
+let iRg = -i(V5)
+let iLED = iRg/3
+echo " "
+echo "=== Grupo LED: Rg=2.2k, 3 LED blancos en paralelo, Vce_sat=0.9 V ==="
+print v(anodo) v(catodo)
+echo "Corriente total del grupo (A) [= por Rg]:"
+print iRg
+echo "Corriente aproximada por LED (A):"
+print iLED
+.endc
+.end
