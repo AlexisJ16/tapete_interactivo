@@ -1,0 +1,88 @@
+name: CI
+
+# Valida en cada push/PR: (1) lógica portable GameCore (C++ doctest + libgamecore.so
+# + pytest) y (2) compilación del firmware ESP32 + smoke test en Wokwi.
+# Fuente de verdad de los tests: scripts/run_all_tests.sh (no depende de PlatformIO).
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: GameCore (C++) + Python
+    runs-on: ubuntu-latest
+    env:
+      QT_QPA_PLATFORM: offscreen   # PyQt6/matplotlib headless
+      SDL_VIDEODRIVER: dummy       # pygame sin display
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Libs de sistema para PyQt6 offscreen
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 libgl1 libxkbcommon0 libdbus-1-3
+
+      - name: Instalar dependencias Python
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt -r simulator/requirements.txt -r dashboard/requirements.txt
+
+      - name: Correr todos los tests (C++ doctest + .so + pytest)
+        run: ./scripts/run_all_tests.sh
+
+  firmware-wokwi:
+    name: Firmware ESP32 + smoke Wokwi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: pio-${{ runner.os }}-${{ hashFiles('firmware/platformio.ini') }}
+          restore-keys: pio-${{ runner.os }}-
+
+      - name: Instalar PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Compilar firmware (esp32dev)
+        working-directory: firmware
+        run: pio run -e esp32dev
+
+      - name: Instalar Wokwi CLI
+        run: |
+          curl -L https://wokwi.com/ci/install.sh | sh
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Smoke test Wokwi (banner del serial)
+        env:
+          WOKWI_CLI_TOKEN: ${{ secrets.WOKWI_CLI_TOKEN }}
+        run: |
+          if [ -z "$WOKWI_CLI_TOKEN" ]; then
+            echo "::warning::WOKWI_CLI_TOKEN no configurado en Secrets; se omite el smoke Wokwi."
+            exit 0
+          fi
+          wokwi-cli firmware --timeout 20000 --expect-text "Tapete Interactivo"
