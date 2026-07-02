@@ -22,7 +22,7 @@ Materiales comprados y validados (2026-07-01): ver **`docs/hardware/materiales.m
       list, ruteo de la Fila J, checklist con multímetro). Diseño y prototipo físico:
       `00_diseno_circuito.md`.
 - [ ] LEDs a 5 V vía **1× ULN2803A** (los 6 GPIO PWM entran al chip). Brillo **tenue
-      pero visible** con 1 kΩ (máximo alcanzable con el inventario; `materiales.md` §3).
+      pero visible** con 2.2 kΩ (máximo alcanzable con el inventario; `materiales.md` §3).
 - [ ] Grabar la **microSD** (ya en mano) en FAT32 con `/mp3/0001.mp3`..`/mp3/0004.mp3`
       (instrucción, acierto, error, éxito). Ver `audio/README.md`.
 - [ ] `cp firmware/src/secrets.h.example firmware/src/secrets.h` + credenciales.

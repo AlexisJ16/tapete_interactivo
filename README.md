@@ -113,7 +113,7 @@ tapete → PC:    {"ev":"led","cell":3,"level":255}        {"ev":"press","cell":
 ## Hardware
 
 ESP32 DevKit (30 pines) · 6× FSR 402 (+ 6× 10 kΩ pull-down) · 18 LED blancos 5 mm
-(3 por botón, a 5 V vía 1× ULN2803A; brillo tenue con 1 kΩ) · DFPlayer Mini +
+(3 por botón, a 5 V vía 1× ULN2803A; brillo tenue con 2.2 kΩ) · DFPlayer Mini +
 microSD + **parlante 4 Ω** · protoboard. Alimentación: PC → ESP32 por USB.
 Inventario y presupuesto en `docs/hardware/materiales.md`; armado en
 `docs/hardware/cableado.md`; diseño en `docs/hardware/00_diseno_circuito.md`.

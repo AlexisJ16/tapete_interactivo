@@ -16,14 +16,14 @@ ESP32 al centro del piso corre la lógica y se comunica con el dashboard de PC.
 | Subsistema | Componentes | Etapa |
 |---|---|---|
 | Sensado | 6× FSR 402 + 6× 10 kΩ (pull-down) | Divisores de voltaje, 3V3 |
-| Iluminación | 18× LED blanco (6 grupos de 3) + 6× 1 kΩ + **1× ULN2803A** | Conmutación a 5 V |
+| Iluminación | 18× LED blanco (6 grupos de 3) + 6× 2.2 kΩ + **1× ULN2803A** | Conmutación a 5 V |
 | Audio | DFPlayer Mini + microSD + **parlante 4 Ω** | UART, 5 V |
 | Cómputo/red | ESP32 DevKit 30 pines | — |
 | Energía | **PC → ESP32 por USB** (5 V), regulador interno (3V3) | 4 rieles |
 
 ## 2. Decisiones congeladas (con el autor)
 
-1. **LEDs con ULN2803A a 5 V**, un grupo de 3 en paralelo por botón, **1 kΩ** en
+1. **LEDs con ULN2803A a 5 V**, un grupo de 3 en paralelo por botón, **2.2 kΩ** en
    serie. El brillo resultante es **tenue pero visible** (no hay resistencias de
    valor bajo para más corriente; es el máximo alcanzable con el inventario —
    decisión de no comprar más). Detalle en `cableado.md` §4.3 y `materiales.md` §3.

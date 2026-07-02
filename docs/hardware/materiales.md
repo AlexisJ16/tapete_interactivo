@@ -21,7 +21,7 @@
 | 9 | R 10 kΩ | 1/4 W | 8 | en mano | 6 pull-down de FSR + 2 reserva |
 | 10 | R 1 kΩ | 1/4 W | 2 | comprado | 1 línea serie DFPlayer + 1 divisor GPIO16 |
 | 11 | R 2 kΩ | 1/4 W | 3 | comprado | Divisor GPIO16 (contingencia) + reserva |
-| 12 | R 2.2 kΩ | 1/4 W | 9 | comprado | Reserva / uso libre |
+| 12 | R 2.2 kΩ | 1/4 W | 9 | comprado | **6× serie de grupo LED** (1 por grupo) + 3 reserva |
 | **Capacitores** | | | | | |
 | 13 | Electrolítico | 1000 µF / 16 V | 2 | comprado | Desacople del bus de 5 V |
 | 14 | Electrolítico | 100 µF / 16 V | 2 | comprado | Desacople VCC del DFPlayer |
@@ -75,10 +75,11 @@ presentar el presupuesto.
   - **1 kΩ** → resistencia en serie de la línea DFPlayer `TX2 → RX`.
   - **1 kΩ + 2 kΩ** → divisor de tensión para `DFPlayer TX → GPIO16`, **solo si**
     el TX del módulo mide 5 V (medir con multímetro; la mayoría emite 3.3 V).
-  - **9 × 2.2 kΩ** → reserva.
+  - **6 × 2.2 kΩ** → serie de los 6 grupos LED (1 por grupo); **3 × 2.2 kΩ** de reserva.
 - **Brillo de los LEDs — límite físico aceptado:** no hay resistencias de valor
-  bajo (~15–47 Ω) para llevar los LEDs a corriente plena. Con la resistencia más
-  baja disponible (1 kΩ) en serie desde 5 V vía el ULN, cada LED recibe ~0.9 mA:
+  bajo (~15–47 Ω) para llevar los LEDs a corriente plena. Las 2× 1 kΩ están
+  asignadas al DFPlayer y al divisor GPIO16, así que los 6 grupos LED usan **2.2 kΩ**
+  (6 de las 9 de reserva). Cada LED recibe **<1 mA** (exacto: ngspice + multímetro):
   **brillo tenue pero visible** (los LEDs van directo en la superficie, por los
   huecos que se hacen en el acrílico). Es el máximo alcanzable con el inventario
   actual (decisión del autor: no comprar más). Ver `cableado.md` §LEDs.

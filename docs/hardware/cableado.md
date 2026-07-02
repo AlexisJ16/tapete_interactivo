@@ -136,12 +136,12 @@ del tapete a 3V3 y el **FSR_bajo** al nodo. **Trenza cada par de hilos FSR** (al
 
 ### 4.3 LEDs vía ULN2803A (mitad inferior-derecha, cols 42–64)
 
-Por grupo (3 LEDs en paralelo): `5V ─[1 kΩ]─ ánodo` y `cátodo ─ OUTk del ULN`. La
+Por grupo (3 LEDs en paralelo): `5V ─[2.2 kΩ]─ ánodo` y `cátodo ─ OUTk del ULN`. La
 entrada `INk` llega del GPIO de LED (Fila J) por puente lateral.
 
 | Grupo | GPIO (Fila J) | Entrada ULN | R serie | Salida ULN |
 |---|---|---|---|---|
-| LED1 | D4 (c29) | IN1 (pin 1) | 5V→[1 kΩ]→ánodo | OUT1 (pin 18) |
+| LED1 | D4 (c29) | IN1 (pin 1) | 5V→[2.2 kΩ]→ánodo | OUT1 (pin 18) |
 | LED2 | D5 (c32) | IN2 (pin 2) | idem | OUT2 (pin 17) |
 | LED3 | D18 (c33) | IN3 (pin 3) | idem | OUT3 (pin 16) |
 | LED4 | D19 (c34) | IN4 (pin 4) | idem | OUT4 (pin 15) |
@@ -151,9 +151,10 @@ entrada `INk` llega del GPIO de LED (Fila J) por puente lateral.
 ULN2803A: **pin 9 = GND** (riel inf −), **pin 10 = COM** (riel inf +, 5 V). Muesca
 hacia el pin 1.
 
-> **Brillo esperado = tenue pero visible.** Con 1 kΩ desde 5 V vía el ULN, cada LED
-> recibe ~0.9 mA (no hay resistencias de valor bajo para más corriente; ver
-> `materiales.md` §3). Es lo máximo alcanzable con el inventario. Los LEDs van
+> **Brillo esperado = tenue pero visible.** Los 6 grupos usan **2.2 kΩ** (las 2× 1 kΩ
+> del inventario van al DFPlayer y al divisor GPIO16; ver `materiales.md` §3). Con 2.2 kΩ
+> desde 5 V vía el ULN cada LED recibe **<1 mA** (corriente exacta validada en `../spice/`,
+> fase ngspice). Es lo máximo alcanzable con el inventario. Los LEDs van
 > **directo en la superficie** (huecos en el acrílico), sin difusor, así que a esa
 > corriente se ven.
 >
@@ -200,7 +201,7 @@ microSD FAT32 con `/mp3/0001.mp3` … `/mp3/0004.mp3` (ver `audio/README.md`).
 - [ ] Cada riel continuo de extremo a extremo (puentear si está partido).
 - [ ] Ningún FSR a 5 V (solo a 3V3); ningún ADC a 5 V (¡el doble "VN": c25 vs c37!).
 - [ ] ULN: pin 9 a GND, pin 10 a 5 V, muesca correcta.
-- [ ] LEDs: polaridad (ánodo a 1 kΩ/5 V, cátodo a OUT del ULN).
+- [ ] LEDs: polaridad (ánodo a 2.2 kΩ/5 V, cátodo a OUT del ULN).
 - [ ] Nada en ADC2 / pines de WiFi. GPIO12 libre (no cablear).
 - [ ] **DFPlayer TX medido ≤ 3.3 V** antes de conectarlo a GPIO16 (si 5 V → divisor).
 - [ ] Tras cablear LED2, el ESP32 **arranca** (GPIO5 strapping; si no, LED2→GPIO22).
@@ -214,7 +215,7 @@ microSD FAT32 con `/mp3/0001.mp3` … `/mp3/0004.mp3` (ver `audio/README.md`).
 3. **FSR uno por uno.** Montar el divisor; ver en el Serial la lectura ADC en reposo
    y al pisar. Ajustar `cfg::UMBRAL_PISADA`. Repetir los 6.
 4. **ULN + LEDs por grupo.** Montar el ULN (pin 9→GND, pin 10→5 V). Un grupo:
-   1 kΩ, ánodo, cátodo→OUT, IN←GPIO por puente lateral. Probar encendido (brillo
+   2.2 kΩ, ánodo, cátodo→OUT, IN←GPIO por puente lateral. Probar encendido (brillo
    tenue esperado). *(GPIO5 strapping: confirmar que el ESP32 sigue arrancando tras LED2.)*
 5. **DFPlayer + parlante.** VCC/GND, TX2→(1 kΩ)→RX, RX2←TX, microSD, SPK a parlante.
    Verificar `audioOk`. Volumen moderado.
