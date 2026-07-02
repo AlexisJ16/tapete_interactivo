@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./scripts/run_all_tests.sh)",
+      "Bash(.venv/bin/pio run -e esp32dev)",
+      "Bash(scripts/pio run -e esp32dev)",
+      "Bash(g++ *)",
+      "Bash(.venv/bin/pytest *)",
+      "Bash(ngspice -b *)",
+      "Bash(ngspice --version)",
+      "Bash(kicad-cli *)",
+      "Bash(wokwi-cli *)"
+    ],
+    "deny": [
+      "Bash(pio * -t upload)",
+      "Bash(.venv/bin/pio * -t upload)",
+      "Bash(scripts/pio * -t upload)",
+      "Bash(esptool*)",
+      "Bash(esptool *)",
+      "Bash(pio device monitor*)",
+      "Bash(.venv/bin/pio device monitor*)",
+      "Bash(rm -rf *)",
+      "Bash(rm -rf /)",
+      "Bash(rm -rf ~)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/guard-flash.sh",
+            "args": []
+          }
+        ]
+      }
+    ]
+  }
+}

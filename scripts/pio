@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Wrapper canónico de PlatformIO para este proyecto: reenvía a .venv/bin/pio
+# (PlatformIO Core 6.1.19). Funciona desde cualquier cwd dentro del repo.
+# Para tener `pio` a secas en el PATH: `source .venv/bin/activate`.
+exec "$(cd "$(dirname "$0")/.." && pwd)/.venv/bin/pio" "$@"

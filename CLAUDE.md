@@ -66,6 +66,30 @@ pio run -e esp32dev -t upload && pio device monitor -b 115200
   (gitignored; plantilla en `secrets.h.example`).
 - **Commits pequeños por fase**, trailer `Co-Authored-By: Claude...`.
 
+## Disciplina de hardware (no negociable)
+
+- **Fuente única de verdad eléctrica:** `docs/hardware/cableado.md` (geometría del
+  protoboard, net list, ruteo Fila J, checklist §6, secuencia §7) + `firmware/lib/
+  GameCore/Config.h` (mapa de pines **canónico**). El diseño/decisiones viven en
+  `docs/hardware/00_diseno_circuito.md`; los materiales en `docs/hardware/materiales.md`.
+  Si `cableado.md` y `Config.h` discrepan, **se detiene el trabajo y se concilia**
+  (`Config.h` es la fuente de pines); nunca se "improvisa" un pin/valor.
+- **Prohibido inventar hardware:** si un pin, corriente, Vf o encapsulado no está en
+  las fuentes de verdad o en un datasheet citado, se marca **DESCONOCIDO** y se
+  pregunta. Nada de rellenar un pinout de memoria.
+- **Unidades siempre explícitas** (V, mA, Ω, ms). Todo cálculo muestra fórmula y despeje.
+- **Frontera 3V3/5V:** nunca puentear los dos rieles `+`; mundo 3V3 arriba (sensores),
+  mundo 5V abajo (LEDs/audio). Toda net que cruce el canal central se justifica.
+- **Un solo ESP32, alimentado solo por USB:** ninguna acción del agente flashea ni abre
+  el serial del ESP32 (lo hace el humano, conscientemente). Lo bloquea el hook
+  `.claude/hooks/guard-flash.sh`. Antes de energizar, correr el checklist con multímetro
+  de `cableado.md` §6.
+- **Instrumentos reales: SOLO multímetro + PC.** La validación de señal/lógica se hace
+  con **ngspice** (analógico) y **Wokwi** (firmware/protocolo/WiFi virtual); no se asume
+  osciloscopio ni analizador lógico.
+- **Compilación:** firmware = `.venv/bin/pio run -e esp32dev` (PlatformIO 6.1.19, en el
+  venv; `scripts/pio` es el wrapper); tests de GameCore = `g++` (`./scripts/run_all_tests.sh`).
+
 ## Trampas conocidas (ya resueltas, no reintroducir)
 
 - **La ruta del proyecto ya no tiene espacios** (movido a `~/code/tapete_interactivo/`;
