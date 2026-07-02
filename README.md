@@ -101,17 +101,19 @@ tapete → PC:    {"ev":"led","cell":3,"level":255}        {"ev":"press","cell":
 
 ## Documentación
 
-- `docs/hardware/00_diseno_circuito.md` — **documento maestro** del circuito: net
-  list, zonificación del protoboard, secuencia de armado y checklist con multímetro
-  (todos los planos derivan de aquí).
-- `docs/hardware/wiring.md` — referencia textual: mapa de pines, divisor FSR (10 kΩ), LEDs a 5 V, DFPlayer.
+- `docs/hardware/materiales.md` — inventario real de componentes + presupuesto.
+- `docs/hardware/cableado.md` — armado del protoboard: geometría, net list, ruteo
+  de la Fila J, leyenda y checklist con multímetro.
+- `docs/hardware/00_diseno_circuito.md` — diseño: decisiones, arquitectura de
+  potencia y prototipo físico (caja/tapa).
 - `docs/hardware/flashing.md` — flasheo, WiFi y calibración del umbral de pisada.
 - `docs/hardware/validation.md` — cómo correr simulador, dashboard y todos los tests.
 - `audio/README.md` — qué MP3 poner en la microSD (los binarios no se versionan).
 
 ## Hardware
 
-ESP32 DevKit V1 (30 pines) · 6× FSR 402 (+ 6× 10 kΩ pull-down) · 18 LED blancos
-(3 por botón, a 5 V vía 1× ULN2803A) · 10× 110 Ω (1 por grupo en uso + reserva) ·
-DFPlayer Mini + microSD (sin parlante en esta build) · protoboard. Diseño maestro
-y secuencia de montaje en `docs/hardware/00_diseno_circuito.md`.
+ESP32 DevKit (30 pines) · 6× FSR 402 (+ 6× 10 kΩ pull-down) · 18 LED blancos 5 mm
+(3 por botón, a 5 V vía 1× ULN2803A; brillo tenue con 1 kΩ) · DFPlayer Mini +
+microSD + **parlante 4 Ω** · protoboard. Alimentación: PC → ESP32 por USB.
+Inventario y presupuesto en `docs/hardware/materiales.md`; armado en
+`docs/hardware/cableado.md`; diseño en `docs/hardware/00_diseno_circuito.md`.

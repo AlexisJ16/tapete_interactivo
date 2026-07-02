@@ -88,7 +88,7 @@ simulator/               tapete_sim.py, core_bridge.py, golden_runner.py, servid
 dashboard/               app.py, sesion.py, storage.py, reports.py, fuente.py
 shared/                  protocol.md, golden_vectors.json
 docs/                    ROADMAP.md · articulo/ (artículo + anteproyecto) · hardware/
-                         (wiring, flashing, validation, diagrama, planos) · evidencia/
+                         (materiales, cableado, 00_diseno_circuito, flashing, validation) · evidencia/
 scripts/                 run_all_tests.sh, demo_visual.py
 audio/                   000X.mp3 (simulador) — ver audio/README.md
 ```
