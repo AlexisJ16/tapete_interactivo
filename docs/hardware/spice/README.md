@@ -40,7 +40,7 @@ Barrido de `R_FSR` (resultado ngspice, ADC ≈ V_nodo/3.3·4095):
 - El pull-down de **10 kΩ** desplaza la sensibilidad hacia fuerzas altas (detecta
   **pisada**, no roce) — decisión de ingeniería correcta para este uso.
 - Acción en hardware: leer el ADC en reposo y al pisar por el Serial y **afinar
-  `UMBRAL_PISADA`** al valor real de los 6 canales (`cableado.md` §7 paso 3).
+  `UMBRAL_PISADA`** al valor real de los 6 canales (`cableado.md` §3, Paso 4).
 
 ## 2. Grupo LED (`grupo_led.cir`)
 
@@ -67,6 +67,6 @@ Resultado ngspice:
   menor Vf acapara); el promedio simulado (0.19 mA) es orden de magnitud, no reparto exacto.
 - **Único lever real de brillo con el inventario** = menos LEDs por grupo (sube I/LED:
   1 LED con 2.2 kΩ ≈ 0.55 mA). Subir de verdad el brillo pediría R < 1 kΩ (no hay).
-- **Prueba empírica pendiente** (`cableado.md` §7 paso 4): cablear un grupo, medir la
+- **Prueba empírica pendiente** (`cableado.md` §3, Paso 6): cablear un grupo, medir la
   corriente con multímetro y **mirar el brillo real** con los LEDs directo en los huecos;
   ahí se decide si es aceptable o se ajusta (nº de LEDs) dentro de lo disponible.

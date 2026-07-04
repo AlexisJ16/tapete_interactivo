@@ -29,6 +29,6 @@ una por tema:
 
 ## Antes de energizar
 
-Sigue el **checklist con multímetro** (`cableado.md` §6). La regla que evita el
+Sigue el **checklist con multímetro** (`cableado.md` §5). La regla que evita el
 corto: **3V3 y 5V nunca con continuidad entre sí ni a GND**; los dos rieles `−` sí
 van unidos (GND común).

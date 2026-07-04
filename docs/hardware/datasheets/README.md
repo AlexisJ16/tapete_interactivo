@@ -17,7 +17,7 @@ Faltantes (sugeridos; dejar el PDF oficial nombrado por componente):
 - LED blanco 5 mm — Vf típica/máx e I_F máx (del proveedor).
 - ESP32 DevKit V1: **no hay datasheet canónico único** (placa de comunidad con
   variación entre clones) → el pinout VIN/3V3 se **confirma contra la placa física**
-  (ver el pre-flight de `cableado.md` §1).
+  (ver la orientación del ESP32 en `cableado.md` §3, Paso 1).
 
 Regla del proyecto: si un dato no está en un datasheet aquí, se marca
 **DESCONOCIDO** y se pregunta — no se rellena de memoria.

@@ -16,8 +16,8 @@ pines ni valores; si un dato no está, márcalo **DESCONOCIDO** y pregunta.
 
 ## Fuentes de verdad
 - `firmware/lib/GameCore/Config.h` — mapa de pines **canónico** (fuente de pines).
-- `docs/hardware/cableado.md` — geometría, net list (§4), ruteo Fila J (§2),
-  arquitectura de potencia (§3), checklist multímetro (§6), secuencia (§7).
+- `docs/hardware/cableado.md` — geometría (§1), net list (§4.2), ruteo Fila J (§3, Paso 1.3),
+  arquitectura de potencia (§1.3 y §3, Paso 2), checklist multímetro (§5), armado paso a paso (§3).
 - `docs/hardware/00_diseno_circuito.md` — decisiones congeladas (§2).
 - `docs/hardware/materiales.md` — BOM y valores.
 
@@ -28,7 +28,7 @@ sigue este checklist:
 
 1. **Coherencia de pines:** cada pin de la net list de `cableado.md` coincide con
    `Config.h`. Si discrepan → HALLAZGO alto; **Config.h es la fuente**, se concilia.
-2. **Frontera 3V3/5V:** los dos rieles `+` NUNCA puenteados (§3). Todo cruce del
+2. **Frontera 3V3/5V:** los dos rieles `+` NUNCA puenteados (§1.3). Todo cruce del
    canal central justificado. Corto 3V3↔5V = CRÍTICO.
 3. **FSR en ADC1** (GPIO32–39): ADC2 se cae con WiFi. FSR en ADC2 = HALLAZGO.
 4. **Strapping** (GPIO0/2/5/12/15): sin cargas que alteren el boot (contingencia

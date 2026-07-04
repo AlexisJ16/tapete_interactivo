@@ -14,10 +14,10 @@ los hace el humano, conscientemente (los bloquea el hook `guard-flash`). El agen
 guía, interpreta lo que el humano pega, y ayuda a calibrar.
 
 ## Antes de energizar (obligatorio)
-1. **Checklist con multímetro** — corre `docs/hardware/cableado.md` §6 **entero**:
+1. **Checklist con multímetro** — corre `docs/hardware/cableado.md` §5 **entero**:
    continuidad de GND, ausencia de corto 3V3↔5V, rieles correctos, polaridad.
    NO energizar si algún punto falla.
-2. Verifica la secuencia de armado `cableado.md` §7 y las decisiones congeladas
+2. Verifica la secuencia de armado `cableado.md` §3 (armado paso a paso) y las decisiones congeladas
    (`00_diseno_circuito.md` §2). Confirma valores contra `materiales.md`.
 3. microSD grabada FAT32 con `/mp3/0001.mp3`..`/mp3/0004.mp3` (ver `audio/README.md`).
 4. `cp firmware/src/secrets.h.example firmware/src/secrets.h` + credenciales WiFi.

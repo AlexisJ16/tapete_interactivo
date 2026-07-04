@@ -54,8 +54,8 @@ kicad-cli sch export netlist --format spice -o tapete.cir tapete.kicad_sch
 ## Notas
 
 - **Brillo LED (gate arrastrado de Fase 2):** ~0.19 mA/LED con 2.2 kΩ es marginal; la
-  prueba empírica de brillo (`cableado.md` §7 paso 4) es un gate real antes del armado.
+  prueba empírica de brillo (`cableado.md` §3, Paso 6) es un gate real antes del armado.
 - **GPIO16 (contingencia):** si el TX del DFPlayer mide ~5 V, intercalar divisor 1k+2k
-  en `DF_TX` (`cableado.md` §4.4). El esquemático representa el caso nominal (3.3 V, directo).
+  en `DF_TX` (`cableado.md` §3, Paso 7). El esquemático representa el caso nominal (3.3 V, directo).
 - **Andamiaje:** `kisch.py`/`gen_tapete.py` son la herramienta de autoría, no el entregable
   final; se purgan del snapshot de entrega (como `docs/superpowers/`).

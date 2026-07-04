@@ -26,7 +26,7 @@ ESP32 al centro del piso corre la lógica y se comunica con el dashboard de PC.
 1. **LEDs con ULN2803A a 5 V**, un grupo de 3 en paralelo por botón, **2.2 kΩ** en
    serie. El brillo resultante es **tenue pero visible** (no hay resistencias de
    valor bajo para más corriente; es el máximo alcanzable con el inventario —
-   decisión de no comprar más). Detalle en `cableado.md` §4.3 y `materiales.md` §3.
+   decisión de no comprar más). Detalle en `cableado.md` §3 (Paso 6) y `materiales.md` §3.
 2. **DFPlayer con parlante 4 Ω** a SPK1/SPK2 (el amplificador del módulo lo maneja).
    El firmware degrada con gracia si el audio no inicializa (`audioOk_`).
 3. **Alimentación: solo el PC al ESP32 por USB** (5 V). Sin power bank ni toma de
@@ -44,7 +44,8 @@ superior y el mundo 5V (LEDs/audio) en la inferior**, separados por el canal cen
 - Los **dos rieles `−`** se puentean entre sí (GND común).
 - Los **dos `+` NUNCA** se puentean (uno es 3V3, otro 5V → corto).
 
-El net list exacto de energía (P1–P5) y las columnas están en `cableado.md` §6.1.
+El net list exacto de energía (P1–P5) y las columnas están en `cableado.md` §4.2 (net list)
+y §3, Paso 2 (armado de los rieles).
 
 ## 4. Prototipo físico (caja + tapa)
 
@@ -96,7 +97,7 @@ para levantar la tapa. Protoboard fijada al piso con doble faz / velcro.
 ## 5. Armado y verificación
 
 El **orden de armado** (rieles → energizar en vacío → FSR → ULN+LEDs → DFPlayer →
-tapa) y el **checklist con multímetro** están en `cableado.md` §8 (checklist) y §9
-(secuencia). La regla que
+tapa) y el **checklist con multímetro** están en `cableado.md` §3 (armado paso a paso) y
+§5 (checklist). La regla que
 evita el corto: **3V3 y 5V nunca con continuidad entre sí ni a GND**; los dos rieles
 `−` sí van unidos.
