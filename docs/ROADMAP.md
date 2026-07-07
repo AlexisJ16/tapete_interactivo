@@ -6,29 +6,31 @@ sigue, para retomarlo en una conversación nueva. Mantener siempre la disciplina
 del proyecto: **TDD**, **una sola fuente de verdad** (`GameCore`), tests en
 verde antes de avanzar (ver `CLAUDE.md`).
 
-> **PUNTO DE CONTINUACIÓN (2026-07-01):** el **carril software está completo**
-> (SP1 mergeado a `main`; SP2 evidencia + analítica + reconexión ejecutado en
-> `sp2-evidencia-analitica`, todo verde). El foco actual es el **hardware físico**:
-> mapa de armado del protoboard y planos del circuito (ver `docs/hardware/`). El
-> rediseño del gráfico se posterga hasta tener el hardware y los planos listos.
-> Entrega: **4-jul**.
+> **PUNTO DE CONTINUACIÓN (2026-07-07):** carril software completo (SP1 + SP2
+> verdes) y **hardware MONTADO** (pruebas eléctricas OK). Foco actual: **calibrar
+> `UMBRAL_PISADA`** (el modo calibración aún no muestra los sensores conectados —
+> a diagnosticar) y la **reescritura honesta del artículo**. La conexión de trabajo
+> es **USB/Serial**. Entrega: **8-jul 18:00 (hora Cali)**.
 
 ## 1. Puesta en marcha del hardware físico (lo único no validable en software)
 
 Materiales comprados y validados (2026-07-01): ver **`docs/hardware/materiales.md`**.
 
 - [x] **Resistencias (10 kΩ), ULN2803A, parlante 4 Ω, capacitores** — en mano.
-- [ ] Montar en protoboard según **`docs/hardware/cableado.md`** (geometría, net
-      list, ruteo de la Fila J, checklist con multímetro). Diseño y prototipo físico:
-      `00_diseno_circuito.md`.
+- [x] Montar en protoboard según **`docs/hardware/cableado.md`** (geometría, net
+      list, ruteo de la Fila J, checklist con multímetro) — **HECHO** (pruebas
+      eléctricas de multímetro OK). Diseño y prototipo físico: `00_diseno_circuito.md`.
 - [ ] LEDs a 5 V vía **1× ULN2803A** (los 6 GPIO PWM entran al chip). Brillo **tenue
       pero visible** con 2.2 kΩ (máximo alcanzable con el inventario; `materiales.md` §3).
 - [ ] Grabar la **microSD** (ya en mano) en FAT32 con `/mp3/0001.mp3`..`/mp3/0004.mp3`
       (instrucción, acierto, error, éxito). Ver `audio/README.md`.
 - [ ] `cp firmware/src/secrets.h.example firmware/src/secrets.h` + credenciales.
-- [ ] Flashear y **calibrar `cfg::UMBRAL_PISADA`** observando el Serial al pisar
-      (`docs/hardware/flashing.md`).
-- [ ] Verificar end-to-end con el dashboard: `app.py --tcp <IP>`.
+- [ ] **EN CURSO — calibrar `cfg::UMBRAL_PISADA`** con el modo calibración
+      (`pio run -e esp32dev_calib`; observar reposo/pico/rango por Serial;
+      `docs/hardware/flashing.md §6`). Bloqueo actual: el modo aún no muestra los
+      sensores conectados (a diagnosticar).
+- [ ] Verificar end-to-end con el dashboard: `app.py --serial /dev/ttyUSB0`
+      (conexión de trabajo USB/Serial) o `app.py --tcp <IP>` si se usa WiFi.
 
 ## 2. Mejoras de funcionalidad (lógica → siempre con tests/golden primero)
 
