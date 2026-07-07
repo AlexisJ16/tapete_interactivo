@@ -107,15 +107,32 @@ void setup() {
     if (!hw.audioDisponible()) {
         Serial.println("AVISO: DFPlayer no detectado (revisa cableado/SD). Sigue sin audio.");
     }
+#ifndef CALIBRACION
     conectarWiFi();
     servidor.begin();
     servidor.setNoDelay(true);
+#endif
 
     static GameEngine eng(hw, emitir);
     motor = &eng;
 }
 
 void loop() {
+#ifdef CALIBRACION
+    // Modo diagnostico (entorno esp32dev_calib, -DCALIBRACION): imprime la
+    // lectura cruda del ADC de cada FSR por serial para calibrar cfg::UMBRAL_PISADA.
+    // NO corre el juego ni WiFi. Pisa cada boton y compara reposo vs pisada firme.
+    static uint32_t ultimoCalib = 0;
+    if (hw.millis() - ultimoCalib >= 200) {
+        ultimoCalib = hw.millis();
+        String linea = "CALIB";
+        for (int c = 1; c <= cfg::CELDAS; ++c) {
+            linea += "  FSR" + String(c) + "=" + String(hw.leerSensor(c));
+        }
+        Serial.println(linea);
+    }
+    return;
+#endif
     // Aceptar/renovar cliente del dashboard.
     if (!cliente || !cliente.connected()) {
         WiFiClient nuevo = servidor.available();

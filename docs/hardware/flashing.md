@@ -59,26 +59,52 @@ Anota la **IP**: la usarás en el dashboard.
 > (`sudo usermod -aG dialout $USER` y reinicia sesión) o instala el driver
 > CP210x/CH340 según tu placa.
 
-## 5. Conectar el dashboard al ESP32
+## 5. Conectar el dashboard al ESP32 (por USB/Serial)
+
+El puerto serie es **exclusivo**: cierra antes el `pio device monitor` (y no
+reflashees con el dashboard abierto). El ESP32 se reinicia al abrir el puerto;
+espera el banner `firmware 1.0.0` antes de pulsar **Iniciar**.
 
 ```bash
-cd dashboard
-../.venv/bin/python app.py --tcp 192.168.1.50      # IP que mostró el Serial
+.venv/bin/python dashboard/app.py --serial /dev/ttyUSB0   # o /dev/ttyACM0
 ```
 
-El dashboard se conecta por TCP (puerto 3333) **con el mismo protocolo** que usa
-contra el simulador. Elige modo/nivel, pulsa **Start** y el niño juega sobre el
+El dashboard habla el **mismo protocolo** por Serial que por TCP (tolera el banner
+de arranque no-JSON). Elige modo/nivel, pulsa **Iniciar** y el niño juega sobre el
 tapete físico; las pisadas (FSR) llegan en vivo y las sesiones se guardan en
 SQLite, exportables a CSV/PDF.
 
-## 6. Calibración del umbral de pisada
+> **Permiso del puerto:** si da *permission denied*, falta el grupo dialout:
+> `sudo usermod -aG dialout $USER` y reinicia sesión. El puerto aparece al
+> conectar: `ls /dev/ttyUSB* /dev/ttyACM*` (CP2102/CH340 → `ttyUSB0`; USB nativo →
+> `ttyACM0`).
+>
+> **Alternativa WiFi (TCP):** pon credenciales en `secrets.h` y usa
+> `--tcp <IP>` con la IP que muestra el Serial. El firmware sirve por ambos a la vez.
 
-Las lecturas crudas del FSR se ven en el Serial. Ajusta `cfg::UMBRAL_PISADA` en
-`firmware/lib/GameCore/Config.h` (0..4095) hasta que una pisada normal lo supere
-con holgura y el reposo quede por debajo. Recompila y vuelve a flashear.
+## 6. Calibración del umbral de pisada (modo calibración)
 
-## 7. Sin WiFi (alternativa por Serial)
+El firmware normal **no** imprime el ADC. Para verlo, flashea el **modo
+calibración** (entorno `esp32dev_calib`): emite las 6 lecturas crudas por serial
+cada ~200 ms y no corre el juego ni WiFi.
 
-Si no hay WiFi, el firmware sigue funcionando: emite y recibe el **mismo
-protocolo** por el puerto serie (115200). Un cliente que hable líneas JSON por
-Serial puede controlarlo igual que por TCP.
+```bash
+cd firmware
+pio run -e esp32dev_calib -t upload    # flashea el modo calibración
+pio device monitor -b 115200
+```
+
+Verás líneas como:
+
+```
+CALIB  FSR1=45  FSR2=52  FSR3=48  FSR4=51  FSR5=47  FSR6=49
+```
+
+Pisa cada botón y anota el valor en **reposo** y con **pisada firme**. Fija
+`cfg::UMBRAL_PISADA` en `firmware/lib/GameCore/Config.h` (0..4095) a un punto
+intermedio (que la pisada lo supere con holgura y el reposo quede debajo). Luego
+**cierra el monitor** y reflashea el firmware normal:
+
+```bash
+pio run -e esp32dev -t upload
+```
