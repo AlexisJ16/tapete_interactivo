@@ -119,37 +119,59 @@ void setup() {
 
 void loop() {
 #ifdef CALIBRACION
-    // Modo diagnostico (entorno esp32dev_calib, -DCALIBRACION): calibra
-    // cfg::UMBRAL_PISADA sin correr el juego ni WiFi. Por cada FSR muestra el
-    // valor actual y el [min..max] observados: el MAX captura el pico de la
-    // pisada aunque sea breve, y el MIN el reposo. Envia cualquier tecla (Enter)
-    // en el monitor para reiniciar min/max y medir otro sensor limpio.
+    // Modo calibracion (entorno esp32dev_calib, -DCALIBRACION). NO corre el juego
+    // ni WiFi. Por cada FSR: promedia 16 lecturas (baja el ruido del ADC), guarda
+    // reposo (min) y pico (max), y marca CONECTADO Y DETECTA (✓) cuando registra
+    // una pisada real (salto >= DELTA). Un canal al aire nunca da ese salto -> ✗.
+    // Calcula el umbral por sensor y uno comun para los seis. Enter = reiniciar.
     static bool init = false;
-    static uint32_t ultimoCalib = 0;
+    static uint32_t ultimo = 0;
     static int minv[cfg::CELDAS + 1];
     static int maxv[cfg::CELDAS + 1];
+    constexpr int DELTA = 1000;   // salto reposo->pico que confirma una pisada real
     if (!init) {
         for (int c = 1; c <= cfg::CELDAS; ++c) { minv[c] = 4095; maxv[c] = 0; }
         init = true;
     }
-    if (Serial.available()) {                          // Enter -> reinicia min/max
+    if (Serial.available()) {                          // Enter -> reinicia
         while (Serial.available()) Serial.read();
         for (int c = 1; c <= cfg::CELDAS; ++c) { minv[c] = 4095; maxv[c] = 0; }
-        Serial.println("CALIB  (min/max reiniciados)");
+        Serial.println(">>> reiniciado (pisa cada sensor) <<<");
     }
-    for (int c = 1; c <= cfg::CELDAS; ++c) {           // muestreo rapido: captura picos
-        int v = hw.leerSensor(c);
+    for (int c = 1; c <= cfg::CELDAS; ++c) {           // promedio de 16 -> menos ruido
+        uint32_t suma = 0;
+        for (int k = 0; k < 16; ++k) suma += hw.leerSensor(c);
+        int v = suma / 16;
         if (v < minv[c]) minv[c] = v;
         if (v > maxv[c]) maxv[c] = v;
     }
-    if (hw.millis() - ultimoCalib >= 300) {
-        ultimoCalib = hw.millis();
-        String linea = "CALIB";
+    if (hw.millis() - ultimo >= 800) {
+        ultimo = hw.millis();
+        int repMax = 0, picoMin = 4095, nOk = 0;
+        Serial.println("====== CALIBRACION FSR ======  (pisa cada sensor; Enter=reiniciar)");
         for (int c = 1; c <= cfg::CELDAS; ++c) {
-            linea += "  FSR" + String(c) + "=" + String(hw.leerSensor(c))
-                   + "[" + String(minv[c]) + ".." + String(maxv[c]) + "]";
+            bool ok = (maxv[c] - minv[c]) >= DELTA;
+            String l = "  FSR" + String(c) + "  ";
+            if (ok) {
+                int umbral = minv[c] + (maxv[c] - minv[c]) * 2 / 5;   // reposo + 40%
+                l += "✓  reposo=" + String(minv[c]) + "  pico=" + String(maxv[c])
+                   + "  umbral=" + String(umbral);
+                if (minv[c] > repMax) repMax = minv[c];
+                if (maxv[c] < picoMin) picoMin = maxv[c];
+                nOk++;
+            } else {
+                l += "✗  (sin sensor / sin pisada)";
+            }
+            Serial.println(l);
         }
-        Serial.println(linea);
+        if (nOk > 0) {
+            int comun = repMax + (picoMin - repMax) * 35 / 100;       // sirve a todos
+            Serial.println("  -> UMBRAL comun sugerido: " + String(comun)
+                         + "   (" + String(nOk) + " sensor(es) OK)");
+        } else {
+            Serial.println("  -> pisa un sensor para ver su umbral");
+        }
+        Serial.println("=============================================");
     }
     return;
 #endif
