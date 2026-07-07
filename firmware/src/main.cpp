@@ -120,15 +120,16 @@ void setup() {
 void loop() {
 #ifdef CALIBRACION
     // Modo calibracion (entorno esp32dev_calib, -DCALIBRACION). NO corre el juego
-    // ni WiFi. Por cada FSR: promedia 16 lecturas (baja el ruido del ADC), guarda
-    // reposo (min) y pico (max), y marca CONECTADO Y DETECTA (✓) cuando registra
-    // una pisada real (salto >= DELTA). Un canal al aire nunca da ese salto -> ✗.
-    // Calcula el umbral por sensor y uno comun para los seis. Enter = reiniciar.
+    // ni WiFi. Muestra SIEMPRE, por cada FSR: valor actual, reposo (min), pico
+    // (max) y rango. El ✓ es solo una PISTA (rango >= UMBRAL_DET sobre el reposo);
+    // los numeros mandan. Un canal conectado tiene reposo estable; uno al aire da
+    // ~0 (GPIO36/39/34/35) o ruido (GPIO32/33). Enter = reiniciar min/max.
     static bool init = false;
     static uint32_t ultimo = 0;
     static int minv[cfg::CELDAS + 1];
     static int maxv[cfg::CELDAS + 1];
-    constexpr int DELTA = 1000;   // salto reposo->pico que confirma una pisada real
+    static int act[cfg::CELDAS + 1];
+    constexpr int UMBRAL_DET = 150;   // salto sobre el reposo que se marca como pisada
     if (!init) {
         for (int c = 1; c <= cfg::CELDAS; ++c) { minv[c] = 4095; maxv[c] = 0; }
         init = true;
@@ -136,40 +137,43 @@ void loop() {
     if (Serial.available()) {                          // Enter -> reinicia
         while (Serial.available()) Serial.read();
         for (int c = 1; c <= cfg::CELDAS; ++c) { minv[c] = 4095; maxv[c] = 0; }
-        Serial.println(">>> reiniciado (pisa cada sensor) <<<");
+        Serial.println(">>> reiniciado (pisa UN sensor fuerte) <<<");
     }
     for (int c = 1; c <= cfg::CELDAS; ++c) {           // promedio de 16 -> menos ruido
         uint32_t suma = 0;
         for (int k = 0; k < 16; ++k) suma += hw.leerSensor(c);
         int v = suma / 16;
+        act[c] = v;
         if (v < minv[c]) minv[c] = v;
         if (v > maxv[c]) maxv[c] = v;
     }
-    if (hw.millis() - ultimo >= 800) {
+    if (hw.millis() - ultimo >= 700) {
         ultimo = hw.millis();
         int repMax = 0, picoMin = 4095, nOk = 0;
-        Serial.println("====== CALIBRACION FSR ======  (pisa cada sensor; Enter=reiniciar)");
+        Serial.println("====== CALIBRACION FSR ======  (Enter=reiniciar)");
         for (int c = 1; c <= cfg::CELDAS; ++c) {
-            bool ok = (maxv[c] - minv[c]) >= DELTA;
-            String l = "  FSR" + String(c) + "  ";
+            int rango = maxv[c] - minv[c];
+            bool ok = rango >= UMBRAL_DET;
+            String l = "  FSR" + String(c)
+                     + "  act=" + String(act[c])
+                     + "  reposo=" + String(minv[c])
+                     + "  pico=" + String(maxv[c])
+                     + "  rango=" + String(rango) + "  ";
             if (ok) {
-                int umbral = minv[c] + (maxv[c] - minv[c]) * 2 / 5;   // reposo + 40%
-                l += "✓  reposo=" + String(minv[c]) + "  pico=" + String(maxv[c])
-                   + "  umbral=" + String(umbral);
+                int umbral = minv[c] + rango * 2 / 5;     // reposo + 40% del rango
+                l += "✓ umbral=" + String(umbral);
                 if (minv[c] > repMax) repMax = minv[c];
                 if (maxv[c] < picoMin) picoMin = maxv[c];
                 nOk++;
             } else {
-                l += "✗  (sin sensor / sin pisada)";
+                l += "✗";
             }
             Serial.println(l);
         }
         if (nOk > 0) {
-            int comun = repMax + (picoMin - repMax) * 35 / 100;       // sirve a todos
+            int comun = repMax + (picoMin - repMax) * 35 / 100;
             Serial.println("  -> UMBRAL comun sugerido: " + String(comun)
-                         + "   (" + String(nOk) + " sensor(es) OK)");
-        } else {
-            Serial.println("  -> pisa un sensor para ver su umbral");
+                         + "   (canales con actividad: " + String(nOk) + ")");
         }
         Serial.println("=============================================");
     }

@@ -85,8 +85,9 @@ SQLite, exportables a CSV/PDF.
 ## 6. Calibración del umbral de pisada (modo calibración)
 
 El firmware normal **no** imprime el ADC. Para verlo, flashea el **modo
-calibración** (entorno `esp32dev_calib`): emite las 6 lecturas crudas por serial
-cada ~200 ms y no corre el juego ni WiFi.
+calibración** (entorno `esp32dev_calib`): imprime por serial, cada ~700 ms, el
+reposo/pico/rango de los 6 FSR (promedia 16 lecturas para bajar el ruido) y no
+corre el juego ni WiFi.
 
 ```bash
 cd firmware
@@ -94,16 +95,33 @@ pio run -e esp32dev_calib -t upload    # flashea el modo calibración
 pio device monitor -b 115200
 ```
 
-Verás líneas como:
+Verás un bloque cada ~700 ms con, por cada FSR: valor **actual**, **reposo**
+(mínimo visto), **pico** (máximo visto) y **rango** (pico−reposo). El `✓` es solo
+una pista (aparece cuando el rango supera 150); **los números mandan**:
 
 ```
-CALIB  FSR1=45  FSR2=52  FSR3=48  FSR4=51  FSR5=47  FSR6=49
+====== CALIBRACION FSR ======  (Enter=reiniciar)
+  FSR1  act=8    reposo=6    pico=41    rango=35     ✗
+  FSR2  act=380  reposo=352  pico=2180  rango=1828   ✓ umbral=1083
+  ...
+  -> UMBRAL comun sugerido: 1000   (canales con actividad: 1)
+=============================================
 ```
 
-Pisa cada botón y anota el valor en **reposo** y con **pisada firme**. Fija
-`cfg::UMBRAL_PISADA` en `firmware/lib/GameCore/Config.h` (0..4095) a un punto
-intermedio (que la pisada lo supere con holgura y el reposo quede debajo). Luego
-**cierra el monitor** y reflashea el firmware normal:
+Cómo leerlo:
+
+- **Canal conectado** → `reposo` estable en una banda con sentido (p. ej. ~300–400
+  con el nodo a ~0.19 V). Al pisar, el `pico` sube.
+- **Canal al aire** (sin sensor) → `reposo` ~0 en GPIO36/39/34/35 (FSR1–4) o ruido
+  en GPIO32/33 (FSR5–6). El rango queda pequeño → `✗`.
+- Pisa **fuerte** (peso, no toque de dedo): un FSR 402 con pull-down de 10 kΩ solo
+  da buen salto con carga real. Pulsa **Enter** para reiniciar reposo/pico.
+
+Anota el `reposo` y el `pico` de cada sensor y fija `cfg::UMBRAL_PISADA` en
+`firmware/lib/GameCore/Config.h` (0..4095) a un punto intermedio —el `umbral`
+que sugiere cada línea (`reposo + 40 %` del rango) es un buen punto de partida—
+que la pisada lo supere con holgura y el reposo quede debajo. Luego **cierra el
+monitor** y reflashea el firmware normal:
 
 ```bash
 pio run -e esp32dev -t upload
