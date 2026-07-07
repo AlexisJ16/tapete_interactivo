@@ -8,7 +8,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from analitica import serie_evolucion, tasa_acierto  # noqa: E402
+from analitica import serie_evolucion, tasa_acierto, tendencia_ventana  # noqa: E402
 from storage import Almacen  # noqa: E402
 
 
@@ -51,3 +51,32 @@ def test_serie_evolucion_perfil_sin_sesiones_es_vacia():
     assert serie["indices"] == []
     assert serie["hits"] == []
     assert serie["tasas"] == []
+
+
+def test_tendencia_ventana_toma_las_ultimas_w():
+    # 6 rondas; con W=4 la tendencia mira solo las 4 ultimas (3 aciertos = 75%,
+    # el mismo umbral 'subir' que usa el motor).
+    res = [True, False, True, True, False, True]
+    t = tendencia_ventana(res, w=4)
+    assert t["recientes"] == [True, True, False, True]
+    assert t["aciertos"] == 3
+    assert t["total"] == 4
+    assert t["pct"] == 75.0
+
+
+def test_tendencia_ventana_incompleta_usa_lo_disponible():
+    # Menos rondas que la ventana: se muestra lo que hay (aun no comparable al
+    # 'rate' del motor, que exige ventana llena).
+    t = tendencia_ventana([True, False], w=4)
+    assert t["recientes"] == [True, False]
+    assert t["aciertos"] == 1
+    assert t["total"] == 2
+    assert t["pct"] == 50.0
+
+
+def test_tendencia_ventana_vacia():
+    t = tendencia_ventana([], w=4)
+    assert t["recientes"] == []
+    assert t["aciertos"] == 0
+    assert t["total"] == 0
+    assert t["pct"] == 0.0

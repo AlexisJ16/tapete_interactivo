@@ -63,7 +63,7 @@ def test_dashboard_registra_y_su_analitica_lo_muestra():
     v = VentanaDashboard(fuente=FuenteCore(), almacen=Almacen(":memory:"))
     v.in_perfil_id.setText("p001")
     v.in_perfil_nombre.setText("Juan")
-    v.sp_seed.setValue(12345)
+    v.semilla = 12345
     v.cb_modo.setCurrentIndex(1)  # Velocidad
     v.sp_nivel.setValue(1)
     v._start()
@@ -80,3 +80,27 @@ def test_dashboard_registra_y_su_analitica_lo_muestra():
     assert len(serie["indices"]) == 1
     assert serie["hits"][0] == 5
     assert serie["tasas"][0] == 100.0
+
+
+def test_ventana_muestra_recomendacion_en_vivo_y_aplica_nivel():
+    """Cableado end-to-end: al jugar, el panel de analisis recibe la sugerencia
+    del motor y 'Aplicar' manda set_level (el motor nunca cambia el nivel solo)."""
+    _app()
+    v = VentanaDashboard(fuente=FuenteCore(), almacen=Almacen(":memory:"))
+    v.semilla = 12345               # objetivos [3,4,5,3,6]
+    v.cb_modo.setCurrentIndex(1)    # Velocidad
+    v.sp_nivel.setValue(1)
+    v._start()
+    for _ in range(4):              # 4 aciertos: el motor sugiere subir a nivel 2
+        v.tick()
+        enc = next((c for c in range(1, 7) if v.ses.leds[c] > 0), None)
+        assert enc is not None
+        v.fuente.pisar(enc)
+        v.tick()
+
+    assert v.ses.ultima_sugerencia.get("dir") == "up"
+    assert v.pa.btn_aplicar.isEnabled()          # el panel refleja la sugerencia
+
+    v.pa.btn_aplicar.click()                     # el terapeuta la aplica
+    assert v.ses.nivel == 2                       # se mando set_level
+    assert v.sp_nivel.value() == 2                # el control se sincronizo

@@ -16,6 +16,20 @@ def tasa_acierto(s: dict) -> float:
     return round(100.0 * hits / total, 1) if total else 0.0
 
 
+def tendencia_ventana(resultados: list[bool], w: int = 4) -> dict:
+    """Tendencia de acierto de las ultimas `w` rondas (True=acierto por ronda).
+
+    Usa la MISMA ventana que el motor (cfg::adaptacion::W=4) para que el % sea
+    comparable al `rate` del evento suggest. Con menos de `w` rondas muestra lo
+    disponible (aun no comparable: el motor solo sugiere con ventana llena).
+    """
+    recientes = resultados[-w:]
+    aciertos = sum(1 for r in recientes if r)
+    total = len(recientes)
+    pct = round(100.0 * aciertos / total, 1) if total else 0.0
+    return {"recientes": recientes, "aciertos": aciertos, "total": total, "pct": pct}
+
+
 def serie_evolucion(almacen: Almacen, perfil_id: str) -> dict:
     """Series por sesion de un perfil, en orden cronologico, para graficar la
     evolucion (E4) y la adaptacion nivel-desempeno (E2)."""

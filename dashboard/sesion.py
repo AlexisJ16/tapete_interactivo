@@ -26,6 +26,7 @@ class Sesion:
         self.rondas = 0
         self.ultimo_rt = 0
         self._rts: list[int] = []    # tiempos de reaccion (>0) para el promedio
+        self.resultados: list[bool] = []    # acierto/error por ronda (para la tendencia en vivo)
         self.ultima_sugerencia: dict = {}   # ultima recomendacion (SP1; UI en SP2)
 
     # --- configuracion / control ---
@@ -59,6 +60,7 @@ class Sesion:
     def _reset_metricas(self) -> None:
         self.hits = self.misses = self.rondas = self.ultimo_rt = 0
         self._rts = []
+        self.resultados = []
         self.leds = [0] * 7
 
     # --- bucle de eventos ---
@@ -80,6 +82,12 @@ class Sesion:
         elif tipo == "sound":
             pass  # el sonido lo gestiona el simulador/ESP32, no el dashboard
         elif tipo == "score":
+            # Cada score resuelve una ronda subiendo +1 hits o +1 misses; el
+            # delta dice si fue acierto o error (base de la tendencia en vivo).
+            if ev["hits"] > self.hits:
+                self.resultados.append(True)
+            elif ev["misses"] > self.misses:
+                self.resultados.append(False)
             self.hits = ev["hits"]
             self.misses = ev["misses"]
             self.rondas = ev["round"]

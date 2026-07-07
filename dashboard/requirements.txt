@@ -1,3 +1,4 @@
 # Dashboard del terapeuta.
 PyQt6>=6.6
 matplotlib>=3.8
+pyserial>=3.5   # FuenteSerial: conexion USB/Serial con el ESP32

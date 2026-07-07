@@ -85,6 +85,48 @@ def test_metricas_con_errores():
     assert s["hits"] == 0
 
 
+def test_sesion_acumula_resultados_por_ronda():
+    # La vista en vivo necesita saber, ronda a ronda, si fue acierto o error.
+    # Sesion lo deriva de los deltas de hits/misses de cada evento score.
+    almacen = Almacen(":memory:")
+    reloj = Reloj()
+    fuente = FuenteCore(reloj=reloj)
+    ses = Sesion(almacen, fuente)
+    ses.sembrar(12345)               # objetivos [3,4,5,3,6]
+    ses.configurar(modo=2, nivel=1)
+    ses.iniciar()
+
+    # Ronda 1: acierto (pisa la encendida).
+    ses.bombear()
+    encendida = next((c for c in range(1, 7) if ses.leds[c] > 0), None)
+    assert encendida is not None
+    reloj.avanzar(400)
+    fuente.pisar(encendida)
+    ses.bombear()
+
+    # Ronda 2: error (pisa una casilla que NO es la encendida).
+    ses.bombear()
+    encendida = next((c for c in range(1, 7) if ses.leds[c] > 0), None)
+    assert encendida is not None
+    equivocada = 1 if encendida != 1 else 2
+    reloj.avanzar(400)
+    fuente.pisar(equivocada)
+    ses.bombear()
+
+    assert ses.resultados == [True, False]
+
+
+def test_resultados_se_reinician_al_iniciar():
+    almacen = Almacen(":memory:")
+    fuente = FuenteCore(reloj=Reloj())
+    ses = Sesion(almacen, fuente)
+    ses.resultados = [True, False, True]   # residuo de una sesion anterior
+    ses.sembrar(12345)
+    ses.configurar(modo=2, nivel=1)
+    ses.iniciar()
+    assert ses.resultados == []
+
+
 def test_suggest_up_tras_cuatro_aciertos():
     almacen = Almacen(":memory:")
     reloj = Reloj()

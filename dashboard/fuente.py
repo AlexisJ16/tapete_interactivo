@@ -21,6 +21,19 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
 from core_bridge import CoreBridge  # noqa: E402
 
 
+def construir_fuente(tcp: str | None = None, serial: str | None = None,
+                     puerto: int = 3333) -> "Fuente":
+    """Elige la fuente segun los argumentos de arranque. `tcp` y `serial` son
+    excluyentes; sin ninguno se embebe el simulador (FuenteCore)."""
+    if tcp and serial:
+        raise ValueError("--tcp y --serial son excluyentes: elige una sola conexion")
+    if serial:
+        return FuenteSerial(serial)
+    if tcp:
+        return FuenteTCP(tcp, puerto)
+    return FuenteCore()
+
+
 class Fuente(ABC):
     """Frontera comun: el dashboard envia comandos y recibe lineas de evento."""
 
@@ -163,3 +176,51 @@ class FuenteTCP(Fuente):
             except OSError:
                 pass
         self.sock = None
+
+
+class FuenteSerial(Fuente):
+    """Cliente line-JSON hacia el ESP32 por USB/Serial (mismo protocolo que TCP).
+
+    El cable USB alimenta y transporta a 115200 baudios; no depende de WiFi. La
+    lectura es no bloqueante (timeout=0) y NO filtra: el serial mezcla el banner
+    de arranque del ESP32 (no-JSON) con los eventos, y quien descarta las lineas
+    no-JSON es sesion.py (via except JSONDecodeError). Fallar al abrir el puerto
+    propaga (ruidoso); los errores de E/S posteriores se silencian para no tumbar
+    la GUI si el cable se desconecta.
+    """
+
+    def __init__(self, puerto: str, baud: int = 115200, timeout: float = 0):
+        import serial  # dependencia solo de esta fuente (pyserial)
+        # serial_for_url acepta tanto un puerto ("/dev/ttyUSB0") como una URL de
+        # test ("loop://"), lo que permite probar el framing sin hardware.
+        self.ser = serial.serial_for_url(puerto, baudrate=baud, timeout=timeout)
+        self._buf = b""
+
+    def enviar(self, linea: str) -> None:
+        if not linea.endswith("\n"):
+            linea += "\n"
+        try:
+            self.ser.write(linea.encode("utf-8"))
+        except OSError:
+            pass
+
+    def recibir(self) -> list[str]:
+        try:
+            trozo = self.ser.read(4096)   # no bloqueante: lo disponible ya
+        except OSError:
+            return []
+        if trozo:
+            self._buf += trozo
+        lineas: list[str] = []
+        while b"\n" in self._buf:
+            linea, self._buf = self._buf.split(b"\n", 1)
+            s = linea.decode("utf-8", "replace").strip()
+            if s:
+                lineas.append(s)
+        return lineas
+
+    def cerrar(self) -> None:
+        try:
+            self.ser.close()
+        except OSError:
+            pass

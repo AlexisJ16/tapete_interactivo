@@ -19,56 +19,21 @@ import sys
 DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, DIR)
 
-from analitica import serie_evolucion  # noqa: E402
-from fuente import FuenteCore, FuenteTCP  # noqa: E402
+from analitica import serie_evolucion, tasa_acierto  # noqa: E402
+from estilo import QSS  # noqa: E402
+from fuente import FuenteCore, construir_fuente  # noqa: E402
+from paneles import PanelAnalisis, PanelJuego, PanelMetricas  # noqa: E402
 from reports import exportar_csv, exportar_pdf  # noqa: E402
 from sesion import Sesion  # noqa: E402
 from storage import Almacen  # noqa: E402
 
 NOMBRES_MODO = {1: "Memoria", 2: "Velocidad", 3: "Equilibrio"}
+SEMILLA_DEFECTO = 12345   # reproducibilidad del RNG; no es un control clinico
 
 
 def _qt():
     from PyQt6 import QtCore, QtGui, QtWidgets
     return QtCore, QtGui, QtWidgets
-
-
-class CeldaLed:
-    """Fabrica del widget de una casilla (LED blanco clicable)."""
-
-    @staticmethod
-    def crear(celda, on_click):
-        QtCore, QtGui, QtWidgets = _qt()
-
-        class _Celda(QtWidgets.QWidget):
-            def __init__(self):
-                super().__init__()
-                self.celda = celda
-                self.nivel = 0
-                self.setMinimumSize(120, 120)
-
-            def set_nivel(self, n):
-                if n != self.nivel:
-                    self.nivel = n
-                    self.update()
-
-            def paintEvent(self, _):
-                p = QtGui.QPainter(self)
-                p.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
-                base = 35
-                v = int(base + (255 - base) * (self.nivel / 255.0))
-                p.setBrush(QtGui.QColor(v, v, v))           # LED BLANCO: escala de gris
-                p.setPen(QtGui.QPen(QtGui.QColor(90, 90, 110), 2))
-                r = self.rect().adjusted(6, 6, -6, -6)
-                p.drawRoundedRect(r, 16, 16)
-                p.setPen(QtGui.QColor(10, 10, 10) if self.nivel > 128 else QtGui.QColor(200, 200, 210))
-                f = p.font(); f.setPointSize(26); f.setBold(True); p.setFont(f)
-                p.drawText(r, QtCore.Qt.AlignmentFlag.AlignCenter, str(self.celda))
-
-            def mousePressEvent(self, _):
-                on_click(self.celda)
-
-        return _Celda()
 
 
 class PanelAnalitica:
@@ -179,76 +144,84 @@ class VentanaDashboard:
         self.almacen = almacen or Almacen(os.path.join(DIR, "tapete.sqlite"))
         self.fuente = fuente or FuenteCore()
         self.ses = Sesion(self.almacen, self.fuente)
+        self.semilla = SEMILLA_DEFECTO   # fuera de la vista del doctor
 
         self.win = QtWidgets.QMainWindow()
-        self.win.setWindowTitle("Tapete Interactivo — Dashboard del terapeuta")
+        self.win.setWindowTitle("Tapete Interactivo — Pantalla del terapeuta")
         self.tabs = QtWidgets.QTabWidget()
         self.win.setCentralWidget(self.tabs)
+
+        # ===== Pestaña "En vivo": controles + juego | metricas / analisis =====
         en_vivo = QtWidgets.QWidget()
         self.tabs.addTab(en_vivo, "En vivo")
-        layout = QtWidgets.QVBoxLayout(en_vivo)
+        raiz = QtWidgets.QVBoxLayout(en_vivo)
 
-        # --- barra de controles ---
+        # --- barra de controles (sin semilla: no es clinica) ---
         ctrl = QtWidgets.QHBoxLayout()
-        self.in_perfil_id = QtWidgets.QLineEdit("p001")
-        self.in_perfil_nombre = QtWidgets.QLineEdit("Juan")
+        self.in_perfil_id = QtWidgets.QLineEdit("p001"); self.in_perfil_id.setMaximumWidth(90)
+        self.in_perfil_nombre = QtWidgets.QLineEdit("Juan"); self.in_perfil_nombre.setMaximumWidth(150)
         self.cb_modo = QtWidgets.QComboBox()
         for i in (1, 2, 3):
             self.cb_modo.addItem(f"{i} - {NOMBRES_MODO[i]}", i)
         self.cb_modo.setCurrentIndex(1)  # Velocidad
         self.sp_nivel = QtWidgets.QSpinBox(); self.sp_nivel.setRange(1, 4); self.sp_nivel.setValue(1)
-        self.sp_seed = QtWidgets.QSpinBox(); self.sp_seed.setRange(1, 2_000_000_000); self.sp_seed.setValue(12345)
-        b_start = QtWidgets.QPushButton("Start")
-        b_stop = QtWidgets.QPushButton("Stop")
-        b_pause = QtWidgets.QPushButton("Pausa")
-        for w, etq in [(self.in_perfil_id, "ID"), (self.in_perfil_nombre, "Nombre")]:
+        self.b_start = QtWidgets.QPushButton("Iniciar"); self.b_start.setObjectName("start")
+        self.b_pause = QtWidgets.QPushButton("Pausa")
+        self.b_stop = QtWidgets.QPushButton("Detener"); self.b_stop.setObjectName("stop")
+        for w, etq in [(self.in_perfil_id, "Niño (ID)"), (self.in_perfil_nombre, "Nombre")]:
             ctrl.addWidget(QtWidgets.QLabel(etq)); ctrl.addWidget(w)
         ctrl.addWidget(QtWidgets.QLabel("Modo")); ctrl.addWidget(self.cb_modo)
         ctrl.addWidget(QtWidgets.QLabel("Nivel")); ctrl.addWidget(self.sp_nivel)
-        ctrl.addWidget(QtWidgets.QLabel("Semilla")); ctrl.addWidget(self.sp_seed)
-        ctrl.addWidget(b_start); ctrl.addWidget(b_pause); ctrl.addWidget(b_stop)
-        layout.addLayout(ctrl)
+        ctrl.addStretch(1)
+        ctrl.addWidget(self.b_start); ctrl.addWidget(self.b_pause); ctrl.addWidget(self.b_stop)
+        raiz.addLayout(ctrl)
 
-        # --- rejilla de LEDs 2x3 ---
-        grid = QtWidgets.QGridLayout()
-        self.celdas = {}
-        for c in range(1, 7):
-            w = CeldaLed.crear(c, self._click_celda)
-            self.celdas[c] = w
-            fila, col = divmod(c - 1, 3)
-            grid.addWidget(w, fila, col)
-        layout.addLayout(grid)
+        # --- cuerpo: juego (izq, grande) | metricas (arriba) + analisis (abajo) ---
+        self.pj = PanelJuego(on_click=self._click_celda)
+        self.pm = PanelMetricas()
+        self.pa = PanelAnalisis(on_aplicar=self._aplicar_nivel)
 
-        # --- HUD de metricas + reportes ---
-        self.lbl_estado = QtWidgets.QLabel("Estado: idle")
-        self.lbl_score = QtWidgets.QLabel("hits=0  misses=0  rt=0ms  ronda=0")
+        derecha = QtWidgets.QSplitter(QtCore.Qt.Orientation.Vertical)
+        derecha.addWidget(self.pm.widget)
+        derecha.addWidget(self.pa.widget)
+        derecha.setSizes([300, 300])          # dos partes iguales
+
+        cuerpo = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal)
+        cuerpo.addWidget(self.pj.widget)
+        cuerpo.addWidget(derecha)
+        cuerpo.setStretchFactor(0, 3)          # el juego, mas grande
+        cuerpo.setStretchFactor(1, 2)
+        cuerpo.setSizes([640, 420])
+        raiz.addWidget(cuerpo, 1)
+
+        # --- franja inferior: export discreto ---
+        pie = QtWidgets.QHBoxLayout()
+        self.lbl_export = QtWidgets.QLabel("")
+        self.lbl_export.setObjectName("export")
         b_csv = QtWidgets.QPushButton("Exportar CSV")
         b_pdf = QtWidgets.QPushButton("Exportar PDF")
-        hud = QtWidgets.QHBoxLayout()
-        hud.addWidget(self.lbl_estado); hud.addWidget(self.lbl_score)
-        hud.addStretch(1); hud.addWidget(b_csv); hud.addWidget(b_pdf)
-        layout.addLayout(hud)
+        pie.addWidget(self.lbl_export); pie.addStretch(1)
+        pie.addWidget(b_csv); pie.addWidget(b_pdf)
+        raiz.addLayout(pie)
+
+        # ===== Pestaña "Historico" (evolucion por perfil) =====
+        self.panel = PanelAnalitica(self.almacen)
+        self.tabs.addTab(self.panel.widget, "Historico")
+        self.tabs.currentChanged.connect(
+            lambda i: self.panel.refrescar() if self.tabs.tabText(i) == "Historico" else None
+        )
 
         # --- conexiones ---
-        b_start.clicked.connect(self._start)
-        b_stop.clicked.connect(self.ses.detener)
-        b_pause.clicked.connect(self.ses.pausar)
+        self.b_start.clicked.connect(self._start)
+        self.b_stop.clicked.connect(self.ses.detener)
+        self.b_pause.clicked.connect(self.ses.pausar)
         self.cb_modo.currentIndexChanged.connect(self._configurar)
         self.sp_nivel.valueChanged.connect(self._configurar)
         b_csv.clicked.connect(lambda: self._exportar("csv"))
         b_pdf.clicked.connect(lambda: self._exportar("pdf"))
-
         self._configurar()
 
-        # --- pestaña de analitica (historico por perfil) ---
-        self.panel = PanelAnalitica(self.almacen)
-        self.tabs.addTab(self.panel.widget, "Analitica")
-        # al entrar a la pestaña, recarga con las sesiones nuevas
-        self.tabs.currentChanged.connect(
-            lambda i: self.panel.refrescar() if self.tabs.tabText(i) == "Analitica" else None
-        )
-
-        # --- temporizador de sondeo ---
+        # --- temporizador de sondeo (25 Hz) ---
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.tick)
         self.timer.start(40)
@@ -262,9 +235,17 @@ class VentanaDashboard:
 
     def _start(self):
         self.ses.set_perfil(self.in_perfil_id.text() or "anon", self.in_perfil_nombre.text() or "")
-        self.ses.sembrar(int(self.sp_seed.value()))
+        self.ses.sembrar(self.semilla)
         self.ses.configurar(self._modo(), self.sp_nivel.value())
         self.ses.iniciar()
+
+    def _aplicar_nivel(self, nivel):
+        # Aplica la recomendacion del motor con set_level (efectivo la ronda
+        # siguiente, sin recrear el modo). No re-disparar _configurar (set_mode).
+        self.ses.set_nivel(nivel)
+        self.sp_nivel.blockSignals(True)
+        self.sp_nivel.setValue(nivel)
+        self.sp_nivel.blockSignals(False)
 
     def _click_celda(self, celda):
         # Solo tiene efecto en modo embebido (FuenteCore): "pisar" con el raton.
@@ -278,20 +259,18 @@ class VentanaDashboard:
         os.makedirs(os.path.join(DIR, "reportes"), exist_ok=True)
         ruta = os.path.join(DIR, "reportes", f"sesion_{self.ses.sesion_id}.{fmt}")
         (exportar_csv if fmt == "csv" else exportar_pdf)(self.almacen, self.ses.sesion_id, ruta)
-        self.lbl_estado.setText(f"Exportado: {ruta}")
+        self.lbl_export.setText(f"Exportado: {ruta}")
 
     def tick(self):
         self.ses.bombear()
         self._refrescar()
 
     def _refrescar(self):
-        for c in range(1, 7):
-            self.celdas[c].set_nivel(self.ses.leds[c])
-        self.lbl_estado.setText(f"Estado: {self.ses.estado}")
-        self.lbl_score.setText(
-            f"hits={self.ses.hits}  misses={self.ses.misses}  "
-            f"rt={self.ses.ultimo_rt}ms  ronda={self.ses.rondas}"
-        )
+        self.pj.actualizar(self.ses.leds, self.ses.estado, self.ses.rondas)
+        tasa = tasa_acierto({"hits": self.ses.hits, "misses": self.ses.misses})
+        self.pm.actualizar(self.ses.hits, self.ses.misses, tasa,
+                           self.ses.ultimo_rt, self.ses.rondas)
+        self.pa.actualizar(self.ses.resultados, self.ses.ultima_sugerencia)
 
     def mostrar(self):
         self.win.show()
@@ -306,7 +285,7 @@ def smoke() -> int:
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
     v = VentanaDashboard(fuente=FuenteCore(), almacen=Almacen(":memory:"))
-    v.sp_seed.setValue(12345)
+    v.semilla = 12345
     v.cb_modo.setCurrentIndex(1)  # Velocidad
     v.sp_nivel.setValue(1)
     v._start()
@@ -320,9 +299,9 @@ def smoke() -> int:
         v.tick()
 
     ok = v.ses.estado == "finished" and v.ses.hits == 5
-    # El HUD debe reflejar el estado final.
-    refleja = "finished" in v.lbl_estado.text()
-    print(f"[smoke-app] estado={v.ses.estado} hits={v.ses.hits} hud='{v.lbl_estado.text()}'")
+    # El panel de juego debe reflejar el estado final.
+    refleja = "finished" in v.pj.lbl_estado.text()
+    print(f"[smoke-app] estado={v.ses.estado} hits={v.ses.hits} juego='{v.pj.lbl_estado.text()}'")
     print("[smoke-app] OK" if (ok and refleja) else "[smoke-app] FALLO")
     del app
     return 0 if (ok and refleja) else 1
@@ -332,12 +311,15 @@ def main() -> int:
     import argparse
     p = argparse.ArgumentParser(description="Dashboard del terapeuta")
     p.add_argument("--tcp", metavar="HOST", default=None, help="conectar a un ESP32/simulador por TCP")
+    p.add_argument("--serial", metavar="PUERTO", default=None,
+                   help="conectar a un ESP32 por USB/Serial (p. ej. /dev/ttyUSB0)")
     p.add_argument("--puerto", type=int, default=3333)
     args = p.parse_args()
 
     QtCore, QtGui, QtWidgets = _qt()
     app = QtWidgets.QApplication(sys.argv)
-    fuente = FuenteTCP(args.tcp, args.puerto) if args.tcp else FuenteCore()
+    app.setStyleSheet(QSS)
+    fuente = construir_fuente(tcp=args.tcp, serial=args.serial, puerto=args.puerto)
     v = VentanaDashboard(fuente=fuente)
     v.mostrar()
     return app.exec()
