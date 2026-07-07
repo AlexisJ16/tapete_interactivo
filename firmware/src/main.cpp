@@ -119,15 +119,35 @@ void setup() {
 
 void loop() {
 #ifdef CALIBRACION
-    // Modo diagnostico (entorno esp32dev_calib, -DCALIBRACION): imprime la
-    // lectura cruda del ADC de cada FSR por serial para calibrar cfg::UMBRAL_PISADA.
-    // NO corre el juego ni WiFi. Pisa cada boton y compara reposo vs pisada firme.
+    // Modo diagnostico (entorno esp32dev_calib, -DCALIBRACION): calibra
+    // cfg::UMBRAL_PISADA sin correr el juego ni WiFi. Por cada FSR muestra el
+    // valor actual y el [min..max] observados: el MAX captura el pico de la
+    // pisada aunque sea breve, y el MIN el reposo. Envia cualquier tecla (Enter)
+    // en el monitor para reiniciar min/max y medir otro sensor limpio.
+    static bool init = false;
     static uint32_t ultimoCalib = 0;
-    if (hw.millis() - ultimoCalib >= 200) {
+    static int minv[cfg::CELDAS + 1];
+    static int maxv[cfg::CELDAS + 1];
+    if (!init) {
+        for (int c = 1; c <= cfg::CELDAS; ++c) { minv[c] = 4095; maxv[c] = 0; }
+        init = true;
+    }
+    if (Serial.available()) {                          // Enter -> reinicia min/max
+        while (Serial.available()) Serial.read();
+        for (int c = 1; c <= cfg::CELDAS; ++c) { minv[c] = 4095; maxv[c] = 0; }
+        Serial.println("CALIB  (min/max reiniciados)");
+    }
+    for (int c = 1; c <= cfg::CELDAS; ++c) {           // muestreo rapido: captura picos
+        int v = hw.leerSensor(c);
+        if (v < minv[c]) minv[c] = v;
+        if (v > maxv[c]) maxv[c] = v;
+    }
+    if (hw.millis() - ultimoCalib >= 300) {
         ultimoCalib = hw.millis();
         String linea = "CALIB";
         for (int c = 1; c <= cfg::CELDAS; ++c) {
-            linea += "  FSR" + String(c) + "=" + String(hw.leerSensor(c));
+            linea += "  FSR" + String(c) + "=" + String(hw.leerSensor(c))
+                   + "[" + String(minv[c]) + ".." + String(maxv[c]) + "]";
         }
         Serial.println(linea);
     }
