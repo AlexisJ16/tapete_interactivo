@@ -14,13 +14,18 @@ habla con un **dashboard** de PC en tiempo real.
 
 Las 6 fases del plan base están **completas y validadas**:
 
-- GameCore (RNG, protocolo, motor, 3 modos) — tests doctest, ~2134 aserciones.
+- GameCore (RNG, protocolo, motor, 3 modos) — tests doctest, ~2174 aserciones.
 - Simulador Pygame + puente ctypes + servidor TCP + golden runner.
 - Dashboard PyQt6 + SQLite + export CSV/PDF + integración (FuenteCore y FuenteTCP).
 - Firmware ESP32 (`EspHardware` + WiFi/TCP) — **compila para `esp32dev`**.
 - Documentación completa en `docs/` y `README.md`.
+- **Robustez integral:** programación defensiva en boundaries (protocolo, fuentes,
+  storage/export, motor, buffer del firmware) + red de seguridad global de la GUI
+  (`dashboard/robustez.py`: la GUI loguea y no muere) + degradación visible +
+  generadores deterministas en la suite (monkey de GUI multi-seed ≥5000 ev; fuzz de
+  protocolo Py/C++).
 
-`./scripts/run_all_tests.sh` → **TODO VERDE** (43 casos C++ / 2134 aserciones + 56 pytest).
+`./scripts/run_all_tests.sh` → **TODO VERDE** (52 casos C++ / 2174 aserciones + 100 pytest).
 `pio run -e esp32dev` → **SUCCESS** (Flash ~60%, RAM ~14%).
 
 Próximos pasos y mejoras: ver `docs/ROADMAP.md`.
@@ -101,6 +106,18 @@ pio run -e esp32dev -t upload && pio device monitor -b 115200
   asumir solo la API 3.x (`ledcAttach`/`ledcWrite(pin,...)`).
 - **PEP 668:** usar siempre el `.venv` del proyecto, no el pip del sistema.
 - **Audio ESP32:** los MP3 van en `/mp3/000X.mp3` de la SD (`playMp3Folder`).
+- **`set_mode`/`set_level` en sesión activa NO deben recrear el modo sin iniciarlo** — era
+  corrupción de memoria en GameCore (`patron_`/`enPatron_` basura → `led` con celda corrupta →
+  crash del dashboard bajo clics rápidos; **afectaba también al ESP32**). En RUNNING/PAUSED apagan
+  y pasan a IDLE; además se validan rangos de `mode`/`level`/`celda` (1..6).
+- **El parser de protocolo NO debe lanzar ante entrada malformada.** C++: `Protocol.cpp` no usa
+  `std::stoll`/`std::stoi` (un entero >19 dígitos lanzaba `out_of_range` → abort del firmware);
+  parser propio sin excepciones + cota de línea. Python: `sesion.bombear()` captura
+  `ValueError`/`RecursionError` (enteros JSON gigantes o hiper-anidados). No reintroducir accesos
+  sin cota ni `except` que traguen en silencio.
+- **La GUI nunca debe morir por un bug interno.** `tick()` y los handlers van envueltos en
+  `ejecutar_seguro` (loguea con traceback, no propaga); hay un `excepthook` global de respaldo. Un
+  fallo de fuente/DB se refleja como estado degradado en la UI (sticky para la DB).
 
 ## Estructura
 
