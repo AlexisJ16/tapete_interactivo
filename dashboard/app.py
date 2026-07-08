@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import logging
 import os
+import sqlite3
 import sys
 
 DIR = os.path.dirname(os.path.abspath(__file__))
@@ -162,6 +163,41 @@ class PanelAnalitica:
         self.lbl.setText(f"Exportado: {ruta}")
 
 
+class _AlmacenSesion:
+    """Envuelve el almacen real solo para las escrituras que hace Sesion
+    (actualizar_metricas/registrar_evento): reenvia todo lo demas via
+    __getattr__ (duck typing, igual que Fuente) y avisa con 'marcar(ok)' si
+    cada escritura tuvo exito o fallo. Necesario porque, entre eventos
+    score/press, bombear() no escribe nada -- "el tick no lanzo" no implica
+    "la DB esta sana" (Finding 1, Task 4.2: la degradacion de almacen debe
+    ser pegajoso hasta la proxima escritura exitosa, no hasta el proximo tick
+    cualquiera). Busca el metodo real con getattr() en cada llamada (no lo
+    ata en el constructor) para seguir funcionando si un test monkeypatchea
+    el metodo despues de crear la ventana."""
+
+    def __init__(self, real, marcar):
+        self._real = real
+        self._marcar = marcar
+
+    def __getattr__(self, nombre):
+        return getattr(self._real, nombre)
+
+    def actualizar_metricas(self, *a, **kw):
+        return self._escribir("actualizar_metricas", a, kw)
+
+    def registrar_evento(self, *a, **kw):
+        return self._escribir("registrar_evento", a, kw)
+
+    def _escribir(self, nombre, a, kw):
+        try:
+            resultado = getattr(self._real, nombre)(*a, **kw)
+        except sqlite3.Error:
+            self._marcar(False)
+            raise
+        self._marcar(True)
+        return resultado
+
+
 class VentanaDashboard:
     """Encapsula la ventana principal (sin heredar de Qt para facilitar el smoke)."""
 
@@ -170,10 +206,15 @@ class VentanaDashboard:
         self.QtCore = QtCore
         self.QtWidgets = QtWidgets
 
-        # --- estado de degradacion (Task 4.2): tres motivos independientes que
-        # el indicador de conexion combina. '_degradado_almacen' es pegajoso
-        # (una vez que se cae a memoria, sigue asi toda la sesion); los otros
-        # dos se recalculan en cada tick.
+        # --- estado de degradacion (Task 4.2): cuatro motivos independientes
+        # que el indicador de conexion combina. '_degradado_almacen' (fallo al
+        # ABRIR el archivo de DB) y '_degradado_almacen_escritura' (fallo al
+        # ESCRIBIR ya con la sesion en curso) son pegajosos cada uno por su
+        # lado -- el primero no se limpia nunca (la apertura ya cayo a
+        # memoria toda la sesion); el segundo se limpia solo cuando una
+        # escritura vuelve a tener exito (Finding 1: un tick ocioso sin
+        # escrituras no cuenta como "recuperado"). Los otros dos se
+        # recalculan en cada tick.
         self._degradado_almacen = False
         if almacen is not None:
             self.almacen = almacen
@@ -182,10 +223,11 @@ class VentanaDashboard:
                 os.path.join(DIR, "tapete.sqlite"),
                 on_degradado=lambda motivo: setattr(self, "_degradado_almacen", True),
             )
+        self._degradado_almacen_escritura = False
         self._degradado_error = False
         self._degradado_transporte = False
         self.fuente = fuente or FuenteCore()
-        self.ses = Sesion(self.almacen, self.fuente)
+        self.ses = Sesion(_AlmacenSesion(self.almacen, self._marcar_escritura_almacen), self.fuente)
         self.semilla = SEMILLA_DEFECTO   # fuera de la vista del doctor
 
         self.win = QtWidgets.QMainWindow()
@@ -281,6 +323,12 @@ class VentanaDashboard:
         # se asumen conectadas siempre (de ahi el default True).
         return getattr(self.fuente, "sock", True) is not None
 
+    def _marcar_escritura_almacen(self, ok: bool) -> None:
+        # No llama a _actualizar_estado_conexion() aqui: el tick que dispara la
+        # escritura ya la llama al final (via _tick_interno o, si la escritura
+        # lanzo y aborto el tick, via _marcar_error_tick).
+        self._degradado_almacen_escritura = not ok
+
     def _actualizar_estado_conexion(self) -> None:
         motivos = []
         if self._degradado_error:
@@ -289,6 +337,8 @@ class VentanaDashboard:
             motivos.append("fuente desconectada")
         if self._degradado_almacen:
             motivos.append("almacen en memoria")
+        if self._degradado_almacen_escritura:
+            motivos.append("fallo de escritura en almacen")
         if motivos:
             self.lbl_estado_conexion.setText("Degradado: " + ", ".join(motivos))
             self.lbl_estado_conexion.setStyleSheet("color: #B42318; font-weight: 700;")

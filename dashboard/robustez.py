@@ -32,11 +32,17 @@ def ejecutar_seguro(fn, logger, on_error=None):
     'on_error', si se pasa, se llama con la excepcion capturada. Es el gancho
     que usa la GUI (Task 4.2) para reflejar el fallo como un estado VISIBLE
     (indicador "Degradado") en vez de dejarlo solo en el log; no cambia el
-    comportamiento de los llamadores que no lo usan (por defecto None)."""
+    comportamiento de los llamadores que no lo usan (por defecto None).
+    La llamada a on_error va en su propio try/except: un bug en el propio
+    gancho no puede escapar de la red de seguridad que ejecutar_seguro
+    representa."""
     try:
         return fn()
     except Exception as e:
         logger.error("Excepcion capturada en un handler/tick", exc_info=True)
         if on_error is not None:
-            on_error(e)
+            try:
+                on_error(e)
+            except Exception:
+                logger.error("Excepcion en el propio on_error", exc_info=True)
         return None

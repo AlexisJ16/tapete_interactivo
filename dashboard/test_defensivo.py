@@ -454,6 +454,27 @@ def test_ejecutar_seguro_no_afecta_el_camino_normal():
     assert ejecutar_seguro(lambda: 42, logger) == 42   # sin excepcion: retorna igual
 
 
+def test_ejecutar_seguro_on_error_que_lanza_no_escapa_la_red_de_seguridad(caplog):
+    # Finding 2 (Task 4.2, hallazgo del reviewer): on_error(e) se llamaba sin
+    # guarda propia; un bug futuro en el gancho (p. ej. en _marcar_error_tick)
+    # rompería la red de seguridad que ejecutar_seguro esta destinado a ser.
+    from robustez import ejecutar_seguro
+    logger = logging.getLogger("test_robustez_unit")
+
+    def _boom():
+        raise RuntimeError("bug interno simulado")
+
+    def _on_error_roto(exc):
+        raise ValueError("bug dentro del propio on_error")
+
+    with caplog.at_level(logging.ERROR, logger="test_robustez_unit"):
+        resultado = ejecutar_seguro(_boom, logger, on_error=_on_error_roto)
+
+    assert resultado is None                              # no propaga ninguna de las dos
+    assert "bug interno simulado" in caplog.text
+    assert "bug dentro del propio on_error" in caplog.text
+
+
 def test_instalar_excepthook_registra_sin_abortar(caplog):
     from robustez import instalar_excepthook
     logger = logging.getLogger("test_robustez_hook")
@@ -632,6 +653,43 @@ def test_almacen_que_falla_a_mitad_de_sesion_marca_indicador_degradado_y_no_cras
     with caplog.at_level(logging.ERROR):
         v.tick()                       # no debe lanzar
     assert "Degradado" in v.lbl_estado_conexion.text()
+
+
+def test_almacen_que_falla_sigue_degradado_en_un_tick_ocioso_posterior(
+    monkeypatch, caplog
+):
+    # Hallazgo del reviewer (Finding 1, Task 4.2): actualizar_metricas/registrar_evento
+    # solo se llaman en eventos score/press; entre eventos, bombear() "tiene exito"
+    # trivialmente aunque la DB siga rota. El _degradado_error (arriba) se resetea
+    # en CUALQUIER tick que no lance -- un tick ocioso posterior a la falla apagaba
+    # el indicador aunque la DB siguiera caida (la caida SOSTENIDA de la DB debe
+    # verse todo el tiempo, no solo en el tick exacto del fallo).
+    v = _ventana()
+    v.b_start.click()
+    v.tick()
+    assert v.ses.estado == "running"
+
+    def _boom(*a, **kw):
+        raise sqlite3.OperationalError("disco lleno (simulado)")
+
+    monkeypatch.setattr(v.almacen, "actualizar_metricas", _boom)
+
+    encendida = next(c for c in range(1, 7) if v.ses.leds[c] > 0)
+    v.fuente.pisar(encendida)
+    with caplog.at_level(logging.ERROR):
+        v.tick()                       # tick CON evento: la escritura falla
+    assert "Degradado" in v.lbl_estado_conexion.text()
+
+    v.tick()                           # tick OCIOSO: bombear() no lanza (sin evento nuevo)
+    assert "Degradado" in v.lbl_estado_conexion.text()   # la DB sigue rota: no debe apagarse
+
+    monkeypatch.undo()                 # la DB "se recupera"
+    # Cualquier celda valida dispara un evento "press" -> registrar_evento
+    # (no monkeypatcheado): no depende de acertar la celda encendida, solo de
+    # que ocurra una escritura real que tenga exito.
+    v.fuente.pisar(1)
+    v.tick()                           # tick con escritura EXITOSA: recien ahi se limpia
+    assert v.lbl_estado_conexion.text() == "Conectado"
 
 
 def test_construir_ventana_con_db_corrupta_al_arrancar_muestra_indicador_degradado(
