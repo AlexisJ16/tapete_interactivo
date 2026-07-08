@@ -234,6 +234,12 @@ class VentanaDashboard:
         self.ses.configurar(self._modo(), self.sp_nivel.value())
 
     def _start(self):
+        # Doble start (sesion ya en curso): ignorar. Sin esta guarda, set_perfil/
+        # sembrar/configurar reenviarian set_seed/set_mode a mitad de partida (la
+        # segunda reinicia el RNG y el modo) y ses.iniciar() crearia una fila
+        # SQLite huerfana ademas de resetear las metricas en curso.
+        if self.ses.estado in ("running", "paused"):
+            return
         self.ses.set_perfil(self.in_perfil_id.text() or "anon", self.in_perfil_nombre.text() or "")
         self.ses.sembrar(self.semilla)
         self.ses.configurar(self._modo(), self.sp_nivel.value())
