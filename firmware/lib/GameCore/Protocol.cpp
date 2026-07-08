@@ -42,12 +42,20 @@ bool leerCadena(const std::string& t, size_t& i, std::string& out) {
 }
 
 bool leerEntero(const std::string& t, size_t& i, long long& out) {
-    size_t inicio = i;
-    if (i < t.size() && (t[i] == '-' || t[i] == '+')) ++i;
+    bool neg = false;
+    if (i < t.size() && (t[i] == '-' || t[i] == '+')) { neg = (t[i] == '-'); ++i; }
     size_t digitos = 0;
-    while (i < t.size() && t[i] >= '0' && t[i] <= '9') { ++i; ++digitos; }
+    long long val = 0;
+    // Acumulacion manual con saturacion: evita std::stoll, que lanzaria
+    // out_of_range con numeros de >19 digitos (abort en el ESP32, que compila sin
+    // excepciones). Se toman a lo sumo 18 digitos (caben en long long); el resto se
+    // ignora. Cualquier valor mayor es basura para el protocolo.
+    while (i < t.size() && t[i] >= '0' && t[i] <= '9') {
+        if (digitos < 18) val = val * 10 + (t[i] - '0');
+        ++i; ++digitos;
+    }
     if (digitos == 0) return false;
-    out = std::stoll(t.substr(inicio, i - inicio));
+    out = neg ? -val : val;
     return true;
 }
 

@@ -31,6 +31,10 @@ static String bufferSerial;
 static bool pisada[cfg::CELDAS + 1] = {false};
 static uint32_t ultimaPisada[cfg::CELDAS + 1] = {0};
 static constexpr uint32_t ANTIRREBOTE_MS = 120;
+// Cota del buffer de linea de entrada (serial/TCP): una linea de protocolo real
+// ronda los 100 bytes; mas de esto sin '\n' es basura -> se descarta (protege la
+// RAM del ESP32 de una linea patologica sin fin).
+static constexpr unsigned MAX_LINEA = 256;
 
 // Emisor: cada evento del motor se manda al Serial y al cliente TCP conectado.
 static void emitir(const proto::Evento& e) {
@@ -68,6 +72,7 @@ static void procesarLineasDe(WiFiClient& c, String& buf) {
         if (ch == '\n') {
             if (buf.length()) { motor->procesarLinea(buf.c_str()); buf = ""; }
         } else if (ch != '\r') {
+            if (buf.length() >= MAX_LINEA) buf = "";  // linea sin fin: descartar
             buf += ch;
         }
     }
@@ -79,6 +84,7 @@ static void procesarLineasSerial() {
         if (ch == '\n') {
             if (bufferSerial.length()) { motor->procesarLinea(bufferSerial.c_str()); bufferSerial = ""; }
         } else if (ch != '\r') {
+            if (bufferSerial.length() >= MAX_LINEA) bufferSerial = "";
             bufferSerial += ch;
         }
     }

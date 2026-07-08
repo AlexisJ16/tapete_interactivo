@@ -104,3 +104,14 @@ TEST_CASE("cadenas con comillas se escapan y se recuperan") {
     Comando r = Comando::parsear(c.serializar());
     CHECK(r.name == R"(Jo"se)");
 }
+
+TEST_CASE("robustez: numeros gigantes no crashean el parser") {
+    // El ESP32 recibe comandos por serial/TCP; un numero de >19 digitos hacia que
+    // std::stoll lanzara out_of_range -> abort del firmware (sin excepciones).
+    Comando c = Comando::parsear(R"({"cmd":"set_level","level":99999999999999999999999})");
+    CHECK(c.tipo == Comando::Tipo::SET_LEVEL);   // parsea sin crashear
+    Evento e = Evento::parsear(R"({"ev":"led","cell":123456789012345678901234,"level":1})");
+    CHECK(e.tipo == Evento::Tipo::LED);          // sin crash
+    Comando s = Comando::parsear(R"({"cmd":"set_seed","seed":-99999999999999999999})");
+    CHECK(s.tipo == Comando::Tipo::SET_SEED);    // negativo gigante tampoco
+}
