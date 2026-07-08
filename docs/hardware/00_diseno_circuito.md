@@ -34,7 +34,8 @@ ESP32 al centro del piso corre la lógica y se comunica con el dashboard de PC.
 4. **24 hilos** tapa→protoboard (4 por botón). Cables largos por **encadenado
    M-F + M-M soldado + termorretráctil**.
 5. Caja transparente **40 × 28 × 13 cm**; protoboard al centro del piso; 6 botones
-   en la tapa en cuadrícula **2×3**. Gráfico de la tapa **32.5 × 19.5 cm (horizontal)**.
+   en la tapa en cuadrícula **2×3**. Gráfico/cuadro interior **32.8 × 19.5 cm**;
+   tapa completa a cubrir **39 × 26 cm** (plantilla imprimible en `grafico/`).
 
 ## 3. Arquitectura de potencia — 4 rieles (anti-corto)
 
@@ -50,9 +51,11 @@ y §3, Paso 2 (armado de los rieles).
 ## 4. Prototipo físico (caja + tapa)
 
 ### 4.1 Distribución de botones en la tapa
-Cuadrícula **2×3** respetando `[1][2][3] / [4][5][6]`, sobre un área de gráfico de
-**32.5 (ancho) × 19.5 (alto) cm**. Separación ~10 cm; hueco para el USB en una
-pared lateral, alineado con el puerto del ESP32.
+Cuadrícula **2×3** respetando `[1][2][3] / [4][5][6]`, sobre un cuadro interior de
+**32.8 (ancho) × 19.5 (alto) cm** (tapa completa a cubrir **39 × 26 cm**). Centros
+separados **8.2 cm** entre columnas y **6.5 cm** entre filas; botones de **radio
+2.8 cm**. Plantilla a escala real para acetato en `grafico/` (ver su `README.md`).
+Hueco para el USB en una pared lateral, alineado con el puerto del ESP32.
 
 ### 4.2 Módulo bajo-tapa por botón (construcción real con acrílico)
 Para que la tapa no flexe y el FSR lea con precisión, la tapa se **rigidiza con dos
@@ -82,7 +85,8 @@ inferior, y baja organizado hacia el protoboard.
 La tapa es transparente y los LEDs son **blancos**. Como los LEDs se ven **directo
 por los huecos**, no dependen de que el material sea translúcido. El gráfico que va
 encima debe dejar una **ventana** sobre cada botón para que se vea el LED. Cada
-ventana de color hace que el LED blanco encienda en ese tono (ver `grafico-tapete.svg`).
+ventana de color hace que el LED blanco encienda en ese tono (plantilla a escala real:
+`grafico/grafico_tapete_A3.pdf`, generada por `scripts/gen_grafico_tapete.py`).
 
 ### 4.4 Cableado tapa→protoboard
 24 hilos = 6 botones × 4 (FSR_alto, FSR_bajo, LED_ánodo común, LED_cátodo común).

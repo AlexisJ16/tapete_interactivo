@@ -12,20 +12,20 @@ una por tema:
 | `validation.md` | Validación por software (simulador, dashboard y tests). |
 | `spice/` | Validación analógica con **ngspice** (divisor FSR, grupo LED). |
 | `kicad/` | **Esquemático eléctrico** KiCad 10 (ERC significativo en verde + PDF/BOM/netlist). Cruza net-por-net con `cableado.md` y `Config.h`. |
-| `grafico-tapete.svg` | Arte de la tapa (6 ventanas, paleta accesible). |
+| `grafico/` | **Plantilla imprimible a escala real** de la tapa (acetato A3); ver `grafico/README.md`. |
 
-## Impresión del gráfico de la tapa (`grafico-tapete.svg`)
+## Impresión del gráfico de la tapa (`grafico/`)
 
-- **Tamaño:** **32.5 × 19.5 cm (horizontal)**. Imprimir a tamaño real.
-- **Ventanas de los botones:** como los LEDs se ven **directo por los huecos** del
-  acrílico, el gráfico solo necesita dejar una ventana sobre cada botón (no requiere
-  material translúcido en toda la lámina).
+Plantilla vectorial **a escala real** para imprimir en **acetato A3** y montar sobre la
+tapa. Instrucciones completas en `grafico/README.md`. Resumen:
+
+- **Tamaño:** cuadro interior **32.8 × 19.5 cm**; tapa completa a cubrir **39 × 26 cm**;
+  6 botones **Ø 5.6 cm**. Imprimir **al 100%** (la hoja trae regla de 100 mm y marcas de corte).
+- **Ventanas de los botones:** relleno translúcido de color + número al centro; el LED
+  blanco enciende teñido de ese tono (los LEDs se ven directo por los huecos).
 - **Paleta (hex):** B1 `#E63946` · B2 `#FFD60A` · B3 `#2A9D8F` · B4 `#0077B6` ·
-  B5 `#F77F00` · B6 `#7B2CBF` · fondo `#FFF8E7` · contornos/números `#1D3557`.
-- **Accesibilidad:** cada botón se distingue por **color + número + forma** (estrella,
-  corazón, círculo, cuadrado, triángulo, rombo) → no depende solo del color.
-
-> El gráfico será rediseñado a nivel profesional a este tamaño (tarea aparte).
+  B5 `#F77F00` · B6 `#7B2CBF` · números/contornos `#1D3557`.
+- **Accesibilidad:** cada botón se distingue por **color + número** (no depende solo del color).
 
 ## Antes de energizar
 
