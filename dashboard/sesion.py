@@ -11,6 +11,15 @@ from fuente import Fuente
 from storage import Almacen
 
 
+def _es_int(x) -> bool:
+    """int de verdad (excluye bool, que es subclase de int)."""
+    return isinstance(x, int) and not isinstance(x, bool)
+
+
+def _como_int(x, defecto: int = 0) -> int:
+    return x if _es_int(x) else defecto
+
+
 class Sesion:
     def __init__(self, almacen: Almacen, fuente: Fuente):
         self.almacen = almacen
@@ -73,35 +82,51 @@ class Sesion:
                 continue
             self._procesar(ev)
 
+    def _celda_valida(self, c) -> bool:
+        # 1..6 (leds tiene 7 slots: 0 no se usa). Excluye bool y fuera de rango.
+        return _es_int(c) and 1 <= c < len(self.leds)
+
     def _procesar(self, ev: dict) -> None:
+        # Frontera: el evento viene de una fuente externa (core, o el ESP32 por
+        # serial/TCP, que puede mezclar ruido). Se valida aqui; una entrada
+        # malformada se descarta sin lanzar ni corromper estado.
+        if not isinstance(ev, dict):
+            return
         tipo = ev.get("ev")
         if tipo == "led":
-            self.leds[ev["cell"]] = ev["level"]
+            cell, level = ev.get("cell"), ev.get("level")
+            if self._celda_valida(cell) and _es_int(level):
+                self.leds[cell] = level
         elif tipo == "press":
-            self._log(ev.get("ms", 0), "press", {"cell": ev["cell"]})
+            cell = ev.get("cell")
+            if self._celda_valida(cell):
+                self._log(_como_int(ev.get("ms")), "press", {"cell": cell})
         elif tipo == "sound":
             pass  # el sonido lo gestiona el simulador/ESP32, no el dashboard
         elif tipo == "score":
+            hits, misses = ev.get("hits"), ev.get("misses")
+            ronda, rt = ev.get("round"), ev.get("rt_ms")
+            if not all(_es_int(x) for x in (hits, misses, ronda, rt)):
+                return
             # Cada score resuelve una ronda subiendo +1 hits o +1 misses; el
             # delta dice si fue acierto o error (base de la tendencia en vivo).
-            if ev["hits"] > self.hits:
+            if hits > self.hits:
                 self.resultados.append(True)
-            elif ev["misses"] > self.misses:
+            elif misses > self.misses:
                 self.resultados.append(False)
-            self.hits = ev["hits"]
-            self.misses = ev["misses"]
-            self.rondas = ev["round"]
-            self.ultimo_rt = ev["rt_ms"]
-            if ev["rt_ms"] > 0:
-                self._rts.append(ev["rt_ms"])
+            self.hits, self.misses, self.rondas, self.ultimo_rt = hits, misses, ronda, rt
+            if rt > 0:
+                self._rts.append(rt)
             self._log(0, "score", ev)
             self._persistir_metricas()
         elif tipo == "suggest":
             self.ultima_sugerencia = ev   # se reconoce; la vista en vivo es SP2
         elif tipo == "state":
-            self.estado = ev["status"]
-            if self.estado == "finished":
-                self._cerrar()
+            status = ev.get("status")
+            if isinstance(status, str):
+                self.estado = status
+                if status == "finished":
+                    self._cerrar()
 
     def _log(self, ms: int, tipo: str, datos: dict) -> None:
         if self.sesion_id is not None:

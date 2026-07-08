@@ -176,14 +176,16 @@ class PanelAnalisis:
         else:
             self.lbl_tendencia.setText("Aciertos recientes: — (sin rondas aun)")
 
-        direccion = sugerencia.get("dir") if sugerencia else None
-        if direccion in ("up", "down"):
-            nivel = sugerencia["level"]
+        sug = sugerencia if isinstance(sugerencia, dict) else {}
+        direccion = sug.get("dir")
+        nivel = sug.get("level")
+        if direccion in ("up", "down") and isinstance(nivel, int) and not isinstance(nivel, bool):
             verbo = "Subir" if direccion == "up" else "Bajar"
+            rate, ventana = sug.get("rate", "?"), sug.get("window", "?")
             self._nivel_sugerido = nivel
             self.lbl_recom.setText(
                 f"Sugerencia: {verbo} a nivel {nivel}  "
-                f"(acierto {sugerencia['rate']}% en {sugerencia['window']} rondas)"
+                f"(acierto {rate}% en {ventana} rondas)"
             )
             self.btn_aplicar.setText(f"Aplicar: {verbo.lower()} a nivel {nivel}")
             self.btn_aplicar.setEnabled(True)

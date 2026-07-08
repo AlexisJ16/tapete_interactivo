@@ -20,6 +20,26 @@ from abc import ABC, abstractmethod
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "simulator"))
 from core_bridge import CoreBridge  # noqa: E402
 
+# Cota del buffer de recepcion: una linea de protocolo real ronda los 100 bytes.
+# Si se acumulan >64 KiB sin '\n' es ruido/linea patologica -> se descarta el
+# residuo (evita crecimiento sin fin ante un serial que escupe basura sin newline).
+_MAX_BUF = 1 << 16
+
+
+def _extraer_lineas(buf: bytes) -> "tuple[list[str], bytes]":
+    """Parte 'buf' en lineas completas (por '\\n') y devuelve (lineas, residuo).
+    Las lineas se decodifican con 'replace' (bytes no-UTF8 no rompen). El residuo
+    se descarta si excede la cota."""
+    lineas: list[str] = []
+    while b"\n" in buf:
+        linea, buf = buf.split(b"\n", 1)
+        s = linea.decode("utf-8", "replace").strip()
+        if s:
+            lineas.append(s)
+    if len(buf) > _MAX_BUF:
+        buf = b""
+    return lineas, buf
+
 
 def construir_fuente(tcp: str | None = None, serial: str | None = None,
                      puerto: int = 3333) -> "Fuente":
@@ -161,12 +181,7 @@ class FuenteTCP(Fuente):
             pass
         except OSError:
             self._caer()
-        lineas: list[str] = []
-        while b"\n" in self._buf:
-            linea, self._buf = self._buf.split(b"\n", 1)
-            s = linea.decode("utf-8", "replace").strip()
-            if s:
-                lineas.append(s)
+        lineas, self._buf = _extraer_lineas(self._buf)
         return lineas
 
     def cerrar(self) -> None:
@@ -211,12 +226,7 @@ class FuenteSerial(Fuente):
             return []
         if trozo:
             self._buf += trozo
-        lineas: list[str] = []
-        while b"\n" in self._buf:
-            linea, self._buf = self._buf.split(b"\n", 1)
-            s = linea.decode("utf-8", "replace").strip()
-            if s:
-                lineas.append(s)
+        lineas, self._buf = _extraer_lineas(self._buf)
         return lineas
 
     def cerrar(self) -> None:
