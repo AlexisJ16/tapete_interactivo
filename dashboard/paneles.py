@@ -81,6 +81,8 @@ class PanelJuego:
         info = QtWidgets.QHBoxLayout()
         self.lbl_estado = QtWidgets.QLabel("Estado: idle")
         self.lbl_estado.setObjectName("estadoJuego")
+        self.lbl_estado.setProperty("estado", "idle")   # color inicial coincide con el 1er render
+        self._estado_pintado = "idle"
         self.lbl_ronda = QtWidgets.QLabel("Ronda 0")
         self.lbl_ronda.setObjectName("rondaJuego")
         info.addWidget(self.lbl_estado); info.addStretch(1); info.addWidget(self.lbl_ronda)
@@ -89,8 +91,16 @@ class PanelJuego:
     def actualizar(self, leds, estado, ronda):
         for c in range(1, 7):
             self.celdas[c].set_nivel(leds[c])
+        # El texto conserva la palabra de estado en minuscula (la leen los tests).
         self.lbl_estado.setText(f"Estado: {estado}")
         self.lbl_ronda.setText(f"Ronda {ronda}")
+        if estado != self._estado_pintado:
+            # Color del chip via propiedad [estado]; re-polish solo al cambiar
+            # (no en cada refresco de 25 Hz), igual que PanelAnalisis._pintar_dir.
+            self._estado_pintado = estado
+            self.lbl_estado.setProperty("estado", estado)
+            st = self.lbl_estado.style()
+            st.unpolish(self.lbl_estado); st.polish(self.lbl_estado)
 
 
 class PanelMetricas:

@@ -22,7 +22,7 @@ DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, DIR)
 
 from analitica import serie_evolucion, tasa_acierto  # noqa: E402
-from estilo import QSS  # noqa: E402
+from estilo import QSS, GRAFICO  # noqa: E402
 from fuente import FuenteCore, construir_fuente  # noqa: E402
 from paneles import PanelAnalisis, PanelJuego, PanelMetricas  # noqa: E402
 from reports import ReporteError, exportar_csv, exportar_pdf  # noqa: E402
@@ -117,35 +117,38 @@ class PanelAnalitica:
     def graficar(self, perfil_id):
         serie = serie_evolucion(self.almacen, perfil_id)
         self.fig.clear()
+        self.fig.patch.set_facecolor(GRAFICO["fondo"])   # integra la figura con el fondo del tab
         ax1 = self.fig.add_subplot(3, 1, 1)
         ax2 = self.fig.add_subplot(3, 1, 2)
         ax3 = self.fig.add_subplot(3, 1, 3)
         x = serie["indices"]
         if x:
-            ax1.plot(x, serie["hits"], "-o", color="tab:green", label="aciertos")
-            ax1.plot(x, serie["misses"], "-o", color="tab:red", label="errores")
+            ax1.plot(x, serie["hits"], "-o", color=GRAFICO["aciertos"], label="aciertos")
+            ax1.plot(x, serie["misses"], "-o", color=GRAFICO["errores"], label="errores")
             ax1.set_ylabel("conteo"); ax1.legend(loc="upper left")
-            ax1.grid(True, alpha=0.3)
             ax1.set_title(f"Evolucion por sesion — perfil {perfil_id}")
 
-            ax2.plot(x, serie["rt_prom_ms"], "-o", color="tab:purple")
+            ax2.plot(x, serie["rt_prom_ms"], "-o", color=GRAFICO["rt"])
             ax2.set_ylabel("t. respuesta (ms)")
-            ax2.grid(True, alpha=0.3)
             ax2.set_title("Tiempo de respuesta promedio")
 
-            ax3.plot(x, serie["tasas"], "-o", color="tab:blue", label="acierto (%)")
+            ax3.plot(x, serie["tasas"], "-o", color=GRAFICO["tasa"], label="acierto (%)")
             ax3b = ax3.twinx()
-            ax3b.plot(x, serie["niveles"], "--s", color="tab:orange", label="nivel")
+            ax3b.plot(x, serie["niveles"], "--s", color=GRAFICO["nivel"], label="nivel")
             ax3.set_xlabel("sesion"); ax3.set_ylabel("acierto (%)")
             ax3b.set_ylabel("nivel")
             ax3.set_ylim(0, 105); ax3b.set_ylim(0.5, 4.5); ax3b.set_yticks([1, 2, 3, 4])
-            ax3.grid(True, alpha=0.3)
             ax3.set_title("Adaptacion: acierto vs nivel sugerido")
+            # Mismos ejes claros y grid tenue en las tres graficas (paleta clinica).
+            for ax in (ax1, ax2, ax3):
+                ax.set_facecolor("#FFFFFF")
+                ax.grid(True, alpha=0.3, color=GRAFICO["grid"])
+                ax.title.set_color(GRAFICO["tinta"])
         else:
             for ax in (ax1, ax2, ax3):
                 ax.set_axis_off()
             ax1.text(0.5, 0.5, "Sin sesiones para este perfil",
-                     ha="center", va="center")
+                     ha="center", va="center", color=GRAFICO["tinta"])
         self.fig.tight_layout()
         self.canvas.draw()
 
@@ -239,9 +242,12 @@ class VentanaDashboard:
         en_vivo = QtWidgets.QWidget()
         self.tabs.addTab(en_vivo, "En vivo")
         raiz = QtWidgets.QVBoxLayout(en_vivo)
+        raiz.setContentsMargins(18, 16, 18, 14)   # aire deliberado alrededor del contenido
+        raiz.setSpacing(14)
 
         # --- barra de controles (sin semilla: no es clinica) ---
         ctrl = QtWidgets.QHBoxLayout()
+        ctrl.setSpacing(8)
         self.in_perfil_id = QtWidgets.QLineEdit("p001"); self.in_perfil_id.setMaximumWidth(90)
         self.in_perfil_nombre = QtWidgets.QLineEdit("Juan"); self.in_perfil_nombre.setMaximumWidth(150)
         self.cb_modo = QtWidgets.QComboBox()
@@ -280,6 +286,7 @@ class VentanaDashboard:
 
         # --- franja inferior: estado de conexion + export discreto ---
         pie = QtWidgets.QHBoxLayout()
+        pie.setSpacing(8)
         self.lbl_estado_conexion = QtWidgets.QLabel("")
         self.lbl_estado_conexion.setObjectName("estadoConexion")
         self.lbl_export = QtWidgets.QLabel("")
@@ -341,10 +348,17 @@ class VentanaDashboard:
             motivos.append("fallo de escritura en almacen")
         if motivos:
             self.lbl_estado_conexion.setText("Degradado: " + ", ".join(motivos))
-            self.lbl_estado_conexion.setStyleSheet("color: #B42318; font-weight: 700;")
+            estado = "degradado"
         else:
             self.lbl_estado_conexion.setText("Conectado")
-            self.lbl_estado_conexion.setStyleSheet("color: #15803D; font-weight: 700;")
+            estado = "ok"
+        # El color sale del QSS (chip [estado]); re-polish solo al cambiar de estado
+        # (no en cada tick), mismo patron que el chip del panel de juego.
+        if estado != getattr(self, "_estado_conexion_pintado", None):
+            self._estado_conexion_pintado = estado
+            self.lbl_estado_conexion.setProperty("estado", estado)
+            st = self.lbl_estado_conexion.style()
+            st.unpolish(self.lbl_estado_conexion); st.polish(self.lbl_estado_conexion)
 
     def _marcar_error_tick(self, exc) -> None:
         self._degradado_error = True

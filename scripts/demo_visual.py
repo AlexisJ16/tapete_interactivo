@@ -70,10 +70,11 @@ def capturar_dashboard():
     from storage import Almacen
 
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+    app.setStyleSheet(__import__("estilo").QSS)  # misma hoja de estilo que main()
     v = VentanaDashboard(fuente=FuenteCore(), almacen=Almacen(":memory:"))
-    v.win.resize(780, 640)
+    v.win.resize(980, 680)
     v.win.show()
-    v.sp_seed.setValue(12345)
+    v.semilla = 12345  # la semilla ya no es un control de la vista clinica
     v.cb_modo.setCurrentIndex(1)  # Velocidad
     v.sp_nivel.setValue(1)
     v.in_perfil_nombre.setText("Demo")

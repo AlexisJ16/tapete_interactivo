@@ -5,17 +5,45 @@ juego oscura para resaltar los LEDs blancos del tapete, y color con SIGNIFICADO
 (verde=acierto/subir, ambar=bajar, rojo=error, gris=mantener). Tipografia con
 jerarquia: cifras grandes, rotulos pequenos. Qt QSS no soporta sombras ni
 text-transform; el relieve se logra con superficie blanca + borde sobre el fondo.
+
+La paleta vive una sola vez aqui (constantes de abajo) y la consumen tanto el QSS
+como las graficas matplotlib del "Historico" (via GRAFICO), para que ambas
+pestanas lean como un solo producto y no como dos aplicaciones distintas.
 """
 
 FUENTE = '"Noto Sans", "DejaVu Sans", sans-serif'
 
+# --- Paleta clinica (fuente unica de color) ---
+TEAL = "#0F766E"       # primario (salud/terapia)
+TEAL_OSC = "#0B5A54"
+VERDE = "#15803D"      # acierto / subir nivel
+ROJO = "#DC2626"       # error
+ROJO_OSC = "#B42318"
+AMBAR = "#B45309"      # bajar nivel
+AZUL_PIZ = "#475569"   # dato neutro (tiempo de reaccion)
+TINTA = "#1F2933"
+GRIS = "#8A94A6"
+FONDO = "#F4F6F9"
+
+# Colores para las series de matplotlib del historico (mismos que el QSS).
+GRAFICO = {
+    "aciertos": VERDE,
+    "errores": ROJO,
+    "rt": AZUL_PIZ,
+    "tasa": TEAL,
+    "nivel": AMBAR,
+    "grid": "#CBD5E1",
+    "tinta": "#384250",
+    "fondo": FONDO,
+}
+
 QSS = f"""
 * {{
     font-family: {FUENTE};
-    color: #1F2933;
+    color: {TINTA};
 }}
 QMainWindow, QTabWidget::pane, QWidget {{
-    background: #F4F6F9;
+    background: {FONDO};
 }}
 QTabWidget::pane {{ border: none; }}
 /* Los QLabel no pintan fondo (heredarian el gris del selector universal). */
@@ -34,9 +62,10 @@ QTabBar::tab {{
     border-bottom: 2px solid transparent;
 }}
 QTabBar::tab:selected {{
-    color: #0F766E;
-    border-bottom: 2px solid #0F766E;
+    color: {TEAL};
+    border-bottom: 2px solid {TEAL};
 }}
+QTabBar::tab:hover:!selected {{ color: #384250; }}
 
 /* --- Barra de controles --- */
 QLabel {{ font-size: 13px; color: #384250; }}
@@ -48,8 +77,20 @@ QLineEdit, QComboBox, QSpinBox {{
     font-size: 13px;
     min-height: 20px;
 }}
-QLineEdit:focus, QComboBox:focus, QSpinBox:focus {{ border: 1px solid #0F766E; }}
-QComboBox::drop-down {{ border: none; width: 20px; }}
+QLineEdit:focus, QComboBox:focus, QSpinBox:focus {{ border: 1px solid {TEAL}; }}
+QComboBox::drop-down {{ border: none; width: 22px; }}
+
+/* SpinBox de nivel: botones +/- con fondo sutil pegados al campo; la flecha la
+   pinta Qt (nativa) -- los triangulos QSS por 'border' no cuajan fiables entre
+   estilos y se veian como rectangulos. Tratamiento minimo y limpio. */
+QSpinBox {{ padding-right: 22px; }}
+QSpinBox::up-button, QSpinBox::down-button {{
+    subcontrol-origin: padding;
+    width: 18px; background: #EDF1F5; border-left: 1px solid #D5DCE5;
+}}
+QSpinBox::up-button {{ subcontrol-position: top right; border-bottom: 1px solid #D5DCE5; }}
+QSpinBox::down-button {{ subcontrol-position: bottom right; }}
+QSpinBox::up-button:hover, QSpinBox::down-button:hover {{ background: #DDE4EC; }}
 
 QPushButton {{
     background: #FFFFFF;
@@ -58,19 +99,33 @@ QPushButton {{
     padding: 7px 16px;
     font-size: 13px;
     font-weight: 600;
-    color: #1F2933;
+    color: {TINTA};
 }}
 QPushButton:hover {{ background: #EDF1F5; }}
-QPushButton#start {{ background: #0F766E; color: #FFFFFF; border: none; }}
-QPushButton#start:hover {{ background: #0B5A54; }}
-QPushButton#stop {{ color: #B42318; border: 1px solid #EFC7C2; }}
+/* Foco de teclado visible (accesibilidad): anillo teal sin mover el layout. */
+QPushButton:focus {{ border: 1px solid {TEAL}; }}
+QPushButton#start {{ background: {TEAL}; color: #FFFFFF; border: 1px solid {TEAL}; }}
+QPushButton#start:hover {{ background: {TEAL_OSC}; border-color: {TEAL_OSC}; }}
+QPushButton#start:focus {{ border: 1px solid {TEAL_OSC}; }}
+QPushButton#stop {{ color: {ROJO_OSC}; border: 1px solid #EFC7C2; }}
 QPushButton#stop:hover {{ background: #FDF1EF; }}
+QPushButton#stop:focus {{ border: 1px solid {ROJO_OSC}; }}
 
 /* --- Panel de juego: fondo oscuro, los LEDs blancos resaltan --- */
 QWidget#panelJuego {{ background: #1B2430; border-radius: 16px; }}
-QLabel#estadoJuego, QLabel#rondaJuego {{
+QLabel#rondaJuego {{
     color: #C7D0DB; font-size: 14px; font-weight: 600; padding: 2px 6px;
 }}
+/* Estado del juego como chip con color semantico (idle/running/paused/finished).
+   El texto conserva la palabra de estado en minuscula (lo usan los tests). */
+QLabel#estadoJuego {{
+    font-size: 13px; font-weight: 700; color: #AEB8C6;
+    padding: 3px 12px; border-radius: 11px;
+    background: rgba(255, 255, 255, 0.06);
+}}
+QLabel#estadoJuego[estado="running"]  {{ color: #86EFAC; background: rgba(21, 128, 61, 0.22); }}
+QLabel#estadoJuego[estado="paused"]   {{ color: #FBBF77; background: rgba(180, 83, 9, 0.26); }}
+QLabel#estadoJuego[estado="finished"] {{ color: #7FE3D8; background: rgba(15, 118, 110, 0.30); }}
 
 /* --- Tarjetas de metricas --- */
 QWidget#panelMetricas {{ background: transparent; }}
@@ -79,12 +134,16 @@ QFrame#tarjeta {{
     border: 1px solid #E3E8EF;
     border-radius: 14px;
     padding: 8px;
+    min-height: 74px;
 }}
-QLabel#valor {{ font-size: 34px; font-weight: 800; color: #1F2933; }}
-QLabel#rotulo {{ font-size: 11px; font-weight: 700; color: #8A94A6; }}
-QFrame#tarjeta[clase="aciertos"] QLabel#valor {{ color: #15803D; }}
-QFrame#tarjeta[clase="errores"] QLabel#valor {{ color: #DC2626; }}
-QFrame#tarjeta[clase="tasa"] QLabel#valor {{ color: #0F766E; }}
+QLabel#valor {{ font-size: 34px; font-weight: 800; color: {TINTA}; }}
+QLabel#rotulo {{ font-size: 11px; font-weight: 700; color: #6B7280; }}
+QFrame#tarjeta[clase="aciertos"] QLabel#valor {{ color: {VERDE}; }}
+QFrame#tarjeta[clase="errores"] QLabel#valor {{ color: {ROJO}; }}
+QFrame#tarjeta[clase="tasa"] QLabel#valor {{ color: {TEAL}; }}
+/* La tarjeta de ronda (ancha) es contexto, no una metrica de desempeno: mas sobria. */
+QFrame#tarjeta[clase="ronda"] {{ min-height: 58px; background: #FBFCFD; }}
+QFrame#tarjeta[clase="ronda"] QLabel#valor {{ font-size: 26px; color: #384250; }}
 
 /* --- Panel de analisis / recomendacion --- */
 QWidget#panelAnalisis {{ background: transparent; }}
@@ -99,14 +158,22 @@ QLabel#recomendacion[dir="down"] {{ background: #FBEFE0; color: #8A4B0A; }}
 QPushButton#aplicar {{
     font-size: 14px; font-weight: 700; padding: 11px;
     border: none; border-radius: 10px;
-    background: #D2DAE3; color: #8A94A6;
+    background: #D2DAE3; color: #6B7280;
 }}
 /* El boton sigue la direccion: verde subir, ambar bajar (coherente con la tarjeta). */
-QPushButton#aplicar[dir="up"]:enabled {{ background: #15803D; color: #FFFFFF; }}
+QPushButton#aplicar[dir="up"]:enabled {{ background: {VERDE}; color: #FFFFFF; }}
 QPushButton#aplicar[dir="up"]:enabled:hover {{ background: #11692F; }}
-QPushButton#aplicar[dir="down"]:enabled {{ background: #B45309; color: #FFFFFF; }}
+QPushButton#aplicar[dir="down"]:enabled {{ background: {AMBAR}; color: #FFFFFF; }}
 QPushButton#aplicar[dir="down"]:enabled:hover {{ background: #94430A; }}
 
 /* --- Franja inferior --- */
-QLabel#export {{ color: #8A94A6; font-size: 12px; }}
+QLabel#export {{ color: {GRIS}; font-size: 12px; }}
+/* Indicador de conexion como chip (verde=conectado, rojo=degradado). La logica
+   solo alterna la propiedad 'estado'; el color sale de aqui (antes iba inline). */
+QLabel#estadoConexion {{
+    font-size: 12px; font-weight: 700;
+    padding: 3px 10px; border-radius: 10px;
+}}
+QLabel#estadoConexion[estado="ok"] {{ color: {VERDE}; background: #E6F4EA; }}
+QLabel#estadoConexion[estado="degradado"] {{ color: {ROJO_OSC}; background: #FDECEA; }}
 """
