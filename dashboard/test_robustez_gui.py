@@ -7,6 +7,9 @@ tick) y verifica que SOBREVIVE sin crash ni excepcion no capturada.
 Regresion concreta: cambiar de modo a mitad de sesion dejaba al GameEngine en
 RUNNING con un modo sin iniciar, que emitia `led` con celda corrupta; en el slot
 de Qt ese IndexError se convertia en abort ("Python dejo de funcionar").
+
+Test permanente (Fase 3, Task 3.1): parametrizado por varias seeds fijas, cada
+una con >= 5000 eventos, para regresion continua en la suite.
 """
 import os
 import sys
@@ -49,7 +52,10 @@ def _monkey(seed, n, fallos):
     v.win.close()
 
 
-@pytest.mark.parametrize("seed", [0, 1, 2, 3, 7])
+N_EVENTOS = 5000
+
+
+@pytest.mark.parametrize("seed", [0, 1, 2])
 def test_monkey_gui_sobrevive(seed):
     fallos = []
 
@@ -59,7 +65,7 @@ def test_monkey_gui_sobrevive(seed):
     prev = sys.excepthook
     sys.excepthook = hook
     try:
-        _monkey(seed, 900, fallos)
+        _monkey(seed, N_EVENTOS, fallos)
     finally:
         sys.excepthook = prev
     assert not fallos, f"la GUI no sobrevivio al monkey (seed={seed}): {fallos[:3]}"
