@@ -78,7 +78,14 @@ class Sesion:
         for linea in self.fuente.recibir():
             try:
                 ev = json.loads(linea)
-            except json.JSONDecodeError:
+            except ValueError:
+                # ValueError cubre json.JSONDecodeError y otras fallas de json.loads
+                # ante entrada adversarial: un entero de miles de digitos dispara el
+                # limite de conversion de Python (ValueError "Exceeds the limit...").
+                continue
+            except RecursionError:
+                # Anidamiento extremo ("[[[...") agota la pila del parser de json;
+                # no es ValueError, se descarta aparte (fuzz: Task 3.2).
                 continue
             self._procesar(ev)
 

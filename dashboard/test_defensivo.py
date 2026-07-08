@@ -4,7 +4,9 @@ Todo dato externo (eventos del protocolo, líneas crudas del serial/TCP) se vali
 al entrar: una entrada malformada NUNCA debe lanzar ni corromper el estado. La
 fuente puede ser el ESP32 real, cuyo serial mezcla ruido/basura con los eventos.
 """
+import json
 import os
+import random
 import sys
 
 import pytest
@@ -14,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from PyQt6 import QtWidgets  # noqa: E402
 from app import VentanaDashboard  # noqa: E402
-from fuente import FuenteCore  # noqa: E402
+from fuente import Fuente, FuenteCore  # noqa: E402
 from sesion import Sesion  # noqa: E402
 from storage import Almacen  # noqa: E402
 
@@ -326,3 +328,90 @@ def test_abrir_almacen_con_db_corrupta_degrada_a_memoria_sin_abortar_la_gui(tmp_
     a.upsert_perfil("p001", "Juan")        # el almacen de respaldo (memoria) funciona
     assert a.perfiles()[0]["id"] == "p001"
     assert "AVISO" in capsys.readouterr().err   # la degradacion es visible, no silenciosa
+
+
+# --- Task 3.2: fuzz determinista del parser de protocolo (bombear/_procesar) ---
+# bombear() es el ingreso real de una linea cruda: json.loads() + _procesar().
+# Un fuzzer determinista (random.Random(seed) fija) genera lineas basura muy
+# variadas y las hace pasar por bombear(); ninguna debe propagar una excepcion.
+
+_ALFABETO_FUZZ = "{}[]\":,0123456789-+.eE abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_\t\\ /"
+_CAMPOS_EV_FUZZ = ["led", "press", "sound", "score", "suggest", "state",
+                   "", "desconocido", None, 42, True]
+_VALORES_FUZZ = [0, 1, -1, 999999999, -999999999, 10**30, -10**30, 3.14,
+                 float("nan"), float("inf"), -float("inf"), True, False, None,
+                 "texto", "", [], {}, [1, 2, 3], {"x": 1}, "9" * 10000]
+
+
+def _linea_fuzz(rng: random.Random) -> str:
+    """Genera una linea 'de protocolo' al azar: basura estructural, vacia,
+    gigante (numero de miles de digitos o texto enorme), JSON valido truncado
+    a medias, JSON anidado en extremo, JSON valido pero no-dict en el tope,
+    evento JSON con campos/tipos al azar, o bytes no-UTF8 (decodificados con
+    'replace', igual que hace fuente.py antes de que la linea llegue aqui)."""
+    categoria = rng.random()
+    if categoria < 0.15:                       # basura estructural (alfabeto tipo JSON)
+        n = rng.randrange(0, 200)
+        return "".join(rng.choice(_ALFABETO_FUZZ) for _ in range(n))
+    if categoria < 0.20:                       # vacia / solo espacios
+        return rng.choice(["", " ", "\n", "\t", "   "])
+    if categoria < 0.30:                       # gigante: numero enorme o basura enorme
+        n = rng.randrange(2000, 60000)
+        if rng.random() < 0.5:
+            return str(rng.choice([1, 8, 9])) * n
+        return "".join(rng.choice(_ALFABETO_FUZZ) for _ in range(n))
+    if categoria < 0.40:                       # JSON valido truncado en un punto al azar
+        base = json.dumps({"ev": rng.choice(_CAMPOS_EV_FUZZ),
+                            "cell": rng.choice(_VALORES_FUZZ),
+                            "level": rng.choice(_VALORES_FUZZ)})
+        return base[:rng.randrange(0, len(base) + 1)]
+    if categoria < 0.55:                       # anidamiento extremo: "[[[..." / {"a":{"a":...
+        n = rng.randrange(200, 20000)
+        abre, cierra = rng.choice([("[", "]"), ('{"a":', "}")])
+        return abre * n + "1" + cierra * n
+    if categoria < 0.70:                       # JSON valido, top-level no es dict
+        return json.dumps(rng.choice([[1, 2, 3], "hola", 42, 3.14, True, None, []]))
+    if categoria < 0.90:                       # evento JSON con campos/tipos al azar
+        ev = {}
+        if rng.random() < 0.9:
+            ev["ev"] = rng.choice(_CAMPOS_EV_FUZZ)
+        for campo in ("cell", "level", "hits", "misses", "round", "rt_ms",
+                      "ms", "status", "seed"):
+            if rng.random() < 0.6:
+                ev[campo] = rng.choice(_VALORES_FUZZ)
+        return json.dumps(ev)
+    n = rng.randrange(0, 300)                  # bytes no-UTF8 (decodificados con replace)
+    crudos = bytes(rng.randrange(0, 256) for _ in range(n))
+    return crudos.decode("utf-8", "replace")
+
+
+class _FuenteFuzz(Fuente):
+    """Fuente minima que entrega, de una vez, un lote fijo de lineas ya generadas."""
+    def __init__(self, lineas: list) -> None:
+        self._lineas = lineas
+
+    def enviar(self, linea: str) -> None:
+        pass
+
+    def recibir(self) -> list:
+        return self._lineas
+
+
+def test_fuzz_bombear_lineas_basura_variadas_no_lanza():
+    # 3 seeds fijas x 6000 lineas (>=5000 cada una) = 18000 lineas reproducibles.
+    for seed in (12345, 67890, 999983):
+        rng = random.Random(seed)
+        lineas = [_linea_fuzz(rng) for _ in range(6000)]
+        ses = Sesion(Almacen(":memory:"), _FuenteFuzz(lineas))
+        ses.bombear()   # ninguna linea debe propagar una excepcion
+
+
+def test_fuzz_casos_conocidos_no_lanzan():
+    # Regresion explicita de lo que encontro el fuzz (RED antes de endurecer
+    # bombear() en sesion.py): json.loads() puede lanzar ValueError (no
+    # JSONDecodeError) ante un entero de miles de digitos -- limite de
+    # conversion de Python -- y RecursionError ante un anidamiento extremo.
+    entero_gigante = "9" * 50000
+    anidado_extremo = "[" * 20000 + "1" + "]" * 20000
+    ses = Sesion(Almacen(":memory:"), _FuenteFuzz([entero_gigante, anidado_extremo]))
+    ses.bombear()   # no debe lanzar
