@@ -590,6 +590,92 @@ git commit -m "docs: guia del medico (release) + setup dev en Windows"
 
 ---
 
+### Task 5b: Arranque por defecto del ejecutable = auto-detección del tapete
+
+> Añadida durante la ejecución: el review de Task 5 detectó que la guía del médico promete
+> "el programa se conecta solo al doble clic", pero el `.exe` sin argumentos caería en modo
+> práctica. El spec §5.5 exige que el `.exe` arranque con `--serial auto`. Esta tarea lo cumple.
+
+**Files:**
+- Modify: `dashboard/puertos.py` (añadir `serial_por_defecto`)
+- Modify: `dashboard/test_puertos.py` (añadir 4 tests + import)
+- Modify: `dashboard/app.py` (`main()`: aplicar el default antes de resolver)
+
+**Interfaces:**
+- Produces: `puertos.serial_por_defecto(serial, tcp, congelado) -> str | None`.
+
+- [ ] **Step 1: Escribir los tests que fallan** — en `dashboard/test_puertos.py`, ampliar el import y añadir 4 tests:
+
+```python
+from puertos import (CP210X_PID, CP210X_VID, puertos_tapete,
+                     resolver_puerto_serial, serial_por_defecto)
+```
+
+```python
+def test_serial_por_defecto_frozen_sin_args_da_auto():
+    assert serial_por_defecto(None, None, True) == "auto"
+
+
+def test_serial_por_defecto_dev_sin_args_da_none():
+    assert serial_por_defecto(None, None, False) is None
+
+
+def test_serial_por_defecto_explicito_manda():
+    assert serial_por_defecto("COM3", None, True) == "COM3"
+
+
+def test_serial_por_defecto_con_tcp_no_fuerza_auto():
+    assert serial_por_defecto(None, "192.168.1.5", True) is None
+```
+
+- [ ] **Step 2: Correr y verlos fallar**
+
+Run: `.venv/bin/python -m pytest dashboard/test_puertos.py -q`
+Expected: FAIL (`ImportError: cannot import name 'serial_por_defecto'`).
+
+- [ ] **Step 3: Implementar en `dashboard/puertos.py`** (añadir tras `resolver_puerto_serial`):
+
+```python
+def serial_por_defecto(serial, tcp, congelado):
+    """Arranque por defecto del puerto serie. En el ejecutable congelado (doble
+    clic, sin argumentos) autodetecta el tapete ('auto'); en dev sigue None
+    (modo embebido). Un --serial/--tcp explicito siempre manda."""
+    if serial is None and tcp is None and congelado:
+        return "auto"
+    return serial
+```
+
+- [ ] **Step 4: Correr los tests y verlos pasar**
+
+Run: `.venv/bin/python -m pytest dashboard/test_puertos.py -q`
+Expected: PASS (10 tests).
+
+- [ ] **Step 5: Cablear `app.py` `main()`** — cambiar el import y aplicar el default antes del bloque de resolución (que ya existe de la Task 3):
+
+```python
+    from puertos import resolver_puerto_serial, serial_por_defecto
+```
+
+  y justo antes de `if args.serial is not None:` insertar:
+
+```python
+    args.serial = serial_por_defecto(args.serial, args.tcp, getattr(sys, "frozen", False))
+```
+
+- [ ] **Step 6: Verificar la suite completa**
+
+Run: `./scripts/run_all_tests.sh`
+Expected: `>>> TODO VERDE <<<`.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add dashboard/puertos.py dashboard/test_puertos.py dashboard/app.py
+git commit -m "feat(dashboard): el ejecutable congelado arranca con auto-deteccion (--serial auto)"
+```
+
+---
+
 ### Task 6: CI — construir, verificar y publicar el ZIP de Windows
 
 **Files:**
