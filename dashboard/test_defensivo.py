@@ -293,6 +293,24 @@ def test_exportar_gui_con_sesion_invalida_no_crashea_y_muestra_error():
     assert "Error" in v.lbl_export.text()
 
 
+def test_exportar_gui_makedirs_falla_no_crashea_y_muestra_error(tmp_path, monkeypatch):
+    # Si "reportes" ya existe como archivo plano (no directorio), os.makedirs(...,
+    # exist_ok=True) lanza FileExistsError pese a exist_ok=True (exist_ok solo
+    # perdona si el target YA es un directorio). Esa excepcion no debe propagar
+    # fuera del slot de Qt (hoy vive fuera del try/except de _exportar).
+    import app
+    monkeypatch.setattr(app, "DIR", str(tmp_path))
+    (tmp_path / "reportes").write_text("no soy un directorio")
+
+    v = _ventana()
+    sid = v.almacen.iniciar_sesion(None, 1, 1)
+    v.ses.sesion_id = sid
+
+    v._exportar("csv")   # no debe lanzar
+
+    assert "Error" in v.lbl_export.text()
+
+
 def test_abrir_almacen_con_db_corrupta_degrada_a_memoria_sin_abortar_la_gui(tmp_path, capsys):
     # Almacen(ruta) real (Task 2.4, arriba) SI lanza AlmacenError con una DB
     # corrupta; pero eso solo se prueba en el aislamiento del unit test. La

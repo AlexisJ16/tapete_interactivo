@@ -279,12 +279,12 @@ class VentanaDashboard:
     def _exportar(self, fmt):
         if self.ses.sesion_id is None:
             return
-        os.makedirs(os.path.join(DIR, "reportes"), exist_ok=True)
         ruta = os.path.join(DIR, "reportes", f"sesion_{self.ses.sesion_id}.{fmt}")
         try:
+            os.makedirs(os.path.join(DIR, "reportes"), exist_ok=True)
             (exportar_csv if fmt == "csv" else exportar_pdf)(self.almacen, self.ses.sesion_id, ruta)
-        except ReporteError as e:
-            # Frontera GUI: un fallo de E/S en el export degrada a mensaje, no crashea.
+        except (OSError, ReporteError) as e:
+            # Frontera GUI: un fallo de E/S (makedirs o export) degrada a mensaje, no crashea.
             self.lbl_export.setText(f"Error al exportar: {e}")
             return
         self.lbl_export.setText(f"Exportado: {ruta}")
