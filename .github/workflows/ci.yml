@@ -86,3 +86,104 @@ jobs:
             exit 0
           fi
           wokwi-cli firmware --timeout 20000 --expect-text "Tapete Interactivo"
+
+  windows-build:
+    name: Windows — tests + empaquetado
+    runs-on: windows-latest
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Instalar MinGW (g++) y ponerlo en PATH
+        shell: pwsh
+        run: |
+          choco install mingw --no-progress -y
+          $cands = @(
+            "C:\ProgramData\mingw64\mingw64\bin",
+            "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin",
+            "C:\mingw64\bin"
+          )
+          $bin = $cands | Where-Object { Test-Path (Join-Path $_ "g++.exe") } | Select-Object -First 1
+          if (-not $bin) {
+            $gpp = Get-Command g++ -ErrorAction SilentlyContinue
+            if ($gpp) { $bin = Split-Path $gpp.Source }
+          }
+          if (-not $bin) { throw "no encontre g++ tras instalar mingw" }
+          echo $bin >> $env:GITHUB_PATH
+
+      - name: Instalar dependencias Python
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt -r simulator/requirements.txt -r dashboard/requirements.txt pyinstaller
+
+      - name: Correr la suite (mismo runner, via bash, PYBIN=python)
+        shell: bash
+        env:
+          PYBIN: python
+          QT_QPA_PLATFORM: offscreen
+          SDL_VIDEODRIVER: dummy
+        run: ./scripts/run_all_tests.sh
+
+      - name: Construir libgamecore.dll
+        run: python -c "import sys; sys.path.insert(0, 'simulator'); import core_bridge; print(core_bridge.construir_so(True))"
+
+      - name: Construir el ejecutable (PyInstaller)
+        run: pyinstaller --noconfirm packaging/tapete_dashboard.spec
+
+      - name: Descargar driver CP210x (offline en el ZIP; best-effort)
+        shell: bash
+        run: |
+          mkdir -p dist/TapeteDashboard/driver_cp210x
+          curl -fL -o dist/TapeteDashboard/driver_cp210x/CP210x_Universal_Windows_Driver.zip \
+            https://www.silabs.com/documents/public/software/CP210x_Universal_Windows_Driver.zip \
+            || echo "::warning::No se pudo bajar el driver CP210x; el ZIP va sin el (la guia trae la referencia)."
+
+      - name: Incluir la guia del medico
+        shell: bash
+        run: cp packaging/GUIA_MEDICO.md dist/TapeteDashboard/GUIA_MEDICO.md
+
+      - name: Empaquetar ZIP
+        shell: bash
+        run: cd dist && 7z a -tzip TapeteDashboard-windows.zip TapeteDashboard >/dev/null
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TapeteDashboard-windows
+          path: dist/TapeteDashboard-windows.zip
+
+  windows-smoke:
+    name: Windows — smoke del .exe SIN deps de dev (gate de evidencia)
+    needs: windows-build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: TapeteDashboard-windows
+
+      - name: Descomprimir
+        shell: bash
+        run: 7z x TapeteDashboard-windows.zip >/dev/null
+
+      - name: Lanzar el .exe headless (sin pip install)
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: ./TapeteDashboard/TapeteDashboard.exe --smoke
+
+  windows-release:
+    name: Windows — adjuntar el ZIP al Release (solo tags)
+    needs: [windows-build, windows-smoke]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: TapeteDashboard-windows
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: TapeteDashboard-windows.zip
