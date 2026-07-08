@@ -54,6 +54,20 @@ def construir_fuente(tcp: str | None = None, serial: str | None = None,
     return FuenteCore()
 
 
+def construir_fuente_segura(tcp=None, serial=None, puerto=3333, on_error=None):
+    """Como construir_fuente pero NUNCA propaga: si la fuente elegida no arranca
+    (p. ej. el puerto serie detectado esta ocupado, o falta un backend en el
+    ejecutable congelado), degrada a FuenteCore (modo practica) y llama
+    on_error(msg) con el motivo. Garantiza que la GUI siempre tiene una fuente
+    (invariante: la GUI nunca muere al arrancar)."""
+    try:
+        return construir_fuente(tcp=tcp, serial=serial, puerto=puerto)
+    except Exception as e:  # frontera de arranque: cualquier fallo degrada
+        if on_error is not None:
+            on_error(str(e))
+        return FuenteCore()
+
+
 class Fuente(ABC):
     """Frontera comun: el dashboard envia comandos y recibe lineas de evento."""
 

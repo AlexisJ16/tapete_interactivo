@@ -121,7 +121,7 @@ jobs:
       - name: Instalar dependencias Python
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt -r simulator/requirements.txt -r dashboard/requirements.txt pyinstaller
+          pip install -r requirements-dev.txt -r simulator/requirements.txt -r dashboard/requirements.txt pyinstaller==6.11.1
 
       - name: Correr la suite (mismo runner, via bash, PYBIN=python)
         shell: bash
@@ -137,13 +137,18 @@ jobs:
       - name: Construir el ejecutable (PyInstaller)
         run: pyinstaller --noconfirm packaging/tapete_dashboard.spec
 
-      - name: Descargar driver CP210x (offline en el ZIP; best-effort)
+      - name: Driver CP210x (offline en el ZIP; best-effort + enlace de respaldo)
         shell: bash
         run: |
           mkdir -p dist/TapeteDashboard/driver_cp210x
+          printf '%s\n' \
+            "Driver CP210x (Silicon Labs) para Windows." \
+            "Si el tapete no aparece como puerto COM, instala este driver." \
+            "Descarga oficial: https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers" \
+            > dist/TapeteDashboard/driver_cp210x/LEEME.txt
           curl -fL -o dist/TapeteDashboard/driver_cp210x/CP210x_Universal_Windows_Driver.zip \
             https://www.silabs.com/documents/public/software/CP210x_Universal_Windows_Driver.zip \
-            || echo "::warning::No se pudo bajar el driver CP210x; el ZIP va sin el (la guia trae la referencia)."
+            || echo "::warning::No se pudo bajar el driver CP210x; el ZIP incluye el enlace en LEEME.txt."
 
       - name: Incluir la guia del medico
         shell: bash

@@ -23,7 +23,7 @@ sys.path.insert(0, DIR)
 
 from analitica import serie_evolucion, tasa_acierto  # noqa: E402
 from estilo import QSS, GRAFICO  # noqa: E402
-from fuente import FuenteCore, construir_fuente  # noqa: E402
+from fuente import FuenteCore, construir_fuente_segura  # noqa: E402
 from paneles import PanelAnalisis, PanelJuego, PanelMetricas  # noqa: E402
 from reports import ReporteError, exportar_csv, exportar_pdf  # noqa: E402
 from robustez import ejecutar_seguro, instalar_excepthook  # noqa: E402
@@ -457,6 +457,8 @@ def smoke() -> int:
     ventana, juega una sesion de Velocidad inyectando pisadas y comprueba que el
     estado se refleja en los widgets."""
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from puertos import puertos_tapete
+    puertos_tapete()   # ejercita serial.tools.list_ports (cobertura del bundle en el smoke)
     QtCore, QtGui, QtWidgets = _qt()
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
@@ -506,17 +508,21 @@ def main() -> int:
     QtCore, QtGui, QtWidgets = _qt()
     app = QtWidgets.QApplication(sys.argv)
     app.setStyleSheet(QSS)
+    def _aviso(msg):
+        QtWidgets.QMessageBox.information(
+            None, "Tapete",
+            f"{msg}\nSe abre en modo practica. Conecta el tapete y vuelve a abrir; "
+            "si Windows no lo reconoce, instala el driver incluido (CP210x).")
+
     args.serial = serial_por_defecto(args.serial, args.tcp, getattr(sys, "frozen", False))
     if args.serial is not None:
         pedido = args.serial
         args.serial = resolver_puerto_serial(args.serial, elegir=_elegir_puerto_com)
         if pedido == "auto" and args.serial is None:
-            QtWidgets.QMessageBox.information(
-                None, "Tapete",
-                "No se detecto el tapete por USB. Se abre en modo practica.\n"
-                "Conecta el tapete y vuelve a abrir; si Windows no lo reconoce, "
-                "instala el driver incluido (CP210x).")
-    fuente = construir_fuente(tcp=args.tcp, serial=args.serial, puerto=args.puerto)
+            _aviso("No se detecto el tapete por USB.")
+    fuente = construir_fuente_segura(
+        tcp=args.tcp, serial=args.serial, puerto=args.puerto,
+        on_error=lambda m: _aviso(f"No se pudo abrir la conexion ({m})."))
     v = VentanaDashboard(fuente=fuente)
     v.mostrar()
     return app.exec()

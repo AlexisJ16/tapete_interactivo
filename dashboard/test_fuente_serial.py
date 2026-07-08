@@ -65,3 +65,22 @@ def test_construir_fuente_core_por_defecto():
 def test_construir_fuente_rechaza_tcp_y_serial_juntos():
     with pytest.raises(ValueError):
         construir_fuente(tcp="192.168.1.5", serial="/dev/ttyUSB0")
+
+
+def test_construir_fuente_segura_degrada_a_core_si_falla(monkeypatch):
+    import fuente as F
+    def boom(**k):
+        raise OSError("puerto ocupado")
+    monkeypatch.setattr(F, "construir_fuente", boom)
+    avisos = []
+    f = F.construir_fuente_segura(serial="COM9", on_error=avisos.append)
+    assert isinstance(f, F.FuenteCore)
+    assert avisos and "ocupado" in avisos[0]
+    f.cerrar()
+
+
+def test_construir_fuente_segura_pasa_si_ok(monkeypatch):
+    import fuente as F
+    centinela = object()
+    monkeypatch.setattr(F, "construir_fuente", lambda **k: centinela)
+    assert F.construir_fuente_segura(serial=None) is centinela

@@ -1,5 +1,7 @@
 @echo off
-REM Instalador de respaldo del Dashboard del Tapete (alternativa al .exe).
+REM Conveniencia de DESARROLLO: corre el dashboard desde un checkout del repo sin
+REM construir el .exe (equivale a docs/dev-windows.md automatizado). NO es para el
+REM cliente: el cliente usa el TapeteDashboard.exe del release.
 REM Crea un entorno Python local e instala las dependencias fijadas.
 setlocal
 cd /d "%~dp0.."

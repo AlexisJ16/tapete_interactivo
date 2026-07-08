@@ -87,8 +87,9 @@ saber que ya funciona (aparece el puerto / el dashboard conecta).
   archivo".
 - Spec de PyInstaller versionado en el repo (`packaging/`), con manejo de `datas` para
   `libgamecore.dll` y hooks de PyQt6/matplotlib.
-- **Respaldo:** `packaging/instalar.bat` (crea venv, instala dependencias fijadas, escribe un
-  `abrir_tapete.bat` + acceso directo) — commiteado, por si el congelado falla.
+- **Conveniencia dev:** `packaging/instalar.bat` corre el dashboard desde un checkout del repo
+  (venv + deps fijadas + `abrir_tapete.bat`), equivalente a `docs/dev-windows.md` automatizado.
+  NO es entregable del cliente (requiere el árbol de fuente).
 
 ## 6. Nivel 2 — Entorno de mantenimiento (dev en Windows)
 
@@ -153,8 +154,9 @@ se conservan. El ZIP del release que baja el cliente no contiene el árbol de de
 ## 11. Riesgos y mitigaciones
 
 - **PyInstaller + PyQt6 + matplotlib** es la parte genuinamente frágil y solo depurable por
-  iteración en CI (no en Linux local). *Mitigación:* el `.bat` instalador (§5.6) queda commiteado
-  como respaldo aceptable (el cliente es "algo técnico").
+  iteración en CI (no en Linux local). *Mitigación:* el `.exe` se **construye y smoke-testea en
+  CI antes de publicar** el release; si el freeze falla, no se publica y se itera el build (no se
+  entrega un fallback a medias).
 - **Driver CP210x** no instalado → sin puerto COM. *Mitigación:* driver offline en el ZIP +
   mensaje claro del auto-detect.
 - **Falso verde de empaquetado** (deps del sistema tapan un fallo del bundle). *Mitigación:* el
