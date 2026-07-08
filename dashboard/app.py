@@ -483,12 +483,22 @@ def smoke() -> int:
     return 0 if (ok and refleja) else 1
 
 
+def _elegir_puerto_com(puertos):
+    """Selector minimo cuando hay varios CP210x (raro). GUI, no se testea."""
+    QtCore, QtGui, QtWidgets = _qt()
+    elegido, ok = QtWidgets.QInputDialog.getItem(
+        None, "Tapete", "Elige el puerto del tapete:", puertos, 0, False)
+    return elegido if ok else puertos[0]
+
+
 def main() -> int:
     import argparse
+
+    from puertos import resolver_puerto_serial
     p = argparse.ArgumentParser(description="Dashboard del terapeuta")
     p.add_argument("--tcp", metavar="HOST", default=None, help="conectar a un ESP32/simulador por TCP")
     p.add_argument("--serial", metavar="PUERTO", default=None,
-                   help="conectar a un ESP32 por USB/Serial (p. ej. /dev/ttyUSB0)")
+                   help="conectar por USB/Serial: un puerto (COM3) o 'auto' (detecta el tapete)")
     p.add_argument("--puerto", type=int, default=3333)
     args = p.parse_args()
 
@@ -496,6 +506,15 @@ def main() -> int:
     QtCore, QtGui, QtWidgets = _qt()
     app = QtWidgets.QApplication(sys.argv)
     app.setStyleSheet(QSS)
+    if args.serial is not None:
+        pedido = args.serial
+        args.serial = resolver_puerto_serial(args.serial, elegir=_elegir_puerto_com)
+        if pedido == "auto" and args.serial is None:
+            QtWidgets.QMessageBox.information(
+                None, "Tapete",
+                "No se detecto el tapete por USB. Se abre en modo practica.\n"
+                "Conecta el tapete y vuelve a abrir; si Windows no lo reconoce, "
+                "instala el driver incluido (CP210x).")
     fuente = construir_fuente(tcp=args.tcp, serial=args.serial, puerto=args.puerto)
     v = VentanaDashboard(fuente=fuente)
     v.mostrar()
