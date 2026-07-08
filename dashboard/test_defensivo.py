@@ -175,6 +175,21 @@ def test_cambiar_modo_a_mitad_de_juego_no_lanza_y_queda_coherente():
     assert all(0 <= led <= 255 for led in v.ses.leds)   # sin corrupcion de LEDs
 
 
+def test_cambiar_nivel_a_mitad_de_juego_no_lanza_y_queda_coherente():
+    # sp_nivel.valueChanged tambien dispara _configurar() -> set_mode (no es el
+    # set_level de "Aplicar"), mismo handler que cb_modo: misma guarda del motor.
+    v = _ventana()
+    v.b_start.click()
+    v.tick()
+    assert v.ses.estado == "running"
+
+    v.sp_nivel.setValue(3)   # cambia de nivel a mitad de partida
+    v.tick()
+
+    assert v.ses.estado == "idle"
+    assert all(0 <= led <= 255 for led in v.ses.leds)
+
+
 def test_aplicar_sin_datos_no_lanza_ni_cambia_nivel():
     v = _ventana()
     nivel_antes = v.sp_nivel.value()
