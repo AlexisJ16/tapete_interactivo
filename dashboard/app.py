@@ -523,6 +523,12 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    # Ejecutable "windowed" (PyInstaller console=False): sin consola, sys.stdout/
+    # stderr son None y cualquier print() abortaria. Redirigir a devnull.
+    if sys.stdout is None or sys.stderr is None:
+        _devnull = open(os.devnull, "w")
+        sys.stdout = sys.stdout or _devnull
+        sys.stderr = sys.stderr or _devnull
     if "--smoke" in sys.argv:
         sys.exit(smoke())
     sys.exit(main())
