@@ -238,6 +238,10 @@ class VentanaDashboard:
         # sembrar/configurar reenviarian set_seed/set_mode a mitad de partida (la
         # segunda reinicia el RNG y el modo) y ses.iniciar() crearia una fila
         # SQLite huerfana ademas de resetear las metricas en curso.
+        # bombear() drena antes de decidir: el "state":"running" del primer start
+        # ya esta encolado en el core aunque el timer de 25 Hz no haya corrido
+        # todavia (dos clics sin tick de por medio no deben burlar la guarda).
+        self.ses.bombear()
         if self.ses.estado in ("running", "paused"):
             return
         self.ses.set_perfil(self.in_perfil_id.text() or "anon", self.in_perfil_nombre.text() or "")

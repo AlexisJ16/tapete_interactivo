@@ -151,6 +151,17 @@ def test_doble_start_no_duplica_sesion_ni_reinicia_metricas():
     assert len(v.almacen.sesiones()) == 1      # ninguna fila huerfana en SQLite
 
 
+def test_doble_start_sin_tick_intermedio_no_duplica_sesion():
+    # El doble clic real: dos start() antes de que el timer de 25 Hz alcance a
+    # correr entre medias. La guarda no puede depender de un tick previo para
+    # ver ses.estado == "running" (el evento ya esta encolado en el core).
+    v = _ventana()
+    v.b_start.click()
+    v.b_start.click()   # sin tick entre los dos clics
+    v.tick()
+    assert len(v.almacen.sesiones()) == 1
+
+
 def test_cambiar_modo_a_mitad_de_juego_no_lanza_y_queda_coherente():
     v = _ventana()
     v.b_start.click()
