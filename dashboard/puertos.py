@@ -37,3 +37,12 @@ def resolver_puerto_serial(valor, detectar=puertos_tapete, elegir=None):
     if elegir is None:
         return encontrados[0]
     return elegir(encontrados)
+
+
+def serial_por_defecto(serial, tcp, congelado):
+    """Arranque por defecto del puerto serie. En el ejecutable congelado (doble
+    clic, sin argumentos) autodetecta el tapete ('auto'); en dev sigue None
+    (modo embebido). Un --serial/--tcp explicito siempre manda."""
+    if serial is None and tcp is None and congelado:
+        return "auto"
+    return serial

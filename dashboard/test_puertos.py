@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from puertos import (CP210X_PID, CP210X_VID, puertos_tapete,
-                     resolver_puerto_serial)
+                     resolver_puerto_serial, serial_por_defecto)
 
 
 def _p(device, vid, pid):
@@ -40,3 +40,19 @@ def test_resolver_auto_varios_usa_elegir():
 
 def test_resolver_auto_varios_sin_elegir_toma_primero():
     assert resolver_puerto_serial("auto", detectar=lambda: ["COM3", "COM5"]) == "COM3"
+
+
+def test_serial_por_defecto_frozen_sin_args_da_auto():
+    assert serial_por_defecto(None, None, True) == "auto"
+
+
+def test_serial_por_defecto_dev_sin_args_da_none():
+    assert serial_por_defecto(None, None, False) is None
+
+
+def test_serial_por_defecto_explicito_manda():
+    assert serial_por_defecto("COM3", None, True) == "COM3"
+
+
+def test_serial_por_defecto_con_tcp_no_fuerza_auto():
+    assert serial_por_defecto(None, "192.168.1.5", True) is None

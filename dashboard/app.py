@@ -494,7 +494,7 @@ def _elegir_puerto_com(puertos):
 def main() -> int:
     import argparse
 
-    from puertos import resolver_puerto_serial
+    from puertos import resolver_puerto_serial, serial_por_defecto
     p = argparse.ArgumentParser(description="Dashboard del terapeuta")
     p.add_argument("--tcp", metavar="HOST", default=None, help="conectar a un ESP32/simulador por TCP")
     p.add_argument("--serial", metavar="PUERTO", default=None,
@@ -506,6 +506,7 @@ def main() -> int:
     QtCore, QtGui, QtWidgets = _qt()
     app = QtWidgets.QApplication(sys.argv)
     app.setStyleSheet(QSS)
+    args.serial = serial_por_defecto(args.serial, args.tcp, getattr(sys, "frozen", False))
     if args.serial is not None:
         pedido = args.serial
         args.serial = resolver_puerto_serial(args.serial, elegir=_elegir_puerto_com)
