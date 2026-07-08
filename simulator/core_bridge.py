@@ -25,7 +25,6 @@ import sys
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GAMECORE = os.path.join(RAIZ, "firmware", "lib", "GameCore")
 BUILD = os.path.join(RAIZ, "build")
-SO_PATH = os.path.join(BUILD, "libgamecore.so")
 
 
 def fuentes_core() -> list[str]:
@@ -35,19 +34,53 @@ def fuentes_core() -> list[str]:
     )
 
 
+def _lib_nombre() -> str:
+    """Nombre de la biblioteca nativa segun la plataforma."""
+    return "libgamecore.dll" if sys.platform.startswith("win") else "libgamecore.so"
+
+
+def _empaquetado() -> bool:
+    """True si corremos dentro de un ejecutable congelado (PyInstaller)."""
+    return getattr(sys, "frozen", False)
+
+
+# Ruta de build (dev). El nombre depende de la plataforma.
+SO_PATH = os.path.join(BUILD, _lib_nombre())
+
+
+def _comando_build() -> list[str]:
+    """Comando g++ para compilar GameCore como biblioteca compartida. En Windows
+    se enlaza estatico (-static*) para que el .dll NO dependa del runtime de MinGW
+    (libstdc++/libgcc/winpthread), ausente en el equipo del medico."""
+    flags = ["-std=c++17", "-O2", "-fPIC", "-shared"]
+    if sys.platform.startswith("win"):
+        flags += ["-static", "-static-libgcc", "-static-libstdc++"]
+    return [os.environ.get("CXX", "g++"), *flags, f"-I{GAMECORE}",
+            *fuentes_core(), "-o", SO_PATH]
+
+
 def construir_so(forzar: bool = False) -> str:
-    """Compila GameCore.so con g++ si falta (o si se fuerza). Devuelve la ruta."""
+    """Compila GameCore (.so/.dll) con g++ si falta (o si se fuerza). Devuelve la
+    ruta. Solo en DESARROLLO: la app congelada nunca llega aqui (ver ruta_lib)."""
     os.makedirs(BUILD, exist_ok=True)
     if forzar or not os.path.exists(SO_PATH):
-        cmd = [
-            os.environ.get("CXX", "g++"),
-            "-std=c++17", "-O2", "-fPIC", "-shared",
-            f"-I{GAMECORE}",
-            *fuentes_core(),
-            "-o", SO_PATH,
-        ]
-        subprocess.run(cmd, check=True)
+        subprocess.run(_comando_build(), check=True)
     return SO_PATH
+
+
+def ruta_lib() -> str:
+    """Ruta a la biblioteca nativa lista para cargar.
+
+    - App congelada (PyInstaller): la lib va empaquetada junto al ejecutable
+      (sys._MEIPASS) y NUNCA se compila (el equipo del medico no tiene g++); si
+      falta, error claro.
+    - Desarrollo: se compila con g++ si falta."""
+    if _empaquetado():
+        p = os.path.join(getattr(sys, "_MEIPASS", RAIZ), _lib_nombre())
+        if not os.path.exists(p):
+            raise RuntimeError(f"biblioteca nativa no encontrada en el paquete: {p}")
+        return p
+    return construir_so()
 
 
 class CoreBridge:
@@ -55,7 +88,7 @@ class CoreBridge:
 
     def __init__(self, libpath: str | None = None):
         if libpath is None:
-            libpath = construir_so()
+            libpath = ruta_lib()
         self._lib = ctypes.CDLL(libpath)
         self._declarar_firmas()
         self._h = self._lib.tapete_crear()
