@@ -92,3 +92,31 @@ TEST_CASE("equilibrio: la ronda siguiente usa el k del nuevo nivel") {
             ++encendidos;
     CHECK(encendidos == 3);                // 3 casillas = k del nivel 2
 }
+
+TEST_CASE("regresion: set_mode durante una sesion la detiene sin corromper LEDs") {
+    // El monkey de robustez cambiaba de modo a mitad de sesion: SET_MODE creaba el
+    // modo nuevo pero NO lo iniciaba ni tocaba el estado, dejandolo en RUNNING con
+    // patron_/enPatron_ sin inicializar. El siguiente actualizar() disparaba
+    // fallar()->apagarPatron() sobre memoria basura -> led con celda corrupta ->
+    // IndexError en el dashboard -> crash de Qt.
+    FakeHardware hw; Colector col;
+    GameEngine motor(hw, col.sink());
+    motor.procesar(Comando::parsear(R"({"cmd":"set_seed","seed":2024})"));
+    motor.procesar(Comando::parsear(R"({"cmd":"set_mode","mode":2,"level":1})"));
+    motor.procesar(Comando::parsear(R"({"cmd":"start"})"));
+    REQUIRE(motor.estado() == Estado::RUNNING);
+
+    // Cambiar de modo a mitad de sesion.
+    motor.procesar(Comando::parsear(R"({"cmd":"set_mode","mode":3,"level":4})"));
+    // El motor queda en un estado seguro (IDLE), no RUNNING con un modo sin iniciar.
+    CHECK(motor.estado() == Estado::IDLE);
+
+    // Avanzar el reloj y actualizar no debe emitir ningun LED con celda invalida.
+    hw.reloj = 100000; motor.actualizar();
+    for (const auto& e : col.eventos) {
+        if (e.tipo == Evento::Tipo::LED) {
+            CHECK(e.cell >= 1);
+            CHECK(e.cell <= cfg::CELDAS);
+        }
+    }
+}

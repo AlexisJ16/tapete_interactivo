@@ -53,6 +53,15 @@ void GameEngine::procesar(const proto::Comando& c) {
             modoId_ = c.mode;
             nivel_ = c.level;
             crearModo(modoId_);
+            // Cambiar de modo durante una sesion activa la detiene. El modo recien
+            // creado aun NO esta iniciado (patron_/enPatron_ sin inicializar);
+            // dejarlo en RUNNING/PAUSED haria que actualizar()/pisar() operen sobre
+            // memoria basura y emitan LEDs con celda corrupta. Volver a IDLE (a la
+            // espera de START) es el estado seguro y predecible.
+            if (estado_ == Estado::RUNNING || estado_ == Estado::PAUSED) {
+                apagarTodos();
+                cambiarEstado(Estado::IDLE);
+            }
             break;
         case T::SET_LEVEL:
             nivel_ = c.level;
