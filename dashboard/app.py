@@ -13,6 +13,7 @@ Uso:
 """
 from __future__ import annotations
 
+import logging
 import os
 import sys
 
@@ -24,11 +25,13 @@ from estilo import QSS  # noqa: E402
 from fuente import FuenteCore, construir_fuente  # noqa: E402
 from paneles import PanelAnalisis, PanelJuego, PanelMetricas  # noqa: E402
 from reports import ReporteError, exportar_csv, exportar_pdf  # noqa: E402
+from robustez import ejecutar_seguro, instalar_excepthook  # noqa: E402
 from sesion import Sesion  # noqa: E402
 from storage import Almacen, AlmacenError  # noqa: E402
 
 NOMBRES_MODO = {1: "Memoria", 2: "Velocidad", 3: "Equilibrio"}
 SEMILLA_DEFECTO = 12345   # reproducibilidad del RNG; no es un control clinico
+LOGGER = logging.getLogger(__name__)
 
 
 def _qt():
@@ -83,6 +86,9 @@ class PanelAnalitica:
         self.refrescar()
 
     def refrescar(self):
+        ejecutar_seguro(self._refrescar_interno, LOGGER)
+
+    def _refrescar_interno(self):
         """Recarga el combo de perfiles desde el almacen y redibuja."""
         actual = self.cb_perfil.currentData()
         self.cb_perfil.blockSignals(True)
@@ -96,6 +102,9 @@ class PanelAnalitica:
         self._graficar_actual()
 
     def _graficar_actual(self):
+        ejecutar_seguro(self._graficar_actual_interno, LOGGER)
+
+    def _graficar_actual_interno(self):
         pid = self.cb_perfil.currentData()
         if pid:
             self.graficar(pid)
@@ -139,6 +148,9 @@ class PanelAnalitica:
         self.fig.savefig(ruta, dpi=120)
 
     def _exportar_dialogo(self):
+        ejecutar_seguro(self._exportar_dialogo_interno, LOGGER)
+
+    def _exportar_dialogo_interno(self):
         os.makedirs(os.path.join(DIR, "reportes"), exist_ok=True)
         pid = self.cb_perfil.currentData() or "perfil"
         ruta = os.path.join(DIR, "reportes", f"evolucion_{pid}.png")
@@ -226,8 +238,10 @@ class VentanaDashboard:
 
         # --- conexiones ---
         self.b_start.clicked.connect(self._start)
-        self.b_stop.clicked.connect(self.ses.detener)
-        self.b_pause.clicked.connect(self.ses.pausar)
+        # ses.detener/pausar viven en sesion.py (fuera de alcance de esta tarea):
+        # se envuelven en el punto de conexion, no se puede tocar su cuerpo.
+        self.b_stop.clicked.connect(lambda: ejecutar_seguro(self.ses.detener, LOGGER))
+        self.b_pause.clicked.connect(lambda: ejecutar_seguro(self.ses.pausar, LOGGER))
         self.cb_modo.currentIndexChanged.connect(self._configurar)
         self.sp_nivel.valueChanged.connect(self._configurar)
         b_csv.clicked.connect(lambda: self._exportar("csv"))
@@ -244,9 +258,15 @@ class VentanaDashboard:
         return self.cb_modo.currentData()
 
     def _configurar(self):
+        ejecutar_seguro(self._configurar_interno, LOGGER)
+
+    def _configurar_interno(self):
         self.ses.configurar(self._modo(), self.sp_nivel.value())
 
     def _start(self):
+        ejecutar_seguro(self._start_interno, LOGGER)
+
+    def _start_interno(self):
         # Doble start (sesion ya en curso): ignorar. Sin esta guarda, set_perfil/
         # sembrar/configurar reenviarian set_seed/set_mode a mitad de partida (la
         # segunda reinicia el RNG y el modo) y ses.iniciar() crearia una fila
@@ -263,6 +283,9 @@ class VentanaDashboard:
         self.ses.iniciar()
 
     def _aplicar_nivel(self, nivel):
+        ejecutar_seguro(lambda: self._aplicar_nivel_interno(nivel), LOGGER)
+
+    def _aplicar_nivel_interno(self, nivel):
         # Aplica la recomendacion del motor con set_level (efectivo la ronda
         # siguiente, sin recrear el modo). No re-disparar _configurar (set_mode).
         self.ses.set_nivel(nivel)
@@ -271,12 +294,18 @@ class VentanaDashboard:
         self.sp_nivel.blockSignals(False)
 
     def _click_celda(self, celda):
+        ejecutar_seguro(lambda: self._click_celda_interno(celda), LOGGER)
+
+    def _click_celda_interno(self, celda):
         # Solo tiene efecto en modo embebido (FuenteCore): "pisar" con el raton.
         if hasattr(self.fuente, "pisar"):
             self.fuente.pisar(celda)
             self.tick()
 
     def _exportar(self, fmt):
+        ejecutar_seguro(lambda: self._exportar_interno(fmt), LOGGER)
+
+    def _exportar_interno(self, fmt):
         if self.ses.sesion_id is None:
             return
         ruta = os.path.join(DIR, "reportes", f"sesion_{self.ses.sesion_id}.{fmt}")
@@ -290,6 +319,9 @@ class VentanaDashboard:
         self.lbl_export.setText(f"Exportado: {ruta}")
 
     def tick(self):
+        ejecutar_seguro(self._tick_interno, LOGGER)
+
+    def _tick_interno(self):
         self.ses.bombear()
         self._refrescar()
 
@@ -344,6 +376,7 @@ def main() -> int:
     p.add_argument("--puerto", type=int, default=3333)
     args = p.parse_args()
 
+    instalar_excepthook(LOGGER)
     QtCore, QtGui, QtWidgets = _qt()
     app = QtWidgets.QApplication(sys.argv)
     app.setStyleSheet(QSS)

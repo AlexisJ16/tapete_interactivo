@@ -5,6 +5,7 @@ al entrar: una entrada malformada NUNCA debe lanzar ni corromper el estado. La
 fuente puede ser el ESP32 real, cuyo serial mezcla ruido/basura con los eventos.
 """
 import json
+import logging
 import os
 import random
 import sys
@@ -415,3 +416,132 @@ def test_fuzz_casos_conocidos_no_lanzan():
     anidado_extremo = "[" * 20000 + "1" + "]" * 20000
     ses = Sesion(Almacen(":memory:"), _FuenteFuzz([entero_gigante, anidado_extremo]))
     ses.bombear()   # no debe lanzar
+
+
+# --- Task 4.1: red de seguridad global (robustez.py) ---
+# Todo lo de arriba valida ENTRADA externa malformada. Aqui el escenario es
+# distinto: un bug INTERNO no anticipado (una excepcion que escapa de un
+# metodo por una razon que no es "dato externo invalido") tampoco debe tumbar
+# la GUI. ejecutar_seguro lo captura y lo registra; instalar_excepthook cubre
+# lo que se escape del despacho de Qt (C++ -> Python) sin quedar envuelto.
+#
+# Verificado empiricamente (fuera de la suite) que sin sys.excepthook propio,
+# una excepcion en un slot conectado via .connect()+.click() aborta el
+# proceso (SIGABRT, exit 134); con un hook propio que solo loguea, el proceso
+# sigue vivo. Por eso los handlers se envuelven con ejecutar_seguro (cubre
+# tanto la llamada directa como la disparada por Qt) y ademas se instala el
+# excepthook como red de respaldo.
+
+
+def test_ejecutar_seguro_captura_excepcion_y_no_propaga(caplog):
+    from robustez import ejecutar_seguro
+    logger = logging.getLogger("test_robustez_unit")
+
+    def _boom():
+        raise RuntimeError("bug interno simulado")
+
+    with caplog.at_level(logging.ERROR, logger="test_robustez_unit"):
+        resultado = ejecutar_seguro(_boom, logger)
+
+    assert resultado is None                        # no propaga
+    assert "bug interno simulado" in caplog.text     # queda registrado
+
+
+def test_ejecutar_seguro_no_afecta_el_camino_normal():
+    from robustez import ejecutar_seguro
+    logger = logging.getLogger("test_robustez_unit")
+    assert ejecutar_seguro(lambda: 42, logger) == 42   # sin excepcion: retorna igual
+
+
+def test_instalar_excepthook_registra_sin_abortar(caplog):
+    from robustez import instalar_excepthook
+    logger = logging.getLogger("test_robustez_hook")
+    prev = sys.excepthook
+    instalar_excepthook(logger)
+    try:
+        try:
+            raise RuntimeError("no deberia abortar el proceso")
+        except RuntimeError:
+            tipo, valor, tb = sys.exc_info()
+        with caplog.at_level(logging.ERROR, logger="test_robustez_hook"):
+            sys.excepthook(tipo, valor, tb)   # no debe lanzar ni abortar
+    finally:
+        sys.excepthook = prev
+    assert "no deberia abortar el proceso" in caplog.text
+
+
+def test_tick_con_bug_interno_no_aborta_la_app_y_lo_registra(monkeypatch, caplog):
+    v = _ventana()
+
+    def _boom():
+        raise RuntimeError("bug interno simulado en tick")
+
+    monkeypatch.setattr(v.ses, "bombear", _boom)
+    with caplog.at_level(logging.ERROR):
+        v.tick()                       # no debe lanzar
+    assert "bug interno simulado en tick" in caplog.text
+
+
+def test_start_con_bug_interno_no_aborta_la_app_y_lo_registra(monkeypatch, caplog):
+    v = _ventana()
+
+    def _boom(*a, **kw):
+        raise RuntimeError("bug interno simulado en start")
+
+    monkeypatch.setattr(v.ses, "iniciar", _boom)
+    with caplog.at_level(logging.ERROR):
+        v._start()                     # no debe lanzar
+    assert "bug interno simulado en start" in caplog.text
+
+
+def test_configurar_con_bug_interno_no_aborta_la_app_y_lo_registra(monkeypatch, caplog):
+    v = _ventana()
+
+    def _boom(*a, **kw):
+        raise RuntimeError("bug interno simulado en configurar")
+
+    monkeypatch.setattr(v.ses, "configurar", _boom)
+    with caplog.at_level(logging.ERROR):
+        v._configurar()                # no debe lanzar
+    assert "bug interno simulado en configurar" in caplog.text
+
+
+def test_click_celda_con_bug_interno_no_aborta_la_app_y_lo_registra(monkeypatch, caplog):
+    v = _ventana()
+
+    def _boom(cell):
+        raise RuntimeError("bug interno simulado en pisar")
+
+    monkeypatch.setattr(v.fuente, "pisar", _boom)
+    with caplog.at_level(logging.ERROR):
+        v._click_celda(1)              # no debe lanzar
+    assert "bug interno simulado en pisar" in caplog.text
+
+
+def test_aplicar_nivel_con_bug_interno_no_aborta_la_app_y_lo_registra(monkeypatch, caplog):
+    v = _ventana()
+
+    def _boom(nivel):
+        raise RuntimeError("bug interno simulado en set_nivel")
+
+    monkeypatch.setattr(v.ses, "set_nivel", _boom)
+    with caplog.at_level(logging.ERROR):
+        v._aplicar_nivel(3)            # no debe lanzar
+    assert "bug interno simulado en set_nivel" in caplog.text
+
+
+def test_exportar_con_bug_interno_no_aborta_la_app_y_lo_registra(monkeypatch, caplog):
+    # Distinto de test_exportar_gui_con_sesion_invalida_*: aqui el fallo NO es
+    # OSError/ReporteError (ya manejados desde 2.4), es un bug imprevisto en
+    # el propio exportar_csv -- exactamente lo que 4.1 debe cubrir.
+    import app
+    v = _ventana()
+    v.ses.sesion_id = v.almacen.iniciar_sesion(None, 1, 1)
+
+    def _boom(*a, **kw):
+        raise RuntimeError("bug interno simulado en exportar_csv")
+
+    monkeypatch.setattr(app, "exportar_csv", _boom)
+    with caplog.at_level(logging.ERROR):
+        v._exportar("csv")             # no debe lanzar
+    assert "bug interno simulado en exportar_csv" in caplog.text
