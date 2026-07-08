@@ -4,6 +4,14 @@
 #include "modes/ModoMemoria.h"
 #include "modes/ModoVelocidad.h"
 
+namespace {
+// Unico lugar que decide que ids de modo existen (ver GameEngine::crearModo).
+bool modoValido(int id) { return id >= 1 && id <= 3; }
+bool nivelValido(int nivel) {
+    return nivel >= cfg::adaptacion::nivelMin && nivel <= cfg::adaptacion::nivelMax;
+}
+}  // namespace
+
 const char* nombreEstado(Estado e) {
     switch (e) {
         case Estado::IDLE:     return "idle";
@@ -50,6 +58,9 @@ void GameEngine::procesar(const proto::Comando& c) {
     using T = proto::Comando::Tipo;
     switch (c.tipo) {
         case T::SET_MODE:
+            // Modo desconocido o nivel fuera de rango: se ignora el comando
+            // completo (no deja el motor con un modoId_/nivel_ invalido).
+            if (!modoValido(c.mode) || !nivelValido(c.level)) break;
             modoId_ = c.mode;
             nivel_ = c.level;
             crearModo(modoId_);
@@ -64,6 +75,8 @@ void GameEngine::procesar(const proto::Comando& c) {
             }
             break;
         case T::SET_LEVEL:
+            // Nivel fuera de rango: se ignora (el nivel actual no cambia).
+            if (!nivelValido(c.level)) break;
             nivel_ = c.level;
             // Solo recrea el modo FUERA de una sesion activa. En RUNNING/PAUSED
             // el modo sigue vivo y la proxima ronda recalcula sus parametros
@@ -118,6 +131,7 @@ void GameEngine::actualizar() {
 }
 
 void GameEngine::pisar(int celda) {
+    if (celda < 1 || celda > cfg::CELDAS) return;  // celda fuera del tapete: se ignora
     if (estado_ == Estado::RUNNING && modo_) {
         uint32_t ms = sesionMs();
         emitir(proto::Evento::press(celda, ms));
