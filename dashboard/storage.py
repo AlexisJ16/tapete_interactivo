@@ -45,14 +45,23 @@ def _ahora() -> str:
     return datetime.now().isoformat(timespec="seconds")
 
 
+class AlmacenError(Exception):
+    """Fallo controlado al abrir/crear la base de datos (ruta invalida, DB
+    corrupta, disco sin permiso). La frontera GUI la captura en vez de
+    propagar el error crudo de sqlite3."""
+
+
 class Almacen:
     def __init__(self, ruta: str = "tapete.sqlite"):
         self.ruta = ruta
-        self.con = sqlite3.connect(ruta)
-        self.con.row_factory = sqlite3.Row
-        self.con.execute("PRAGMA foreign_keys = ON")
-        self.con.executescript(ESQUEMA)
-        self.con.commit()
+        try:
+            self.con = sqlite3.connect(ruta)
+            self.con.row_factory = sqlite3.Row
+            self.con.execute("PRAGMA foreign_keys = ON")
+            self.con.executescript(ESQUEMA)
+            self.con.commit()
+        except sqlite3.Error as e:
+            raise AlmacenError(f"no se pudo abrir la base de datos '{ruta}': {e}") from e
 
     # --- perfiles ---
     def upsert_perfil(self, id: str, nombre: str) -> None:

@@ -7,6 +7,8 @@ fuente puede ser el ESP32 real, cuyo serial mezcla ruido/basura con los eventos.
 import os
 import sys
 
+import pytest
+
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -203,3 +205,106 @@ def test_exportar_sin_sesion_no_lanza_ni_crea_archivo():
     v._exportar("csv")
     v._exportar("pdf")
     assert v.lbl_export.text() == ""
+
+
+# --- Task 2.4: storage y export degradan sin tumbar la GUI ---
+# Errores de E/S de disco/DB (ruta inexistente, DB corrupta, sin permiso, sin
+# datos) deben llegar a la frontera como una excepcion propia (AlmacenError /
+# ReporteError), nunca como un crash sin control ni una corrupcion silenciosa.
+
+
+def test_almacen_ruta_a_directorio_inexistente_lanza_error_controlado():
+    from storage import AlmacenError
+    with pytest.raises(AlmacenError):
+        Almacen("/ruta/que/no/existe/tapete.sqlite")
+
+
+def test_almacen_db_corrupta_lanza_error_controlado(tmp_path):
+    from storage import AlmacenError
+    ruta = tmp_path / "corrupta.sqlite"
+    ruta.write_bytes(b"esto no es una base de datos sqlite")
+    with pytest.raises(AlmacenError):
+        Almacen(str(ruta))
+
+
+def test_exportar_csv_a_ruta_sin_permiso_lanza_error_controlado(tmp_path):
+    from reports import ReporteError, exportar_csv
+    a = Almacen(":memory:")
+    sid = a.iniciar_sesion(None, 1, 1)
+    sin_permiso = tmp_path / "sin_permiso"
+    sin_permiso.mkdir()
+    sin_permiso.chmod(0o000)
+    try:
+        with pytest.raises(ReporteError):
+            exportar_csv(a, sid, str(sin_permiso / "reporte.csv"))
+    finally:
+        sin_permiso.chmod(0o755)   # permitir que pytest limpie tmp_path
+
+
+def test_exportar_pdf_a_ruta_sin_permiso_lanza_error_controlado(tmp_path):
+    from reports import ReporteError, exportar_pdf
+    a = Almacen(":memory:")
+    sid = a.iniciar_sesion(None, 1, 1)
+    sin_permiso = tmp_path / "sin_permiso"
+    sin_permiso.mkdir()
+    sin_permiso.chmod(0o000)
+    try:
+        with pytest.raises(ReporteError):
+            exportar_pdf(a, sid, str(sin_permiso / "reporte.pdf"))
+    finally:
+        sin_permiso.chmod(0o755)
+
+
+def test_exportar_csv_sin_datos_lanza_error_controlado(tmp_path):
+    from reports import ReporteError, exportar_csv
+    a = Almacen(":memory:")
+    with pytest.raises(ReporteError):
+        exportar_csv(a, 9999, str(tmp_path / "no_deberia_crearse.csv"))
+    assert not (tmp_path / "no_deberia_crearse.csv").exists()
+
+
+def test_exportar_pdf_sin_datos_lanza_error_controlado(tmp_path):
+    from reports import ReporteError, exportar_pdf
+    a = Almacen(":memory:")
+    with pytest.raises(ReporteError):
+        exportar_pdf(a, 9999, str(tmp_path / "no_deberia_crearse.pdf"))
+    assert not (tmp_path / "no_deberia_crearse.pdf").exists()
+
+
+def test_exportar_csv_sesion_valida_sin_eventos_exporta_igual(tmp_path):
+    # Otra lectura de "sin datos": una sesion que SI existe pero no acumulo
+    # eventos (0 rondas). No es un error; debe exportar el resumen igual.
+    from reports import exportar_csv
+    a = Almacen(":memory:")
+    sid = a.iniciar_sesion(None, 1, 1)
+    ruta = str(tmp_path / "sin_eventos.csv")
+    exportar_csv(a, sid, ruta)
+    assert os.path.exists(ruta)
+
+
+def test_exportar_gui_con_sesion_invalida_no_crashea_y_muestra_error():
+    # Simula una sesion cuyo id no esta en el almacen (equivalente, desde la
+    # frontera, a que storage/reports fallen): _exportar no debe propagar.
+    v = _ventana()
+    v.ses.sesion_id = 9999
+    v._exportar("csv")
+    assert "Error" in v.lbl_export.text()
+    v._exportar("pdf")
+    assert "Error" in v.lbl_export.text()
+
+
+def test_abrir_almacen_con_db_corrupta_degrada_a_memoria_sin_abortar_la_gui(tmp_path, capsys):
+    # Almacen(ruta) real (Task 2.4, arriba) SI lanza AlmacenError con una DB
+    # corrupta; pero eso solo se prueba en el aislamiento del unit test. La
+    # ventana se construye una unica vez al arrancar, con una ruta fija: si
+    # esa apertura fallara sin capturarse, la GUI ni siquiera llegaria a
+    # mostrarse. _abrir_almacen es la frontera que evita ese aborto.
+    from app import _abrir_almacen
+    ruta = tmp_path / "corrupta.sqlite"
+    ruta.write_bytes(b"esto no es una base de datos sqlite")
+
+    a = _abrir_almacen(str(ruta))          # no debe lanzar
+
+    a.upsert_perfil("p001", "Juan")        # el almacen de respaldo (memoria) funciona
+    assert a.perfiles()[0]["id"] == "p001"
+    assert "AVISO" in capsys.readouterr().err   # la degradacion es visible, no silenciosa

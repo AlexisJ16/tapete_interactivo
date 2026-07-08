@@ -23,9 +23,9 @@ from analitica import serie_evolucion, tasa_acierto  # noqa: E402
 from estilo import QSS  # noqa: E402
 from fuente import FuenteCore, construir_fuente  # noqa: E402
 from paneles import PanelAnalisis, PanelJuego, PanelMetricas  # noqa: E402
-from reports import exportar_csv, exportar_pdf  # noqa: E402
+from reports import ReporteError, exportar_csv, exportar_pdf  # noqa: E402
 from sesion import Sesion  # noqa: E402
-from storage import Almacen  # noqa: E402
+from storage import Almacen, AlmacenError  # noqa: E402
 
 NOMBRES_MODO = {1: "Memoria", 2: "Velocidad", 3: "Equilibrio"}
 SEMILLA_DEFECTO = 12345   # reproducibilidad del RNG; no es un control clinico
@@ -34,6 +34,19 @@ SEMILLA_DEFECTO = 12345   # reproducibilidad del RNG; no es un control clinico
 def _qt():
     from PyQt6 import QtCore, QtGui, QtWidgets
     return QtCore, QtGui, QtWidgets
+
+
+def _abrir_almacen(ruta: str) -> Almacen:
+    """Abre el almacen SQLite en 'ruta'. Si falla (DB corrupta, directorio
+    inexistente), degrada a un almacen en memoria con un aviso visible en vez
+    de abortar el arranque de la GUI (sin persistencia entre sesiones, pero el
+    terapeuta puede seguir usando el tapete)."""
+    try:
+        return Almacen(ruta)
+    except AlmacenError as e:
+        print(f"AVISO: {e} — se usara un almacen en memoria (sin persistencia)",
+              file=sys.stderr)
+        return Almacen(":memory:")
 
 
 class PanelAnalitica:
@@ -141,7 +154,7 @@ class VentanaDashboard:
         self.QtCore = QtCore
         self.QtWidgets = QtWidgets
 
-        self.almacen = almacen or Almacen(os.path.join(DIR, "tapete.sqlite"))
+        self.almacen = almacen or _abrir_almacen(os.path.join(DIR, "tapete.sqlite"))
         self.fuente = fuente or FuenteCore()
         self.ses = Sesion(self.almacen, self.fuente)
         self.semilla = SEMILLA_DEFECTO   # fuera de la vista del doctor
@@ -268,7 +281,12 @@ class VentanaDashboard:
             return
         os.makedirs(os.path.join(DIR, "reportes"), exist_ok=True)
         ruta = os.path.join(DIR, "reportes", f"sesion_{self.ses.sesion_id}.{fmt}")
-        (exportar_csv if fmt == "csv" else exportar_pdf)(self.almacen, self.ses.sesion_id, ruta)
+        try:
+            (exportar_csv if fmt == "csv" else exportar_pdf)(self.almacen, self.ses.sesion_id, ruta)
+        except ReporteError as e:
+            # Frontera GUI: un fallo de E/S en el export degrada a mensaje, no crashea.
+            self.lbl_export.setText(f"Error al exportar: {e}")
+            return
         self.lbl_export.setText(f"Exportado: {ruta}")
 
     def tick(self):

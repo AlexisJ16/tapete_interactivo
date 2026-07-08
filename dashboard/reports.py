@@ -15,22 +15,30 @@ CAMPOS_RESUMEN = [
 ]
 
 
+class ReporteError(Exception):
+    """Fallo controlado al exportar (sesion inexistente, ruta sin permiso u
+    otro error de E/S). La frontera GUI la captura en vez de propagar."""
+
+
 def exportar_csv(almacen: Almacen, sesion_id: int, ruta: str) -> str:
     """Escribe un CSV con el resumen de la sesion y su log de eventos."""
     s = almacen.sesion(sesion_id)
     if s is None:
-        raise ValueError(f"sesion {sesion_id} inexistente")
+        raise ReporteError(f"sesion {sesion_id} inexistente")
     eventos = almacen.eventos(sesion_id)
 
-    with open(ruta, "w", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
-        w.writerow(["campo", "valor"])
-        for c in CAMPOS_RESUMEN:
-            w.writerow([c, s.get(c)])
-        w.writerow([])
-        w.writerow(["ms", "tipo", "datos"])
-        for e in eventos:
-            w.writerow([e["ms"], e["tipo"], e["datos"]])
+    try:
+        with open(ruta, "w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow(["campo", "valor"])
+            for c in CAMPOS_RESUMEN:
+                w.writerow([c, s.get(c)])
+            w.writerow([])
+            w.writerow(["ms", "tipo", "datos"])
+            for e in eventos:
+                w.writerow([e["ms"], e["tipo"], e["datos"]])
+    except OSError as e:
+        raise ReporteError(f"no se pudo escribir '{ruta}': {e}") from e
     return ruta
 
 
@@ -42,7 +50,7 @@ def exportar_pdf(almacen: Almacen, sesion_id: int, ruta: str) -> str:
 
     s = almacen.sesion(sesion_id)
     if s is None:
-        raise ValueError(f"sesion {sesion_id} inexistente")
+        raise ReporteError(f"sesion {sesion_id} inexistente")
 
     fig, (ax_txt, ax_bar) = plt.subplots(2, 1, figsize=(8.27, 11.69),
                                          gridspec_kw={"height_ratios": [1, 1]})
@@ -68,6 +76,10 @@ def exportar_pdf(almacen: Almacen, sesion_id: int, ruta: str) -> str:
     ax_bar.set_ylabel("conteo")
     ax_bar.set_title("Desempeno")
 
-    fig.savefig(ruta, format="pdf")
-    plt.close(fig)
+    try:
+        fig.savefig(ruta, format="pdf")
+    except OSError as e:
+        raise ReporteError(f"no se pudo escribir '{ruta}': {e}") from e
+    finally:
+        plt.close(fig)
     return ruta
