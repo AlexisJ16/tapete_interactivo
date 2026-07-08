@@ -25,11 +25,18 @@ def instalar_excepthook(logger):
     sys.excepthook = _hook
 
 
-def ejecutar_seguro(fn, logger):
+def ejecutar_seguro(fn, logger, on_error=None):
     """Ejecuta fn() (sin argumentos); si lanza, la registra con 'logger' y no
-    propaga (retorna None). Para envolver tick() y los handlers de la GUI."""
+    propaga (retorna None). Para envolver tick() y los handlers de la GUI.
+
+    'on_error', si se pasa, se llama con la excepcion capturada. Es el gancho
+    que usa la GUI (Task 4.2) para reflejar el fallo como un estado VISIBLE
+    (indicador "Degradado") en vez de dejarlo solo en el log; no cambia el
+    comportamiento de los llamadores que no lo usan (por defecto None)."""
     try:
         return fn()
-    except Exception:
+    except Exception as e:
         logger.error("Excepcion capturada en un handler/tick", exc_info=True)
+        if on_error is not None:
+            on_error(e)
         return None

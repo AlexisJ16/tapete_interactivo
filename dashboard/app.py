@@ -39,16 +39,20 @@ def _qt():
     return QtCore, QtGui, QtWidgets
 
 
-def _abrir_almacen(ruta: str) -> Almacen:
+def _abrir_almacen(ruta: str, on_degradado=None) -> Almacen:
     """Abre el almacen SQLite en 'ruta'. Si falla (DB corrupta, directorio
     inexistente), degrada a un almacen en memoria con un aviso visible en vez
     de abortar el arranque de la GUI (sin persistencia entre sesiones, pero el
-    terapeuta puede seguir usando el tapete)."""
+    terapeuta puede seguir usando el tapete). 'on_degradado', si se pasa, se
+    llama con el mensaje de error para que el llamador refleje la degradacion
+    en la UI (Task 4.2), ademas del aviso por stderr (ya cubierto en 2.4)."""
     try:
         return Almacen(ruta)
     except AlmacenError as e:
         print(f"AVISO: {e} — se usara un almacen en memoria (sin persistencia)",
               file=sys.stderr)
+        if on_degradado is not None:
+            on_degradado(str(e))
         return Almacen(":memory:")
 
 
@@ -166,7 +170,20 @@ class VentanaDashboard:
         self.QtCore = QtCore
         self.QtWidgets = QtWidgets
 
-        self.almacen = almacen or _abrir_almacen(os.path.join(DIR, "tapete.sqlite"))
+        # --- estado de degradacion (Task 4.2): tres motivos independientes que
+        # el indicador de conexion combina. '_degradado_almacen' es pegajoso
+        # (una vez que se cae a memoria, sigue asi toda la sesion); los otros
+        # dos se recalculan en cada tick.
+        self._degradado_almacen = False
+        if almacen is not None:
+            self.almacen = almacen
+        else:
+            self.almacen = _abrir_almacen(
+                os.path.join(DIR, "tapete.sqlite"),
+                on_degradado=lambda motivo: setattr(self, "_degradado_almacen", True),
+            )
+        self._degradado_error = False
+        self._degradado_transporte = False
         self.fuente = fuente or FuenteCore()
         self.ses = Sesion(self.almacen, self.fuente)
         self.semilla = SEMILLA_DEFECTO   # fuera de la vista del doctor
@@ -219,12 +236,15 @@ class VentanaDashboard:
         cuerpo.setSizes([640, 420])
         raiz.addWidget(cuerpo, 1)
 
-        # --- franja inferior: export discreto ---
+        # --- franja inferior: estado de conexion + export discreto ---
         pie = QtWidgets.QHBoxLayout()
+        self.lbl_estado_conexion = QtWidgets.QLabel("")
+        self.lbl_estado_conexion.setObjectName("estadoConexion")
         self.lbl_export = QtWidgets.QLabel("")
         self.lbl_export.setObjectName("export")
         b_csv = QtWidgets.QPushButton("Exportar CSV")
         b_pdf = QtWidgets.QPushButton("Exportar PDF")
+        pie.addWidget(self.lbl_estado_conexion)
         pie.addWidget(self.lbl_export); pie.addStretch(1)
         pie.addWidget(b_csv); pie.addWidget(b_pdf)
         raiz.addLayout(pie)
@@ -247,11 +267,38 @@ class VentanaDashboard:
         b_csv.clicked.connect(lambda: self._exportar("csv"))
         b_pdf.clicked.connect(lambda: self._exportar("pdf"))
         self._configurar()
+        self._actualizar_estado_conexion()   # refleja desde ya un almacen degradado al abrir
 
         # --- temporizador de sondeo (25 Hz) ---
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.tick)
         self.timer.start(40)
+
+    # --- indicador de conexion/degradacion (Task 4.2) ---
+    def _fuente_conectada(self) -> bool:
+        # FuenteTCP expone 'sock' (None mientras reconecta tras una caida del
+        # ESP32); FuenteCore/FuenteSerial no tienen esa nocion de transporte y
+        # se asumen conectadas siempre (de ahi el default True).
+        return getattr(self.fuente, "sock", True) is not None
+
+    def _actualizar_estado_conexion(self) -> None:
+        motivos = []
+        if self._degradado_error:
+            motivos.append("error en tick")
+        if self._degradado_transporte:
+            motivos.append("fuente desconectada")
+        if self._degradado_almacen:
+            motivos.append("almacen en memoria")
+        if motivos:
+            self.lbl_estado_conexion.setText("Degradado: " + ", ".join(motivos))
+            self.lbl_estado_conexion.setStyleSheet("color: #B42318; font-weight: 700;")
+        else:
+            self.lbl_estado_conexion.setText("Conectado")
+            self.lbl_estado_conexion.setStyleSheet("color: #15803D; font-weight: 700;")
+
+    def _marcar_error_tick(self, exc) -> None:
+        self._degradado_error = True
+        self._actualizar_estado_conexion()
 
     # --- acciones ---
     def _modo(self):
@@ -319,10 +366,15 @@ class VentanaDashboard:
         self.lbl_export.setText(f"Exportado: {ruta}")
 
     def tick(self):
-        ejecutar_seguro(self._tick_interno, LOGGER)
+        ejecutar_seguro(self._tick_interno, LOGGER, on_error=self._marcar_error_tick)
 
     def _tick_interno(self):
         self.ses.bombear()
+        # Si bombear() no lanzo (fuente y almacen respondieron), el tick esta
+        # sano: limpia el error previo y recalcula el estado del transporte.
+        self._degradado_error = False
+        self._degradado_transporte = not self._fuente_conectada()
+        self._actualizar_estado_conexion()
         self._refrescar()
 
     def _refrescar(self):

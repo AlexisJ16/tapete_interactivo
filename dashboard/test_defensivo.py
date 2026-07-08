@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import random
+import sqlite3
 import sys
 
 import pytest
@@ -545,3 +546,106 @@ def test_exportar_con_bug_interno_no_aborta_la_app_y_lo_registra(monkeypatch, ca
     with caplog.at_level(logging.ERROR):
         v._exportar("csv")             # no debe lanzar
     assert "bug interno simulado en exportar_csv" in caplog.text
+
+
+# --- Task 4.2: degradacion VISIBLE ante caida de fuente/DB ---
+# 4.1 ya evita que un bug interno tumbe la GUI (arriba). Lo que falta -- y es
+# lo unico que agrega 4.2 -- es una senal OBSERVABLE en la UI (no solo el log):
+# un indicador ("Conectado"/"Degradado: ...") que el terapeuta pueda ver.
+# La mitad "no crashea" de estos escenarios ya la cubre ejecutar_seguro (4.1);
+# el assert que discrimina RED de GREEN es el texto del indicador, no la
+# ausencia de excepcion.
+
+
+class _FuenteQueFalla(Fuente):
+    """Fuente minima cuyo recibir() lanza a demanda (simula 'Fuente.recibir()
+    empieza a fallar'), y dejar de fallar simula la recuperacion."""
+
+    def __init__(self):
+        self.fallar = True
+
+    def enviar(self, linea: str) -> None:
+        pass
+
+    def recibir(self) -> list:
+        if self.fallar:
+            raise RuntimeError("fuente caida (simulada)")
+        return []
+
+
+class _FuenteConSocket(FuenteCore):
+    """Simula el atributo publico 'sock' de FuenteTCP (None mientras
+    reconecta tras una caida del ESP32) sin abrir conexiones reales: prueba
+    solo que app.py refleja ese estado, no la reconexion en si (ya cubierta
+    en test_tcp_reconexion.py)."""
+
+    def __init__(self):
+        super().__init__()
+        self.sock = None
+
+
+def test_indicador_conexion_existe_y_conectado_por_defecto():
+    v = _ventana()
+    assert v.lbl_estado_conexion.text() == "Conectado"
+
+
+def test_recibir_que_falla_marca_indicador_degradado_y_no_crashea(caplog):
+    v = VentanaDashboard(fuente=_FuenteQueFalla(), almacen=Almacen(":memory:"))
+    v.timer.stop()
+
+    with caplog.at_level(logging.ERROR):
+        v.tick()                       # no debe lanzar (red de 4.1)
+    assert "Degradado" in v.lbl_estado_conexion.text()
+
+    v.fuente.fallar = False            # la fuente "se recupera"
+    v.tick()
+    assert v.lbl_estado_conexion.text() == "Conectado"
+
+
+def test_fuente_tcp_con_sock_none_marca_indicador_degradado_y_reconexion_lo_limpia():
+    v = VentanaDashboard(fuente=_FuenteConSocket(), almacen=Almacen(":memory:"))
+    v.timer.stop()
+
+    v.tick()
+    assert "Degradado" in v.lbl_estado_conexion.text()
+
+    v.fuente.sock = object()           # "reconectado"
+    v.tick()
+    assert v.lbl_estado_conexion.text() == "Conectado"
+
+
+def test_almacen_que_falla_a_mitad_de_sesion_marca_indicador_degradado_y_no_crashea(
+    monkeypatch, caplog
+):
+    v = _ventana()
+    v.b_start.click()
+    v.tick()
+    assert v.ses.estado == "running"
+
+    def _boom(*a, **kw):
+        raise sqlite3.OperationalError("disco lleno (simulado)")
+
+    monkeypatch.setattr(v.almacen, "actualizar_metricas", _boom)
+
+    encendida = next(c for c in range(1, 7) if v.ses.leds[c] > 0)
+    v.fuente.pisar(encendida)
+    with caplog.at_level(logging.ERROR):
+        v.tick()                       # no debe lanzar
+    assert "Degradado" in v.lbl_estado_conexion.text()
+
+
+def test_construir_ventana_con_db_corrupta_al_arrancar_muestra_indicador_degradado(
+    monkeypatch, tmp_path, capsys
+):
+    # Cierra el gap de la Task 2.4: _abrir_almacen ya degradaba a memoria con
+    # aviso solo por stderr; ahora ademas debe verse en la UI desde el arranque.
+    import app
+    monkeypatch.setattr(app, "DIR", str(tmp_path))
+    (tmp_path / "tapete.sqlite").write_bytes(b"esto no es una base de datos sqlite")
+
+    v = VentanaDashboard(fuente=FuenteCore())   # sin almacen explicito: pasa por _abrir_almacen
+    v.timer.stop()
+
+    assert "Degradado" in v.lbl_estado_conexion.text()
+    assert "almacen" in v.lbl_estado_conexion.text().lower()
+    assert "AVISO" in capsys.readouterr().err   # el aviso por stderr de 2.4 sigue intacto
