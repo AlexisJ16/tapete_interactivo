@@ -1,15 +1,18 @@
 # -*- mode: python ; coding: utf-8 -*-
 # PyInstaller spec del dashboard del terapeuta (onedir).
 # Se construye en Windows (CI). build/libgamecore.dll debe existir antes de correr
-# pyinstaller (CI: paso "Construir libgamecore.dll"). Correr desde la raiz del repo.
+# pyinstaller (CI: paso "Construir libgamecore.dll").
+# Las rutas se anclan a la RAIZ del repo via SPECPATH (dir de este .spec), no al
+# cwd: en un .spec las rutas relativas de Analysis se resuelven contra el dir del
+# spec (packaging/), lo que rompia el entry. Absolutas => funciona desde cualquier cwd.
 import os
 
-raiz = os.path.abspath(os.getcwd())
+raiz = os.path.abspath(os.path.join(SPECPATH, os.pardir))
 dll = os.path.join(raiz, "build", "libgamecore.dll")
 
 a = Analysis(
-    ['dashboard/app.py'],
-    pathex=['dashboard', 'simulator'],
+    [os.path.join(raiz, 'dashboard', 'app.py')],
+    pathex=[os.path.join(raiz, 'dashboard'), os.path.join(raiz, 'simulator')],
     binaries=[],
     datas=[(dll, '.')] if os.path.exists(dll) else [],
     hiddenimports=['core_bridge', 'fuente', 'sesion', 'storage', 'reports',
