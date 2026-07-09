@@ -231,32 +231,27 @@ def test_almacen_db_corrupta_lanza_error_controlado(tmp_path):
         Almacen(str(ruta))
 
 
-def test_exportar_csv_a_ruta_sin_permiso_lanza_error_controlado(tmp_path):
+def test_exportar_csv_a_ruta_no_escribible_lanza_error_controlado(tmp_path):
     from reports import ReporteError, exportar_csv
     a = Almacen(":memory:")
     sid = a.iniciar_sesion(None, 1, 1)
-    sin_permiso = tmp_path / "sin_permiso"
-    sin_permiso.mkdir()
-    sin_permiso.chmod(0o000)
-    try:
-        with pytest.raises(ReporteError):
-            exportar_csv(a, sid, str(sin_permiso / "reporte.csv"))
-    finally:
-        sin_permiso.chmod(0o755)   # permitir que pytest limpie tmp_path
+    # El "directorio" padre es en realidad un ARCHIVO: escribir dentro de el
+    # falla con OSError tanto en Linux como en Windows -> reports lo envuelve en
+    # ReporteError. (Evita chmod(0o000), que no bloquea escritura en Windows.)
+    padre = tmp_path / "padre_archivo"
+    padre.write_text("no soy un directorio")
+    with pytest.raises(ReporteError):
+        exportar_csv(a, sid, str(padre / "reporte.csv"))
 
 
-def test_exportar_pdf_a_ruta_sin_permiso_lanza_error_controlado(tmp_path):
+def test_exportar_pdf_a_ruta_no_escribible_lanza_error_controlado(tmp_path):
     from reports import ReporteError, exportar_pdf
     a = Almacen(":memory:")
     sid = a.iniciar_sesion(None, 1, 1)
-    sin_permiso = tmp_path / "sin_permiso"
-    sin_permiso.mkdir()
-    sin_permiso.chmod(0o000)
-    try:
-        with pytest.raises(ReporteError):
-            exportar_pdf(a, sid, str(sin_permiso / "reporte.pdf"))
-    finally:
-        sin_permiso.chmod(0o755)
+    padre = tmp_path / "padre_archivo"
+    padre.write_text("no soy un directorio")
+    with pytest.raises(ReporteError):
+        exportar_pdf(a, sid, str(padre / "reporte.pdf"))
 
 
 def test_exportar_csv_sin_datos_lanza_error_controlado(tmp_path):

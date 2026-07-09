@@ -28,6 +28,14 @@ CXX="${CXX:-g++}"
 INCLUDES=(-I"$GAMECORE" -I"$VENDOR" -I"$TESTDIR")
 CXXFLAGS=(-std=c++17 -Wall -Wextra -O1 "${INCLUDES[@]}")
 
+# En Windows (Git Bash/MSYS) los binarios de test se enlazan estaticos: si no,
+# el .exe carga los DLL de runtime de MinGW (libstdc++/libgcc/winpthread) desde
+# el PATH y Git-for-Windows trae una copia incompatible que lo hace crashear al
+# arrancar. Estatico elimina esa busqueda. En Linux no se toca nada.
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) CXXFLAGS+=(-static -static-libgcc -static-libstdc++) ;;
+esac
+
 shopt -s nullglob
 CORE_SRCS=( "$GAMECORE"/*.cpp "$GAMECORE"/modes/*.cpp )
 
@@ -52,7 +60,8 @@ for d in "$TESTDIR"/test_*/; do
     if "./$bin"; then
       echo "${GREEN}OK${NC} $name"
     else
-      echo "${RED}FALLO (runtime)${NC} $name"; FAILED=1
+      rc=$?
+      echo "${RED}FALLO (runtime, rc=$rc)${NC} $name"; FAILED=1
     fi
   else
     echo "${RED}FALLO (compilacion)${NC} $name"; FAILED=1
