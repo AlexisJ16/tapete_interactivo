@@ -133,7 +133,7 @@ def figura_montecarlo(datos: dict, salida: str) -> str:
     panel(ejes[2], m, [f["longitud"] for f in m], [f["teorico"] for f in m],
           "Memoria:  P = h^L  (h=0,85)", "longitud L de la secuencia")
     ejes[0].set_ylabel("prob. de ganar la ronda")
-    fig.suptitle("Verificación estadística de la regla del motor (200 semillas)", y=1.02)
+    fig.suptitle("Verificación estadística de la regla de dificultad (200 semillas)", y=1.02)
     fig.text(0.5, -0.10, PIE, ha="center", fontsize=7, style="italic")
     ruta = os.path.join(salida, "E6_montecarlo.png")
     fig.savefig(ruta, dpi=150, bbox_inches="tight")

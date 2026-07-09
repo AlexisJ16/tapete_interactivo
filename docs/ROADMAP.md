@@ -16,7 +16,7 @@ Mantener siempre la disciplina del proyecto: **TDD**, **una sola fuente de verda
 > retoman *después* del artículo, en ese orden.
 
 **Línea base del software:** `./scripts/run_all_tests.sh` → TODO VERDE (52 casos /
-2174 aserciones C++ + 119 pytest); `.venv/bin/pio run -e esp32dev` → SUCCESS. Si algo
+2174 aserciones C++ + 135 pytest); `.venv/bin/pio run -e esp32dev` → SUCCESS. Si algo
 está en rojo al empezar, arreglarlo antes de añadir nada. Esta máquina tiene display real
 (`DISPLAY=:0` / Wayland): se pueden lanzar el simulador y el dashboard, y generar capturas
 con `scripts/demo_visual.py`.

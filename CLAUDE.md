@@ -26,7 +26,7 @@ Las 6 fases del plan base están **completas y validadas**:
   protocolo Py/C++).
 - Empaquetado Windows (`packaging/`): `.exe` PyInstaller con `--serial auto`.
 
-`./scripts/run_all_tests.sh` → **TODO VERDE** (52 casos C++ / 2174 aserciones + 119 pytest).
+`./scripts/run_all_tests.sh` → **TODO VERDE** (52 casos C++ / 2174 aserciones + 135 pytest).
 `.venv/bin/pio run -e esp32dev` → **SUCCESS** (Flash ~60%, RAM ~14%).
 
 **El software en verde no significa el proyecto en verde.** El hardware físico, el CI y
