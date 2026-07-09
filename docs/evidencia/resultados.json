@@ -852,14 +852,94 @@
     }
   },
   "coste_computacional": {
-    "tick_ns": 5.4,
-    "pisada_ns": 590.2,
-    "sesion_us": 7.08,
+    "tick_ns": 4.8,
+    "pisada_ns": 433.6,
+    "sesion_us": 5.2,
     "cpu": "Intel Core i7-1355U",
     "salida_cruda": [
-      "actualizar() [tick en RUNNING]          5.4 ns/llamada  (1000000 ticks)",
-      "pisar() [pisada que emite eventos]    590.2 ns/pisada    (240000 pisadas efectivas)",
-      "sesion completa (nivel 4)              7.08 us/sesion    (20000 sesiones de 12 rondas)"
+      "actualizar() [tick en RUNNING]          4.8 ns/llamada  (1000000 ticks)",
+      "pisar() [pisada que emite eventos]    433.6 ns/pisada    (240000 pisadas efectivas)",
+      "sesion completa (nivel 4)              5.20 us/sesion    (20000 sesiones de 12 rondas)"
     ]
+  },
+  "analogico": {
+    "divisor_fsr": [
+      {
+        "r_fsr": 250.0,
+        "v_nodo": 3.21951,
+        "adc": 3995.12,
+        "teorico": 3.2195121951219514
+      },
+      {
+        "r_fsr": 500.0,
+        "v_nodo": 3.14286,
+        "adc": 3900.0,
+        "teorico": 3.142857142857143
+      },
+      {
+        "r_fsr": 1000.0,
+        "v_nodo": 3.0,
+        "adc": 3722.73,
+        "teorico": 3.0
+      },
+      {
+        "r_fsr": 2200.0,
+        "v_nodo": 2.70492,
+        "adc": 3356.56,
+        "teorico": 2.7049180327868854
+      },
+      {
+        "r_fsr": 4700.0,
+        "v_nodo": 2.2449,
+        "adc": 2785.71,
+        "teorico": 2.2448979591836733
+      },
+      {
+        "r_fsr": 10000.0,
+        "v_nodo": 1.65,
+        "adc": 2047.5,
+        "teorico": 1.65
+      },
+      {
+        "r_fsr": 22000.0,
+        "v_nodo": 1.03125,
+        "adc": 1279.69,
+        "teorico": 1.03125
+      },
+      {
+        "r_fsr": 47000.0,
+        "v_nodo": 0.578947,
+        "adc": 718.421,
+        "teorico": 0.5789473684210527
+      },
+      {
+        "r_fsr": 100000.0,
+        "v_nodo": 0.3,
+        "adc": 372.273,
+        "teorico": 0.3
+      },
+      {
+        "r_fsr": 1000000.0,
+        "v_nodo": 0.0326733,
+        "adc": 40.5446,
+        "teorico": 0.032673267326732675
+      },
+      {
+        "r_fsr": 10000000.0,
+        "v_nodo": 0.0032967,
+        "adc": 4.09091,
+        "teorico": 0.0032967032967032967
+      }
+    ],
+    "r_fsr_umbral_2000_ohm": 10474.999999999998,
+    "v_umbral_2000_v": 1.6117216117216118,
+    "max_error_vs_teoria_v": 2.85714285741534e-06,
+    "grupo_led": {
+      "v_anodo": 3.731136,
+      "v_catodo": 0.9,
+      "i_grupo_a": 0.0005767565,
+      "i_led_a": 0.0001922522,
+      "nota": "estimacion de orden de magnitud; modelo de diodo y V_CE(sat) asumidos, pendientes de confirmar con multimetro"
+    }
   }
 }

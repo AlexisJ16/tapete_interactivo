@@ -1,0 +1,42 @@
+digraph tapete {
+  rankdir=TB;
+  splines=spline;
+  nodesep=0.5;
+  ranksep=0.7;
+  compound=true;
+  fontname="DejaVu Sans";
+  node [fontname="DejaVu Sans", fontsize=10, shape=box, style="rounded,filled", fillcolor=white];
+  edge [fontname="DejaVu Sans", fontsize=8.5, color="#444444"];
+
+  subgraph cluster_33 {
+    label="Dominio 3,3 V — sensado";
+    style="rounded,dashed"; color="#1f77b4"; fontcolor="#1f77b4"; fontsize=10;
+    FSR [label="6 × sensor FSR 402\ndivisor con 10 kΩ a masa", fillcolor="#eaf2fb"];
+  }
+
+  subgraph cluster_esp {
+    label="Cómputo";
+    style="rounded,dashed"; color="#555555"; fontsize=10;
+    ESP [label="ESP32 DevKit\nGameCore: 3 modos + recomendador\n(motor no bloqueante)",
+         fillcolor="#fdf6e3", height=1.1];
+  }
+
+  subgraph cluster_5 {
+    label="Dominio 5 V — actuación";
+    style="rounded,dashed"; color="#d62728"; fontcolor="#d62728"; fontsize=10;
+    ULN [label="ULN2803A\ndriver Darlington", fillcolor="#fdeaea"];
+    LED [label="6 grupos × 3 LED blancos\n(2,2 kΩ en serie por grupo)", fillcolor="#fdeaea"];
+    DF  [label="DFPlayer Mini\n+ microSD", fillcolor="#fdeaea"];
+    SPK [label="parlante 4 Ω / 3 W", shape=box, fillcolor="#fdeaea"];
+  }
+
+  PC [label="PC del terapeuta\ndashboard PyQt6 + SQLite\nexportación CSV / PDF",
+      fillcolor="#eafaea", height=0.9];
+
+  PC  -> ESP [label="  protocolo JSON por líneas\l  USB serie 115 200 bd\l  o TCP 3333 por WiFi\l", dir=both];
+  ESP -> FSR [label="  6 × ADC1\l  GPIO36, GPIO39, GPIO34, GPIO35, GPIO32, GPIO33\l", dir=back];
+  ESP -> ULN [label="  6 × PWM\l  GPIO4, GPIO5, GPIO18, GPIO19, GPIO21, GPIO23\l"];
+  ESP -> DF  [label="  UART2\l  TX=GPIO17, RX=GPIO16\l"];
+  ULN -> LED [label="  conmutación a 5 V"];
+  DF  -> SPK [label="  audio diferencial"];
+}

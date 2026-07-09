@@ -118,9 +118,32 @@ class Comp:
 
 
 @dataclass
+class TitleBlock:
+    """Cajetin del plano. Fecha fija: la salida debe ser reproducible byte a byte."""
+    title: str = ""
+    date: str = ""
+    rev: str = ""
+    company: str = ""
+    comments: tuple[str, ...] = ()
+
+    def render(self) -> str:
+        if not any((self.title, self.date, self.rev, self.company, self.comments)):
+            return ""
+        campos = ""
+        for nombre, val in (("title", self.title), ("date", self.date),
+                            ("rev", self.rev), ("company", self.company)):
+            if val:
+                campos += f'\t\t({nombre} "{val}")\n'
+        for i, c in enumerate(self.comments, start=1):
+            campos += f'\t\t(comment {i} "{c}")\n'
+        return f"\t(title_block\n{campos}\t)\n"
+
+
+@dataclass
 class Design:
     project: str = "tapete"
     paper: str = "A3"
+    title_block: TitleBlock = field(default_factory=TitleBlock)
     comps: list[Comp] = field(default_factory=list)
     # net -> lista de (ref, pin_number)
     nets: dict[str, list[tuple[str, str]]] = field(default_factory=dict)
@@ -181,11 +204,18 @@ def _emit_symbol(c: Comp, symdef: str) -> str:
     )
 
 
-def _emit_label(net: str, x: float, y: float, key: str) -> str:
+LABEL_SIZE = 1.0  # mm. Menor que el simbolo: con una label por pin (2,54 mm de paso)
+                  # el tamano por defecto (1,27) hace que se pisen entre si.
+
+
+def _emit_label(net: str, x: float, y: float, key: str, justify: str = "left") -> str:
+    """El texto se escribe HACIA AFUERA del simbolo: los pines del lado izquierdo
+    llevan justify right, si no la etiqueta se dibuja encima del componente."""
     return (
         f'\t(label "{net}"\n'
         f"\t\t(at {_fmt(x)} {_fmt(y)} 0)\n"
-        f"\t\t(effects\n\t\t\t(font\n\t\t\t\t(size 1.27 1.27)\n\t\t\t)\n\t\t\t(justify left bottom)\n\t\t)\n"
+        f"\t\t(effects\n\t\t\t(font\n\t\t\t\t(size {LABEL_SIZE} {LABEL_SIZE})\n\t\t\t)\n"
+        f"\t\t\t(justify {justify} bottom)\n\t\t)\n"
         f'\t\t(uuid "{uid("label:" + key)}")\n'
         f"\t)\n"
     )
@@ -239,7 +269,8 @@ def render(d: Design) -> str:
             px, py = pin_cache[c.lib_id][pin]
             # Y-flip: el espacio del simbolo es Y-arriba; el esquematico Y-abajo.
             ax, ay = c.x + px, c.y - py
-            labels += _emit_label(net, ax, ay, f"{net}:{ref}:{pin}")
+            justify = "right" if px < 0 else "left"
+            labels += _emit_label(net, ax, ay, f"{net}:{ref}:{pin}", justify)
 
     # 5) no_connect en el punto de conexion de cada pin marcado
     ncs = ""
@@ -262,6 +293,7 @@ def render(d: Design) -> str:
         '\t(generator_version "10.0")\n'
         f'\t(uuid "{ROOT_UUID}")\n'
         f'\t(paper "{d.paper}")\n'
+        f"{d.title_block.render()}"
         f"\t(lib_symbols\n{lib_syms}\t)\n"
         f"{body}{labels}{ncs}{notes}"
         '\t(sheet_instances\n\t\t(path "/"\n\t\t\t(page "1")\n\t\t)\n\t)\n'
