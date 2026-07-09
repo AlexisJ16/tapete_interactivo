@@ -134,9 +134,11 @@ La decisión de emplear **iluminación blanca regulada por PWM en lugar de tiras
 
 **Salida de audio.** Un módulo DFPlayer Mini, con amplificador integrado y tarjeta microSD, reproduce cuatro pistas asociadas a los eventos del juego: instrucción, acierto, error y éxito de secuencia. Se comunica con el microcontrolador por interfaz serie asíncrona (GPIO 17 y 16) y ataca un parlante de 4 Ω y 3 W.
 
-**Alimentación y montaje.** El conjunto se alimenta exclusivamente desde el puerto USB del PC que ejecuta el programa de monitoreo, decisión que elimina la necesidad de una fuente externa y simplifica la seguridad eléctrica del prototipo en un entorno con niños. El circuito se montó sobre placa de prototipado alojada en una caja transparente de 40 × 28 × 13 cm, con la tapa reforzada mediante láminas de acrílico que distribuyen la carga de la pisada sobre los sensores y sobre la que se dispone el arte gráfico de las seis casillas. La Figura 1 muestra el inventario de componentes y el prototipo ensamblado.
+**Alimentación y montaje.** El conjunto se alimenta exclusivamente desde el puerto USB del PC que ejecuta el programa de monitoreo, decisión que elimina la necesidad de una fuente externa y simplifica la seguridad eléctrica del prototipo en un entorno con niños. El circuito se montó sobre placa de prototipado alojada en una caja transparente de 40 × 28 × 13 cm, con la tapa reforzada mediante láminas de acrílico que distribuyen la carga de la pisada sobre los sensores y sobre la que se dispone el arte gráfico de las seis casillas. Las Figuras 1 y 2 muestran, respectivamente, el inventario de componentes y el prototipo ensamblado.
 
-![Inventario de componentes del prototipo (izquierda) y caja ensamblada con la tapa reforzada (derecha). El circuito se aloja en una caja transparente de 40 × 28 × 13 cm y se alimenta exclusivamente por USB.](../evidencia/caja/materiales_completos.jpeg){width=70%}
+![Inventario de componentes del prototipo: placa de prototipado con el módulo ESP32, arreglo de conmutación, módulo de audio con tarjeta microSD, parlante, condensadores, resistencias, diodos emisores de luz, cableado y los seis sensores de presión resistivos (abajo a la derecha).](../evidencia/caja/materiales_completos.jpeg){width=68%}
+
+![Prototipo ensamblado. El circuito se aloja en una caja transparente de 40 × 28 × 13 cm, cuya tapa se refuerza con láminas de acrílico que distribuyen la carga de la pisada sobre los sensores. La alimentación se toma exclusivamente del puerto USB del PC.](../evidencia/caja/vista_frontal.jpeg){width=52%}
 
 ## Arquitectura del software: una sola fuente de verdad
 
@@ -248,7 +250,7 @@ Dos de los ocho escenarios se verifican en modo **estricto**: la traza emitida d
 
 Se ejecutó un barrido de la habilidad del jugador simulado de 0 % a 100 %, en incrementos de 10 puntos, sobre el nivel 2 de cada modo. La tasa de acierto de la sesión crece de forma monótona con la habilidad en los tres modos, y la dirección recomendada por el sistema sigue coherentemente al desempeño: recomienda **bajar** el nivel ante habilidades bajas y **subir** ante habilidades altas.
 
-La Figura 2 presenta el caso del modo de velocidad, para el que la recomendación transita por las tres direcciones posibles: sugiere bajar con habilidades de 0 a 10 %, mantener entre 20 y 30 % —franja en la que la tasa de acierto se sitúa en el 50 %, dentro de la banda muerta del recomendador— y subir a partir del 40 %.
+La Figura 3 presenta el caso del modo de velocidad, para el que la recomendación transita por las tres direcciones posibles: sugiere bajar con habilidades de 0 a 10 %, mantener entre 20 y 30 % —franja en la que la tasa de acierto se sitúa en el 50 %, dentro de la banda muerta del recomendador— y subir a partir del 40 %.
 
 Conviene evitar aquí una lectura errónea de la figura. El eje vertical representa la tasa de acierto de la **sesión completa**, mientras que la dirección recomendada se calcula sobre la **ventana de las cuatro últimas rondas**. Ambas magnitudes no tienen por qué coincidir: con una habilidad del 40 %, la sesión cierra con un 62,5 % de aciertos y, sin embargo, el sistema recomienda subir, porque las cuatro rondas finales alcanzaron el umbral del 75 %. La figura describe el desempeño global; la recomendación responde al desempeño reciente, que es justamente lo que interesa a un mecanismo adaptativo.
 
@@ -285,7 +287,7 @@ El modo de equilibrio muestra el salto esperado entre los niveles 2 y 3, donde e
 
 ## Convergencia del nivel al desempeño (E5)
 
-Encadenando sesiones y aplicando en cada una la recomendación emitida por el sistema, se simularon dos perfiles extremos: un jugador con habilidad máxima que comienza en el nivel 1, y un jugador con habilidad nula que comienza en el nivel 4. La Figura 3 muestra el resultado para los tres modos.
+Encadenando sesiones y aplicando en cada una la recomendación emitida por el sistema, se simularon dos perfiles extremos: un jugador con habilidad máxima que comienza en el nivel 1, y un jugador con habilidad nula que comienza en el nivel 4. La Figura 4 muestra el resultado para los tres modos.
 
 ![Convergencia del nivel de dificultad al desempeño, en los tres modos. El jugador hábil asciende del nivel 1 al 4 y satura; el jugador con dificultad desciende del 4 al 1 y satura. Simulación determinista.](../evidencia/E5_convergencia_modos.png)
 
@@ -299,7 +301,7 @@ Las evidencias anteriores muestran que el mecanismo de adaptación se comporta *
 
 Considérese un jugador que acierta cada pisada individual con probabilidad $h$, de forma independiente. Una ronda del modo de velocidad se gana con una única pisada correcta, de modo que la probabilidad de ganarla es $P = h$. Una ronda del modo de equilibrio exige acertar las $k$ casillas del patrón, y un solo fallo la pierde: $P = h^k$. Una ronda del modo de memoria exige reproducir los $L$ pasos de la secuencia: $P = h^L$. Estas tres expresiones son predicciones cerradas, derivadas de la especificación del juego y no de su implementación.
 
-Para contrastarlas se ejecutaron 200 semillas independientes por punto y se agregaron todas las rondas observadas. La Tabla 5 y la Figura 4 comparan la proporción medida con la predicción teórica. El intervalo de confianza del 95 % se calculó por aproximación normal sobre la proporción.
+Para contrastarlas se ejecutaron 200 semillas independientes por punto y se agregaron todas las rondas observadas. La Tabla 5 y la Figura 5 comparan la proporción medida con la predicción teórica. El intervalo de confianza del 95 % se calculó por aproximación normal sobre la proporción.
 
 : Verificación estadística de la regla de dificultad. Proporción de rondas ganadas, medida sobre 200 semillas, frente a la predicción analítica.
 
@@ -377,7 +379,7 @@ Este trabajo presenta limitaciones que conviene enunciar sin atenuantes.
 
 **No hubo participación de usuarios.** La validación se realizó íntegramente sobre la lógica del sistema mediante simulación determinista y sobre su implementación mediante pruebas de software. No se realizaron pruebas con niños con síndrome de Down, ni con niños de desarrollo típico, ni con terapeutas. En consecuencia, este trabajo **no permite afirmar nada** sobre la experiencia de uso real, la aceptación del dispositivo, su usabilidad, la motivación que genera ni su impacto cognitivo o motor. Ninguna cifra de la sección de resultados debe interpretarse como un indicio de eficacia terapéutica.
 
-**El jugador simulado no es un niño.** El modelo de usuario empleado reduce el comportamiento a un único parámetro: la probabilidad de acertar cada pisada, constante e independiente entre pisadas. Un niño real presenta fatiga, aprendizaje intrasesión, variabilidad en el tiempo de reacción, distracción y correlación entre errores consecutivos. El jugador simulado es un instrumento para verificar el sistema, no un modelo del usuario. Las trayectorias de convergencia de la Figura 3 caracterizan al recomendador, no predicen la progresión de ningún niño.
+**El jugador simulado no es un niño.** El modelo de usuario empleado reduce el comportamiento a un único parámetro: la probabilidad de acertar cada pisada, constante e independiente entre pisadas. Un niño real presenta fatiga, aprendizaje intrasesión, variabilidad en el tiempo de reacción, distracción y correlación entre errores consecutivos. El jugador simulado es un instrumento para verificar el sistema, no un modelo del usuario. Las trayectorias de convergencia de la Figura 4 caracterizan al recomendador, no predicen la progresión de ningún niño.
 
 **La validación de banco física está incompleta.** Las evidencias E9 y E10 —latencia del lazo pisada→retroalimentación y fiabilidad de detección de los sensores— no se reportan porque la calibración del umbral de sensado se encuentra en curso. Hasta disponer de ellas, la afirmación de que el dispositivo detecta correctamente la pisada de un niño **no está respaldada por medición**. Las cifras de costo computacional (E8) acotan la contribución del software a la latencia, pero no sustituyen la medición del lazo completo.
 

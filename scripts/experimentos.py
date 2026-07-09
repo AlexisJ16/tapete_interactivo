@@ -173,6 +173,11 @@ def main(salida: str = SALIDA) -> int:
         "montecarlo": montecarlo(),
         "coste_computacional": coste_computacional(),
     }
+    # El articulo afirma que UN solo guion reproduce todas sus figuras. Para que sea
+    # cierto, aqui se regeneran tambien las del modo Velocidad (E2/E3/E4).
+    import generar_evidencia
+    generar_evidencia.main(salida)
+
     figura_convergencia(datos["convergencia"], salida)
     figura_montecarlo(datos["montecarlo"], salida)
 
