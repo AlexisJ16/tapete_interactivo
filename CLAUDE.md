@@ -10,7 +10,7 @@ habla con un **dashboard** de PC en tiempo real.
 > `build/libgamecore.so` y el simulador lo carga por `ctypes`. El **mismo**
 > GameCore se compila para el ESP32. No hay dos implementaciones.
 
-## Estado actual (todo verde)
+## Estado del software (verde)
 
 Las 6 fases del plan base están **completas y validadas**:
 
@@ -24,11 +24,14 @@ Las 6 fases del plan base están **completas y validadas**:
   (`dashboard/robustez.py`: la GUI loguea y no muere) + degradación visible +
   generadores deterministas en la suite (monkey de GUI multi-seed ≥5000 ev; fuzz de
   protocolo Py/C++).
+- Empaquetado Windows (`packaging/`): `.exe` PyInstaller con `--serial auto`.
 
-`./scripts/run_all_tests.sh` → **TODO VERDE** (52 casos C++ / 2174 aserciones + 100 pytest).
-`pio run -e esp32dev` → **SUCCESS** (Flash ~60%, RAM ~14%).
+`./scripts/run_all_tests.sh` → **TODO VERDE** (52 casos C++ / 2174 aserciones + 119 pytest).
+`.venv/bin/pio run -e esp32dev` → **SUCCESS** (Flash ~60%, RAM ~14%).
 
-Próximos pasos y mejoras: ver `docs/ROADMAP.md`.
+**El software en verde no significa el proyecto en verde.** El hardware físico, el CI y
+el artículo tienen estado propio: la fuente única es `docs/ROADMAP.md`, que además lista
+los próximos pasos.
 
 ## Comandos clave
 
@@ -45,9 +48,8 @@ python3 -m venv .venv
 .venv/bin/python dashboard/app.py                   # dashboard embebido
 .venv/bin/python dashboard/app.py --tcp <IP_ESP32>  # contra hardware real
 
-# Firmware
-cd firmware && pio run -e esp32dev                  # compila (no flashea)
-pio run -e esp32dev -t upload && pio device monitor -b 115200
+# Firmware (compila; NO flashea — eso lo hace el humano, ver `/bring-up`)
+cd firmware && ../.venv/bin/pio run -e esp32dev
 
 # Evidencia visual (capturas/GIF a /tmp/tapete_demo/)
 .venv/bin/python scripts/demo_visual.py
@@ -126,11 +128,14 @@ firmware/lib/GameCore/   Lógica portable (fuente de verdad) + bridge.cpp (C ABI
 firmware/src/            EspHardware + main.cpp (ESP32)
 firmware/test/           doctest (test_core, test_protocolo, test_modo_*)
 simulator/               tapete_sim.py, core_bridge.py, golden_runner.py, servidor.py
-dashboard/               app.py, sesion.py, storage.py, reports.py, fuente.py
+dashboard/               app.py, sesion.py, storage.py, reports.py, fuente.py, puertos.py
+packaging/               tapete_dashboard.spec (PyInstaller), instalar.bat, GUIA_MEDICO.md
+.github/workflows/       ci.yml — ROTO, en revisión (ver ROADMAP §2)
 shared/                  protocol.md, golden_vectors.json
-docs/                    ROADMAP.md · articulo/ (artículo + anteproyecto) · hardware/
-                         (materiales, cableado, 00_diseno_circuito, flashing, validation) · evidencia/
-scripts/                 run_all_tests.sh, demo_visual.py
+docs/                    ROADMAP.md · dev-windows.md · articulo/ (artículo + anteproyecto) ·
+                         hardware/ (materiales, cableado, 00_diseno_circuito, flashing,
+                         validation) · evidencia/
+scripts/                 run_all_tests.sh, demo_visual.py, verificar_pisadas.py
 audio/                   000X.mp3 (simulador) — ver audio/README.md
 ```
 ```

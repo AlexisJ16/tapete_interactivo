@@ -27,9 +27,10 @@ Retroalimentación **sin color** (LEDs blancos): patrón de parpadeo + sonido
 firmware/   PlatformIO. lib/GameCore = lógica portable (fuente de verdad). src/ = ESP32.
 simulator/  Simulador visual (Pygame) + servidor TCP, cargan GameCore.so vía ctypes.
 dashboard/  Interfaz del terapeuta (PyQt6 + SQLite + export CSV/PDF).
+packaging/  Empaquetado Windows: spec de PyInstaller + guía del médico.
 shared/     protocol.md + golden_vectors.json (contrato común C++/Python).
 audio/      MP3 para el DFPlayer (000X.mp3).
-docs/       hardware/ (wiring, flashing, validation, planos), articulo/, evidencia/.
+docs/       ROADMAP.md (estado del proyecto), hardware/, articulo/, evidencia/.
 scripts/    run_all_tests.sh (corre TODOS los tests).
 ```
 
@@ -65,8 +66,9 @@ smokes). Termina en `>>> TODO VERDE <<<` (código 0) si todo pasa.
 ### Dashboard del terapeuta
 
 ```bash
-.venv/bin/python dashboard/app.py                   # modo embebido (incluye el simulador)
-.venv/bin/python dashboard/app.py --tcp 192.168.1.50  # contra un ESP32 real por WiFi
+.venv/bin/python dashboard/app.py                        # modo embebido (incluye el simulador)
+.venv/bin/python dashboard/app.py --serial /dev/ttyUSB0  # contra un ESP32 real por USB
+.venv/bin/python dashboard/app.py --tcp 192.168.1.50     # contra un ESP32 real por WiFi
 ```
 
 Servidor TCP del simulador (para probar la red sin hardware):
@@ -80,9 +82,9 @@ Servidor TCP del simulador (para probar la red sin hardware):
 ```bash
 cd firmware
 cp src/secrets.h.example src/secrets.h              # edita tu SSID/contraseña WiFi
-pio run -e esp32dev                                 # compila (no flashea)
-pio run -e esp32dev -t upload                       # flashea por USB
-pio device monitor -b 115200                        # muestra la IP del ESP32
+../.venv/bin/pio run -e esp32dev                    # compila (no flashea)
+../.venv/bin/pio run -e esp32dev -t upload          # flashea por USB
+../.venv/bin/pio device monitor -b 115200           # muestra la IP del ESP32
 ```
 
 Luego conecta el dashboard con `--tcp <IP>`. **Cero cambios de lógica** entre el
@@ -101,6 +103,10 @@ tapete → PC:    {"ev":"led","cell":3,"level":255}        {"ev":"press","cell":
 
 ## Documentación
 
+- `docs/ROADMAP.md` — **estado vigente del proyecto** (software, hardware, CI, artículo)
+  y trabajo pendiente.
+- `docs/dev-windows.md` — build y empaquetado en Windows; `packaging/GUIA_MEDICO.md` — uso
+  del ejecutable para el terapeuta.
 - `docs/hardware/materiales.md` — inventario real de componentes + presupuesto.
 - `docs/hardware/cableado.md` — armado del protoboard: geometría, net list, ruteo
   de la Fila J, leyenda y checklist con multímetro.
