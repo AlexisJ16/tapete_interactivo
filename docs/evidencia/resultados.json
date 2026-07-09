@@ -1,0 +1,860 @@
+{
+  "seed": 777,
+  "semillas_montecarlo": 200,
+  "determinismo": {
+    "Memoria": {
+      "sha256": "b63d8131bdd8e314e9c340fe30cde153f804c2c3cbae4c423ee1154822f268fc",
+      "identicas": true
+    },
+    "Velocidad": {
+      "sha256": "862fe628bfad24dad0b86346d6ecbfa239ef9cf7c518015c9b640fd1af0c1361",
+      "identicas": true
+    },
+    "Equilibrio": {
+      "sha256": "00c531fa311c4b007608955c1d8cc7a3e9bce2eebf4b9380d56e28aeafbaf4a0",
+      "identicas": true
+    }
+  },
+  "adaptacion": {
+    "Memoria": [
+      {
+        "habilidad": 0.0,
+        "hits": 0,
+        "misses": 46,
+        "tasa": 0.0,
+        "rondas": 3,
+        "dir": "down"
+      },
+      {
+        "habilidad": 0.1,
+        "hits": 0,
+        "misses": 45,
+        "tasa": 0.0,
+        "rondas": 3,
+        "dir": "down"
+      },
+      {
+        "habilidad": 0.2,
+        "hits": 1,
+        "misses": 34,
+        "tasa": 2.9,
+        "rondas": 4,
+        "dir": "down"
+      },
+      {
+        "habilidad": 0.3,
+        "hits": 1,
+        "misses": 34,
+        "tasa": 2.9,
+        "rondas": 4,
+        "dir": "down"
+      },
+      {
+        "habilidad": 0.4,
+        "hits": 1,
+        "misses": 33,
+        "tasa": 2.9,
+        "rondas": 4,
+        "dir": "down"
+      },
+      {
+        "habilidad": 0.5,
+        "hits": 1,
+        "misses": 32,
+        "tasa": 3.0,
+        "rondas": 4,
+        "dir": "down"
+      },
+      {
+        "habilidad": 0.6,
+        "hits": 3,
+        "misses": 23,
+        "tasa": 11.5,
+        "rondas": 6,
+        "dir": "down"
+      },
+      {
+        "habilidad": 0.7,
+        "hits": 4,
+        "misses": 6,
+        "tasa": 40.0,
+        "rondas": 6,
+        "dir": "down"
+      },
+      {
+        "habilidad": 0.8,
+        "hits": 4,
+        "misses": 4,
+        "tasa": 50.0,
+        "rondas": 6,
+        "dir": "down"
+      },
+      {
+        "habilidad": 0.9,
+        "hits": 4,
+        "misses": 0,
+        "tasa": 100.0,
+        "rondas": 6,
+        "dir": "up"
+      },
+      {
+        "habilidad": 1.0,
+        "hits": 4,
+        "misses": 0,
+        "tasa": 100.0,
+        "rondas": 6,
+        "dir": "up"
+      }
+    ],
+    "Velocidad": [
+      {
+        "habilidad": 0.0,
+        "hits": 0,
+        "misses": 8,
+        "tasa": 0.0,
+        "rondas": 8,
+        "dir": "down"
+      },
+      {
+        "habilidad": 0.1,
+        "hits": 0,
+        "misses": 8,
+        "tasa": 0.0,
+        "rondas": 8,
+        "dir": "down"
+      },
+      {
+        "habilidad": 0.2,
+        "hits": 4,
+        "misses": 4,
+        "tasa": 50.0,
+        "rondas": 8,
+        "dir": "keep"
+      },
+      {
+        "habilidad": 0.3,
+        "hits": 4,
+        "misses": 4,
+        "tasa": 50.0,
+        "rondas": 8,
+        "dir": "keep"
+      },
+      {
+        "habilidad": 0.4,
+        "hits": 5,
+        "misses": 3,
+        "tasa": 62.5,
+        "rondas": 8,
+        "dir": "up"
+      },
+      {
+        "habilidad": 0.5,
+        "hits": 5,
+        "misses": 3,
+        "tasa": 62.5,
+        "rondas": 8,
+        "dir": "up"
+      },
+      {
+        "habilidad": 0.6,
+        "hits": 5,
+        "misses": 3,
+        "tasa": 62.5,
+        "rondas": 8,
+        "dir": "up"
+      },
+      {
+        "habilidad": 0.7,
+        "hits": 6,
+        "misses": 2,
+        "tasa": 75.0,
+        "rondas": 8,
+        "dir": "up"
+      },
+      {
+        "habilidad": 0.8,
+        "hits": 7,
+        "misses": 1,
+        "tasa": 87.5,
+        "rondas": 8,
+        "dir": "up"
+      },
+      {
+        "habilidad": 0.9,
+        "hits": 8,
+        "misses": 0,
+        "tasa": 100.0,
+        "rondas": 8,
+        "dir": "up"
+      },
+      {
+        "habilidad": 1.0,
+        "hits": 8,
+        "misses": 0,
+        "tasa": 100.0,
+        "rondas": 8,
+        "dir": "up"
+      }
+    ],
+    "Equilibrio": [
+      {
+        "habilidad": 0.0,
+        "hits": 0,
+        "misses": 6,
+        "tasa": 0.0,
+        "rondas": 6,
+        "dir": "down"
+      },
+      {
+        "habilidad": 0.1,
+        "hits": 0,
+        "misses": 6,
+        "tasa": 0.0,
+        "rondas": 6,
+        "dir": "down"
+      },
+      {
+        "habilidad": 0.2,
+        "hits": 1,
+        "misses": 5,
+        "tasa": 16.7,
+        "rondas": 6,
+        "dir": "down"
+      },
+      {
+        "habilidad": 0.3,
+        "hits": 1,
+        "misses": 5,
+        "tasa": 16.7,
+        "rondas": 6,
+        "dir": "down"
+      },
+      {
+        "habilidad": 0.4,
+        "hits": 1,
+        "misses": 5,
+        "tasa": 16.7,
+        "rondas": 6,
+        "dir": "down"
+      },
+      {
+        "habilidad": 0.5,
+        "hits": 2,
+        "misses": 4,
+        "tasa": 33.3,
+        "rondas": 6,
+        "dir": "down"
+      },
+      {
+        "habilidad": 0.6,
+        "hits": 2,
+        "misses": 4,
+        "tasa": 33.3,
+        "rondas": 6,
+        "dir": "down"
+      },
+      {
+        "habilidad": 0.7,
+        "hits": 4,
+        "misses": 2,
+        "tasa": 66.7,
+        "rondas": 6,
+        "dir": "up"
+      },
+      {
+        "habilidad": 0.8,
+        "hits": 5,
+        "misses": 1,
+        "tasa": 83.3,
+        "rondas": 6,
+        "dir": "up"
+      },
+      {
+        "habilidad": 0.9,
+        "hits": 6,
+        "misses": 0,
+        "tasa": 100.0,
+        "rondas": 6,
+        "dir": "up"
+      },
+      {
+        "habilidad": 1.0,
+        "hits": 6,
+        "misses": 0,
+        "tasa": 100.0,
+        "rondas": 6,
+        "dir": "up"
+      }
+    ]
+  },
+  "escalado_niveles": {
+    "Memoria": [
+      {
+        "nivel": 1,
+        "hits": 4,
+        "misses": 1,
+        "tasa": 80.0,
+        "rondas": 5,
+        "dir": "up"
+      },
+      {
+        "nivel": 2,
+        "hits": 4,
+        "misses": 4,
+        "tasa": 50.0,
+        "rondas": 6,
+        "dir": "down"
+      },
+      {
+        "nivel": 3,
+        "hits": 4,
+        "misses": 4,
+        "tasa": 50.0,
+        "rondas": 7,
+        "dir": "down"
+      },
+      {
+        "nivel": 4,
+        "hits": 4,
+        "misses": 9,
+        "tasa": 30.8,
+        "rondas": 8,
+        "dir": "down"
+      }
+    ],
+    "Velocidad": [
+      {
+        "nivel": 1,
+        "hits": 4,
+        "misses": 1,
+        "tasa": 80.0,
+        "rondas": 5,
+        "dir": "up"
+      },
+      {
+        "nivel": 2,
+        "hits": 7,
+        "misses": 1,
+        "tasa": 87.5,
+        "rondas": 8,
+        "dir": "up"
+      },
+      {
+        "nivel": 3,
+        "hits": 9,
+        "misses": 1,
+        "tasa": 90.0,
+        "rondas": 10,
+        "dir": "up"
+      },
+      {
+        "nivel": 4,
+        "hits": 11,
+        "misses": 1,
+        "tasa": 91.7,
+        "rondas": 12,
+        "dir": "keep"
+      }
+    ],
+    "Equilibrio": [
+      {
+        "nivel": 1,
+        "hits": 3,
+        "misses": 1,
+        "tasa": 75.0,
+        "rondas": 4,
+        "dir": "up"
+      },
+      {
+        "nivel": 2,
+        "hits": 5,
+        "misses": 1,
+        "tasa": 83.3,
+        "rondas": 6,
+        "dir": "up"
+      },
+      {
+        "nivel": 3,
+        "hits": 4,
+        "misses": 4,
+        "tasa": 50.0,
+        "rondas": 8,
+        "dir": "down"
+      },
+      {
+        "nivel": 4,
+        "hits": 6,
+        "misses": 4,
+        "tasa": 60.0,
+        "rondas": 10,
+        "dir": "keep"
+      }
+    ]
+  },
+  "convergencia": {
+    "Memoria": {
+      "habil": [
+        {
+          "sesion": 1,
+          "nivel": 1,
+          "hits": 4,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 2,
+          "nivel": 2,
+          "hits": 4,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 3,
+          "nivel": 3,
+          "hits": 4,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 4,
+          "nivel": 4,
+          "hits": 4,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 5,
+          "nivel": 4,
+          "hits": 4,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 6,
+          "nivel": 4,
+          "hits": 4,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 7,
+          "nivel": 4,
+          "hits": 4,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 8,
+          "nivel": 4,
+          "hits": 4,
+          "misses": 0,
+          "tasa": 100.0
+        }
+      ],
+      "con_dificultad": [
+        {
+          "sesion": 1,
+          "nivel": 4,
+          "hits": 0,
+          "misses": 38,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 2,
+          "nivel": 3,
+          "hits": 0,
+          "misses": 40,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 3,
+          "nivel": 2,
+          "hits": 0,
+          "misses": 46,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 4,
+          "nivel": 1,
+          "hits": 0,
+          "misses": 58,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 5,
+          "nivel": 1,
+          "hits": 0,
+          "misses": 58,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 6,
+          "nivel": 1,
+          "hits": 0,
+          "misses": 58,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 7,
+          "nivel": 1,
+          "hits": 0,
+          "misses": 58,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 8,
+          "nivel": 1,
+          "hits": 0,
+          "misses": 58,
+          "tasa": 0.0
+        }
+      ]
+    },
+    "Velocidad": {
+      "habil": [
+        {
+          "sesion": 1,
+          "nivel": 1,
+          "hits": 5,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 2,
+          "nivel": 2,
+          "hits": 8,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 3,
+          "nivel": 3,
+          "hits": 10,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 4,
+          "nivel": 4,
+          "hits": 12,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 5,
+          "nivel": 4,
+          "hits": 12,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 6,
+          "nivel": 4,
+          "hits": 12,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 7,
+          "nivel": 4,
+          "hits": 12,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 8,
+          "nivel": 4,
+          "hits": 12,
+          "misses": 0,
+          "tasa": 100.0
+        }
+      ],
+      "con_dificultad": [
+        {
+          "sesion": 1,
+          "nivel": 4,
+          "hits": 0,
+          "misses": 12,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 2,
+          "nivel": 3,
+          "hits": 0,
+          "misses": 10,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 3,
+          "nivel": 2,
+          "hits": 0,
+          "misses": 8,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 4,
+          "nivel": 1,
+          "hits": 0,
+          "misses": 5,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 5,
+          "nivel": 1,
+          "hits": 0,
+          "misses": 5,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 6,
+          "nivel": 1,
+          "hits": 0,
+          "misses": 5,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 7,
+          "nivel": 1,
+          "hits": 0,
+          "misses": 5,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 8,
+          "nivel": 1,
+          "hits": 0,
+          "misses": 5,
+          "tasa": 0.0
+        }
+      ]
+    },
+    "Equilibrio": {
+      "habil": [
+        {
+          "sesion": 1,
+          "nivel": 1,
+          "hits": 4,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 2,
+          "nivel": 2,
+          "hits": 6,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 3,
+          "nivel": 3,
+          "hits": 8,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 4,
+          "nivel": 4,
+          "hits": 10,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 5,
+          "nivel": 4,
+          "hits": 10,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 6,
+          "nivel": 4,
+          "hits": 10,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 7,
+          "nivel": 4,
+          "hits": 10,
+          "misses": 0,
+          "tasa": 100.0
+        },
+        {
+          "sesion": 8,
+          "nivel": 4,
+          "hits": 10,
+          "misses": 0,
+          "tasa": 100.0
+        }
+      ],
+      "con_dificultad": [
+        {
+          "sesion": 1,
+          "nivel": 4,
+          "hits": 0,
+          "misses": 10,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 2,
+          "nivel": 3,
+          "hits": 0,
+          "misses": 8,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 3,
+          "nivel": 2,
+          "hits": 0,
+          "misses": 6,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 4,
+          "nivel": 1,
+          "hits": 0,
+          "misses": 4,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 5,
+          "nivel": 1,
+          "hits": 0,
+          "misses": 4,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 6,
+          "nivel": 1,
+          "hits": 0,
+          "misses": 4,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 7,
+          "nivel": 1,
+          "hits": 0,
+          "misses": 4,
+          "tasa": 0.0
+        },
+        {
+          "sesion": 8,
+          "nivel": 1,
+          "hits": 0,
+          "misses": 4,
+          "tasa": 0.0
+        }
+      ]
+    }
+  },
+  "montecarlo": {
+    "Velocidad": [
+      {
+        "habilidad": 0.3,
+        "rondas": 1600,
+        "medido": 0.298125,
+        "ic95": 0.022414299207969342,
+        "teorico": 0.3,
+        "coincide": true
+      },
+      {
+        "habilidad": 0.5,
+        "rondas": 1600,
+        "medido": 0.494375,
+        "ic95": 0.02449844956031657,
+        "teorico": 0.5,
+        "coincide": true
+      },
+      {
+        "habilidad": 0.7,
+        "rondas": 1600,
+        "medido": 0.68875,
+        "ic95": 0.022687234812499738,
+        "teorico": 0.7,
+        "coincide": true
+      },
+      {
+        "habilidad": 0.9,
+        "rondas": 1600,
+        "medido": 0.9,
+        "ic95": 0.0147,
+        "teorico": 0.9,
+        "coincide": true
+      }
+    ],
+    "Equilibrio": [
+      {
+        "habilidad": 0.5,
+        "rondas": 1200,
+        "medido": 0.11833333333333333,
+        "ic95": 0.018275581664756534,
+        "teorico": 0.125,
+        "coincide": true
+      },
+      {
+        "habilidad": 0.7,
+        "rondas": 1200,
+        "medido": 0.33166666666666667,
+        "ic95": 0.026638693592147048,
+        "teorico": 0.3429999999999999,
+        "coincide": true
+      },
+      {
+        "habilidad": 0.9,
+        "rondas": 1200,
+        "medido": 0.7216666666666667,
+        "ic95": 0.025358080821760998,
+        "teorico": 0.7290000000000001,
+        "coincide": true
+      }
+    ],
+    "Memoria": {
+      "habilidad": 0.85,
+      "por_longitud": [
+        {
+          "longitud": 3,
+          "rondas": 337,
+          "medido": 0.5934718100890207,
+          "ic95": 0.052442876097629904,
+          "teorico": 0.6141249999999999,
+          "coincide": true
+        },
+        {
+          "longitud": 4,
+          "rondas": 396,
+          "medido": 0.5050505050505051,
+          "ic95": 0.04924434054543729,
+          "teorico": 0.5220062499999999,
+          "coincide": true
+        },
+        {
+          "longitud": 5,
+          "rondas": 471,
+          "medido": 0.42462845010615713,
+          "ic95": 0.0446400172685744,
+          "teorico": 0.44370531249999995,
+          "coincide": true
+        },
+        {
+          "longitud": 6,
+          "rondas": 520,
+          "medido": 0.38461538461538464,
+          "ic95": 0.04181586094620958,
+          "teorico": 0.37714951562499993,
+          "coincide": true
+        }
+      ]
+    }
+  },
+  "coste_computacional": {
+    "tick_ns": 6.4,
+    "pisada_ns": 481.8,
+    "sesion_us": 5.78,
+    "cpu": "Intel Core i7-1355U",
+    "salida_cruda": [
+      "actualizar() [tick en RUNNING]          6.4 ns/llamada  (1000000 ticks)",
+      "pisar() [pisada que emite eventos]    481.8 ns/pisada    (240000 pisadas efectivas)",
+      "sesion completa (nivel 4)              5.78 us/sesion    (20000 sesiones de 12 rondas)"
+    ]
+  }
+}

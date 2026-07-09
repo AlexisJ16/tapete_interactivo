@@ -35,3 +35,4 @@ dashboard/reportes/
 *.swp
 .idea/
 .vscode/
+build/bench_nucleo
