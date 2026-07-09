@@ -115,8 +115,10 @@ atornillado), **ninguna pisada llega al dashboard**, en ningún modo, pisando co
 - El enlace serie, el firmware y el motor **funcionan**: durante esas sesiones sí llegaron
   eventos `score`. El fallo está aislado en la detección del FSR.
 
-`reposo=0` es compatible con un FSR sano y sin fuerza (R de megaohmios + pull-down de
-10 kΩ → nodo ~0 V), así que ese bloque **no discrimina por sí solo**.
+`reposo=0` es compatible con un FSR sano y sin fuerza (R del sensor ≫ 10 kΩ del pull-down
+→ nodo ~0 V), así que ese bloque **no discrimina por sí solo**. El valor de reposo del FSR
+**no está medido** y no hay datasheet del sensor en `docs/hardware/datasheets/`: no se cite
+una magnitud concreta hasta caracterizarlo.
 
 **Primer paso al retomar:** el bloque de calibración **mientras se mantiene pisado** un
 botón, mirando `act` en vivo (no `pico`).

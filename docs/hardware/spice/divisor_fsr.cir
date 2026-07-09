@@ -8,8 +8,11 @@
 *  Ventana util del ADC del ESP32 (atenuacion 11/12 dB): ~150..2450 mV.
 *  cfg::UMBRAL_PISADA = 2000 cuentas (de 4095, ref 3.3 V) ~ 1.61 V.
 *
-*  Barremos R_FSR de 250 ohm (pisada fuerte) a 10 Mohm (sin carga) y
-*  tabulamos V_nodo y su equivalente aproximado en cuentas de ADC.
+*  Barremos R_FSR de 250 ohm a 10 Mohm y tabulamos V_nodo y su equivalente
+*  aproximado en cuentas de ADC. OJO: los extremos del barrido son un RANGO DE
+*  EXPLORACION, no valores medidos ni de datasheet -- la R del FSR en reposo y
+*  bajo pisada esta SIN CARACTERIZAR (no hay datasheet del sensor en el repo).
+*  Lo que el barrido establece es la relacion umbral<->resistencia, exacta.
 * --------------------------------------------------------------------------
 
 V3V3 vcc 0 DC 3.3

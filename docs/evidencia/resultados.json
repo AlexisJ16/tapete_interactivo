@@ -854,19 +854,19 @@
   "coste_computacional": {
     "repeticiones": 7,
     "tick_ns": {
-      "mediana": 5.7,
-      "min": 4.4,
-      "max": 5.9
+      "mediana": 4.9,
+      "min": 4.2,
+      "max": 6.4
     },
     "pisada_ns": {
-      "mediana": 462.8,
-      "min": 450.8,
-      "max": 538.3
+      "mediana": 472.0,
+      "min": 457.4,
+      "max": 523.4
     },
     "sesion_us": {
-      "mediana": 5.55,
-      "min": 5.41,
-      "max": 6.46
+      "mediana": 5.66,
+      "min": 5.49,
+      "max": 6.28
     },
     "cpu": "Intel Core i7-1355U",
     "nota": "no determinista: depende del procesador y de la carga de la maquina"
