@@ -44,6 +44,15 @@ def huella_determinismo() -> dict:
     return out
 
 
+def golden() -> dict:
+    """E2: cuantos escenarios de referencia hay y cuantos exigen traza exacta."""
+    with open(os.path.join(RAIZ, "shared", "golden_vectors.json"), encoding="utf-8") as f:
+        escenarios = json.load(f)["scenarios"]
+    estrictos = sum(1 for e in escenarios if e.get("match") == "strict")
+    return {"escenarios": len(escenarios), "estrictos": estrictos,
+            "subsecuencia": len(escenarios) - estrictos}
+
+
 def adaptacion() -> dict:
     habilidades = [round(0.1 * i, 1) for i in range(11)]
     return {NOMBRE_MODO[m]: barrido_habilidad_modo(m, 2, SEED, habilidades) for m in MODOS}
@@ -157,6 +166,7 @@ def main(salida: str = SALIDA) -> int:
         "seed": SEED,
         "semillas_montecarlo": len(list(SEMILLAS_MC)),
         "determinismo": huella_determinismo(),
+        "golden": golden(),
         "adaptacion": adaptacion(),
         "escalado_niveles": escalado_niveles(),
         "convergencia": convergencia(),

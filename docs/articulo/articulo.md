@@ -242,7 +242,7 @@ Este resultado, aparentemente modesto, es la condición de posibilidad de todos 
 
 La estrategia de fuente única de verdad se somete a comprobación mediante un conjunto de ocho escenarios de referencia —*golden vectors*—, que fijan, para una configuración y una semilla dadas, la secuencia exacta de eventos que el sistema debe emitir. Los escenarios cubren los tres modos e incluyen casos de acierto, expiración de la ventana, cambio de nivel en plena sesión y emisión de recomendaciones en ambas direcciones.
 
-Tres de los ocho escenarios se verifican en modo **estricto**: la traza emitida debe coincidir con la esperada elemento a elemento, sin eventos intermedios ni omisiones. Los cinco restantes exigen que la traza esperada aparezca como subsecuencia ordenada de la emitida. Los ocho escenarios se ejecutan contra la biblioteca compilada desde el mismo código fuente que se carga en el microcontrolador, y los ocho pasan. Dado que no existen dos implementaciones de la lógica, este resultado no debe leerse como una comparación entre dos sistemas que coinciden, sino como la verificación de que el único sistema existente se comporta según su especificación en ambos destinos de compilación.
+Dos de los ocho escenarios se verifican en modo **estricto**: la traza emitida debe coincidir con la esperada elemento a elemento, sin eventos intermedios ni omisiones. Los seis restantes exigen que la traza esperada aparezca como subsecuencia ordenada de la emitida. Los ocho escenarios se ejecutan contra la biblioteca compilada desde el mismo código fuente que se carga en el microcontrolador, y los ocho pasan. Dado que no existen dos implementaciones de la lógica, este resultado no debe leerse como una comparación entre dos sistemas que coinciden, sino como la verificación de que el único sistema existente se comporta según su especificación en ambos destinos de compilación.
 
 ## Respuesta de la adaptación al desempeño (E3)
 
@@ -304,13 +304,13 @@ Para contrastarlas se ejecutaron 200 semillas independientes por punto y se agre
 | Modo | Parámetro | Rondas | Medido | IC 95 % | Teoría | ¿Coincide? |
 |:--|:--|--:|--:|--:|--:|:--|
 | Velocidad | $h = 0{,}3$ | 1600 | 0,298 | ± 0,022 | 0,300 | Sí |
-| Velocidad | $h = 0{,}5$ | 1600 | 0,494 | ± 0,025 | 0,500 | Sí |
+| Velocidad | $h = 0{,}5$ | 1600 | 0,494 | ± 0,024 | 0,500 | Sí |
 | Velocidad | $h = 0{,}7$ | 1600 | 0,689 | ± 0,023 | 0,700 | Sí |
 | Velocidad | $h = 0{,}9$ | 1600 | 0,900 | ± 0,015 | 0,900 | Sí |
 | Equilibrio | $h = 0{,}5$, $k = 3$ | 1200 | 0,118 | ± 0,018 | 0,125 | Sí |
 | Equilibrio | $h = 0{,}7$, $k = 3$ | 1200 | 0,332 | ± 0,027 | 0,343 | Sí |
 | Equilibrio | $h = 0{,}9$, $k = 3$ | 1200 | 0,722 | ± 0,025 | 0,729 | Sí |
-| Memoria | $h = 0{,}85$, $L = 3$ | 337 | 0,594 | ± 0,052 | 0,614 | Sí |
+| Memoria | $h = 0{,}85$, $L = 3$ | 337 | 0,593 | ± 0,052 | 0,614 | Sí |
 | Memoria | $h = 0{,}85$, $L = 4$ | 396 | 0,505 | ± 0,049 | 0,522 | Sí |
 | Memoria | $h = 0{,}85$, $L = 5$ | 471 | 0,425 | ± 0,045 | 0,444 | Sí |
 | Memoria | $h = 0{,}85$, $L = 6$ | 520 | 0,385 | ± 0,042 | 0,377 | Sí |
@@ -333,7 +333,7 @@ Ninguna de estas pruebas produjo una excepción no controlada ni una terminació
 
 Se midió el coste de cómputo del núcleo compilado con optimización sobre un procesador Intel Core i7-1355U, ejercitando directamente la máquina de estados y serializando cada evento emitido como haría el firmware. Un ciclo de avance temporal sin transiciones cuesta **6,4 ns**. Una pisada que sí produce eventos —encendido o apagado de casilla, sonido, puntuación y, cuando corresponde, recomendación— cuesta **481,8 ns**, promediada sobre 240 000 pisadas efectivas. Una sesión completa del modo de velocidad en nivel 4, con sus doce rondas, se resuelve en **5,78 µs**.
 
-Estas cifras deben leerse con cuidado. Corresponden a un procesador de PC, no al microcontrolador, y **no constituyen la latencia del lazo de interacción física**, que incluye el tiempo de conversión analógico-digital, el filtrado de la pisada y la conmutación de los diodos, y que solo puede medirse sobre el prototipo instrumentado (evidencia E9, pendiente). Lo que sí establecen es que el coste de la lógica es de tres a cinco órdenes de magnitud inferior a la escala temporal del juego —cuya ventana de reacción más exigente es de 1000 ms— y que, por tanto, el núcleo no puede constituir el cuello de botella del lazo de interacción.
+Estas cifras deben leerse con cuidado. Corresponden a un procesador de PC, no al microcontrolador, y **no constituyen la latencia del lazo de interacción física**, que incluye el tiempo de conversión analógico-digital, el filtrado de la pisada y la conmutación de los diodos, y que solo puede medirse sobre el prototipo instrumentado (evidencia E9, pendiente). Lo que sí establecen es que el coste de la lógica es más de seis órdenes de magnitud inferior a la escala temporal del juego —cuya ventana de reacción más exigente es de 1000 ms, frente a los 481,8 ns que cuesta procesar una pisada— y que, por tanto, el núcleo no puede constituir el cuello de botella del lazo de interacción.
 
 Respecto a la huella en el dispositivo, la compilación del firmware para el ESP32 ocupa **60,2 %** de la memoria de programa (788 501 de 1 310 720 bytes) y **13,8 %** de la memoria de datos (45 324 de 327 680 bytes), lo que deja margen suficiente para las extensiones previstas.
 
