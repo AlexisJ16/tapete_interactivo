@@ -22,9 +22,11 @@ comun=(--citeproc --bibliography="$BIB" --csl="$CSL"
 echo "==> .docx"
 pandoc "$SRC" "${comun[@]}" -o "$SALIDA.docx"
 
+# xelatex y no pdflatex: el texto lleva Unicode (Ω, µ) que pdflatex no compone.
 echo "==> .pdf"
-pandoc "$SRC" "${comun[@]}" \
+pandoc "$SRC" "${comun[@]}" --pdf-engine=xelatex \
   -V geometry:margin=2.5cm -V fontsize=11pt -V lang=es \
+  -V mainfont="DejaVu Serif" -V sansfont="DejaVu Sans" -V monofont="DejaVu Sans Mono" \
   -o "$SALIDA.pdf"
 
 # Una cita sin resolver aparece como [@clave] en la salida: es un error silencioso
