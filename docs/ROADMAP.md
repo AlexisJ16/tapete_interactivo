@@ -30,33 +30,36 @@ profesor y NO se edita**; el artículo es el único entregable editable, y es do
 justifican las desviaciones respecto de la guía.
 
 **Regla de integridad, no negociable:** no hubo pruebas con niños ni comité de ética. El
-artículo reporta **validación funcional** (simulación determinista + banco), y lo clínico
-se enuncia como trabajo futuro. Nunca en pasado lo que no ocurrió.
+artículo reporta **validación funcional** (simulación determinista + banco de software), y
+lo clínico se enuncia como trabajo futuro. Nunca en pasado lo que no ocurrió. Corolario
+operativo: **ninguna cifra del artículo se escribe a mano**; todas salen de
+`scripts/experimentos.py` → `docs/evidencia/resultados.json`.
 
-**Materiales en `docs/articulo/`:**
+**Fuente única:** `docs/articulo/articulo.md` (Markdown versionable). Se construye con
+`./scripts/build_articulo.sh` → `.docx` (para revisión) y `.pdf`, con citas APA 7 resueltas
+por citeproc contra `referencias.bib`. El guion **falla si queda una cita sin resolver**.
+El anteproyecto `...V3.docx` es solo lectura. Los dos borradores previos se absorbieron y
+se borraron (recuperables en `ab69ba6`).
 
-| Archivo | Qué es |
-|---|---|
-| `Articulo_Mejorado.docx` | Base de partida. **Incompleta:** 4323 palabras, termina en el título «4. Metodología» y salta a Referencias. Aporta marco teórico y estado del arte revisados, y un juego propio de referencias. |
-| `Articulo_Tapete_Interactivo.md` / `.docx` | Versión previa, **completa**. Ya trae el reencuadre honesto: resumen sin pruebas clínicas, objetivo (iii) aterrizado, §4.1 justifica LED blanco frente a RGB, §5.5 marcada «pendiente de datos de banco», §5.6 trazabilidad objetivo→evidencia. |
-| `...V3.docx` | Anteproyecto guía del profesor. **Solo lectura.** |
+**Hecho (2026-07-09):**
 
-**Trabajo pendiente:**
+- [x] Unificación en un solo documento (~11 900 palabras, 30 páginas, 4 figuras, 5 tablas).
+- [x] Bibliografía: 29 referencias **verificadas una a una en línea**. Detectada una cita
+      **fabricada** (IEEE Access 2023 con autores y páginas que no corresponden a su DOI);
+      corregidos el apellido de Rodríguez-Timaná y el DOI de Bausela. Descartadas las
+      fuentes de divulgación (Scribd, Emooti, Mayo Clinic, Physiopedia, ScienceDirect Topics)
+      y toda referencia sin lista de autores confirmada.
+- [x] Evidencia nueva medida: jugadores simulados de Memoria y Equilibrio (el borrador solo
+      validaba Velocidad), convergencia en los tres modos, verificación estadística Monte
+      Carlo (11/11 puntos dentro del IC 95 %), robustez, coste computacional y huella.
+- [x] Corregido el hardware inventado del borrador: no hay batería de litio ni tapete de
+      material suave (alimentación **solo USB**, caja de acrílico).
 
-- [ ] **Unificar en un solo documento** (Markdown versionable como fuente; exportación a
-      `.docx` al final), partiendo del `Mejorado` y desarrollándolo hasta un artículo
-      completo, profesional y con excelencia académica.
-- [ ] Reconciliar las divergencias entre versiones: «juegos didácticos» vs «juegos serios»
-      (el término también aparece en palabras clave); §3.4 PLAYTEK vs juguetes para
-      parálisis cerebral; numeración (§3.6 debe ser §3.5).
-- [ ] **Verificar todas las referencias.** Varias del `Mejorado` no son de calidad
-      académica (Scribd, ScienceDirect Topics, Emooti, Mayo Clinic) y una cita al CDC
-      lleva fecha «2026, 8 de enero» sin comprobar.
-- [ ] Apoyar Resultados en la evidencia funcional **real y reproducible**: golden vectors,
-      dashboard/SQLite/CSV, figuras `docs/evidencia/E2_adaptacion.png`, `E3_niveles.png`,
-      `E4_trayectoria.png`.
+**Pendiente:**
+
 - [ ] Figura del circuito: `docs/hardware/kicad/tapete.pdf` existe pero tiene **etiquetas
-      solapadas** — falta un *tidy* en eeschema antes de incluirla.
+      solapadas** — falta un *tidy* en eeschema antes de incluirla en el artículo.
+- [ ] Revisión final del director y envío.
 
 ## 2. CI — ROTO, pendiente de revisión exhaustiva (después del artículo)
 
