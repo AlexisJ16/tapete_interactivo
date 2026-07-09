@@ -55,11 +55,24 @@ se borraron (recuperables en `ab69ba6`).
 - [x] Corregido el hardware inventado del borrador: no hay batería de litio ni tapete de
       material suave (alimentación **solo USB**, caja de acrílico).
 
+- [x] **Figuras de ingeniería (2026-07-09).** Esquemático KiCad rehecho (bloques
+      funcionales, cajetín, etiquetas hacia afuera; **netlist idéntico**: 47 nets nodo a
+      nodo, verificado, y cotejado con `Config.h` por `circuit-reviewer`). Diagrama de
+      bloques con graphviz, leyendo los GPIO de `Config.h`. Simulación ngspice del divisor
+      del FSR = **evidencia E9**. Artículo: 33 páginas, 8 figuras, 6 tablas, Anexo A con el
+      esquemático completo. Todo regenerable: `scripts/gen_esquematico.py`,
+      `scripts/gen_diagrama_bloques.py`, `scripts/experimentos.py`.
+
 **Pendiente:**
 
-- [ ] Figura del circuito: `docs/hardware/kicad/tapete.pdf` existe pero tiene **etiquetas
-      solapadas** — falta un *tidy* en eeschema antes de incluirla en el artículo.
-- [ ] Revisión final del director y envío.
+- [ ] **Revisión profunda del documento** por el usuario, en varias sesiones, antes del envío.
+- [ ] **Wokwi**: no se pudo ejecutar (el token vive en `~/.secrets`, de lectura bloqueada
+      para el agente). Su aporte real es limitado: `firmware/diagram.json` solo instancia el
+      ESP32, sin periféricos, así que sirve de *smoke* del firmware, no de validación del
+      circuito. Si se quiere una figura, hay que ejecutarlo con el token en el entorno.
+- [ ] Esquemático **de calidad de publicación** (hilos dibujados, buses, hojas jerárquicas):
+      hoy la conectividad se expresa por etiquetas de red, lo cual es correcto y pasa ERC,
+      pero un plano con hilos exigiría reescribir `kisch.py`. Decidido dejarlo como anexo.
 
 ## 2. CI — ROTO, pendiente de revisión exhaustiva (después del artículo)
 
@@ -155,3 +168,8 @@ el humano, con el skill `/bring-up`.
 commit inicial) **más** depuración de rastros de IA (`docs/superpowers/`, `CLAUDE.md`, y
 cualquier mención a Claude/superpowers), verificando que la suite siga verde sobre el árbol
 depurado.
+
+**Ojo al depurar:** el `.docx` y el `.pdf` generados del artículo también llevan metadatos.
+Y **no** se purgan los generadores de figuras (`kisch.py`, `gen_tapete.py`,
+`scripts/gen_*.py`): el artículo afirma que el esquemático y el diagrama se generan con
+guiones deterministas, y esa afirmación debe poder comprobarse en el árbol entregado.

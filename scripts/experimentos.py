@@ -195,23 +195,44 @@ def figura_analogico(datos: dict, salida: str) -> str:
     return ruta
 
 
+REPETICIONES_BENCH = 7
+
+
 def coste_computacional() -> dict:
-    """Compila y corre el benchmark C++ del nucleo. Cifras en ns/us, no inventadas."""
+    """Compila y corre el benchmark C++ del nucleo, varias veces.
+
+    A diferencia del resto del articulo, estas cifras NO son deterministas: dependen
+    del procesador y de la carga de la maquina. Se reportan como mediana y rango sobre
+    `REPETICIONES_BENCH` ejecuciones, no como un valor exacto.
+    """
+    import glob
     import re
+    import statistics
     import subprocess
 
     binario = os.path.join(RAIZ, "build", "bench_nucleo")
     fuentes = [os.path.join(RAIZ, "scripts", "bench_nucleo.cpp")]
     for patron in ("*.cpp", "modes/*.cpp"):
-        import glob
         fuentes += sorted(glob.glob(os.path.join(RAIZ, "firmware", "lib", "GameCore", patron)))
     subprocess.run(["g++", "-std=c++17", "-O2",
                     f"-I{os.path.join(RAIZ, 'firmware', 'lib', 'GameCore')}",
                     *fuentes, "-o", binario], check=True)
-    salida = subprocess.run([binario], check=True, capture_output=True, text=True).stdout
-    numeros = [float(x) for x in re.findall(r"([\d.]+) (?:ns|us)/", salida)]
-    return {"tick_ns": numeros[0], "pisada_ns": numeros[1], "sesion_us": numeros[2],
-            "cpu": "Intel Core i7-1355U", "salida_cruda": salida.strip().splitlines()}
+
+    medidas: list[list[float]] = []
+    for _ in range(REPETICIONES_BENCH):
+        salida = subprocess.run([binario], check=True, capture_output=True, text=True).stdout
+        medidas.append([float(x) for x in re.findall(r"([\d.]+) (?:ns|us)/", salida)])
+
+    def resumen_metrica(i: int) -> dict:
+        vals = sorted(m[i] for m in medidas)
+        return {"mediana": statistics.median(vals), "min": vals[0], "max": vals[-1]}
+
+    return {"repeticiones": REPETICIONES_BENCH,
+            "tick_ns": resumen_metrica(0),
+            "pisada_ns": resumen_metrica(1),
+            "sesion_us": resumen_metrica(2),
+            "cpu": "Intel Core i7-1355U",
+            "nota": "no determinista: depende del procesador y de la carga de la maquina"}
 
 
 def main(salida: str = SALIDA) -> int:

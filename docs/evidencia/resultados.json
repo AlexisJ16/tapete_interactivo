@@ -852,15 +852,24 @@
     }
   },
   "coste_computacional": {
-    "tick_ns": 4.8,
-    "pisada_ns": 433.6,
-    "sesion_us": 5.2,
+    "repeticiones": 7,
+    "tick_ns": {
+      "mediana": 5.7,
+      "min": 4.4,
+      "max": 5.9
+    },
+    "pisada_ns": {
+      "mediana": 462.8,
+      "min": 450.8,
+      "max": 538.3
+    },
+    "sesion_us": {
+      "mediana": 5.55,
+      "min": 5.41,
+      "max": 6.46
+    },
     "cpu": "Intel Core i7-1355U",
-    "salida_cruda": [
-      "actualizar() [tick en RUNNING]          4.8 ns/llamada  (1000000 ticks)",
-      "pisar() [pisada que emite eventos]    433.6 ns/pisada    (240000 pisadas efectivas)",
-      "sesion completa (nivel 4)              5.20 us/sesion    (20000 sesiones de 12 rondas)"
-    ]
+    "nota": "no determinista: depende del procesador y de la carga de la maquina"
   },
   "analogico": {
     "divisor_fsr": [

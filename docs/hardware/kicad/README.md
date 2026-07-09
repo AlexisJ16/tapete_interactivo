@@ -8,31 +8,39 @@ en verde y exports para el artículo. Cruza net-por-net con las fuentes de verda
 
 | Archivo | Qué es |
 |---|---|
-| `tapete.kicad_sch` | Esquemático (abrir con `eeschema`). Auto-layout: reordenar en la GUI si se desea. |
+| `tapete.kicad_sch` | Esquemático (abrir con `eeschema`). Layout por bloques funcionales: sensado 3V3 · cómputo · actuación 5V · audio. |
 | `tapete.kicad_sym` | Librería de símbolos custom (ESP32 DevKit 30-pin, DFPlayer Mini), tipados. |
 | `sym-lib-table`, `tapete.kicad_pro` | Proyecto KiCad (registran la lib `tapete`). |
-| `tapete.pdf` | Plano exportado (para el artículo). |
+| `tapete.pdf` | Plano exportado. Es el **Anexo A del artículo** (`docs/evidencia/esquematico.png` es su versión rotada). |
 | `tapete-bom.csv` | Lista de materiales. |
 | `tapete.cir` | Netlist SPICE (artefacto; requiere modelos para simular). |
-| `kisch.py`, `gen_tapete.py` | **Andamiaje**: generador que autora el `.kicad_sch`. Ver abajo. |
+| `kisch.py`, `gen_tapete.py` | Generador que autora el `.kicad_sch`. Ver abajo. |
 
 ## Regenerar
+
+**Camino normal** — regenera, valida y exporta en un paso (aborta si el ERC encuentra
+alguna infracción):
+
+```bash
+.venv/bin/python scripts/gen_esquematico.py
+```
+
+Pasos sueltos, si hace falta:
 
 ```bash
 # Proyecto + esquemático completo:
 .venv/bin/python docs/hardware/kicad/gen_tapete.py --stage all --project
 # Etapas intermedias (build incremental): esp32 | fsr | uln | dfplayer
-```
 
-Exports y verificación:
-
-```bash
 cd docs/hardware/kicad
 kicad-cli sch erc --severity-all --exit-code-violations tapete.kicad_sch   # 0 infracciones
 kicad-cli sch export pdf     -o tapete.pdf      tapete.kicad_sch
 kicad-cli sch export bom     -o tapete-bom.csv  tapete.kicad_sch
 kicad-cli sch export netlist --format spice -o tapete.cir tapete.kicad_sch
 ```
+
+> **Cambiar el dibujo no debe cambiar el circuito.** Tras tocar el layout, exportar el
+> netlist antes y después y comparar nodo a nodo (deben salir 47 nets idénticas).
 
 ## Método (por qué es fiable)
 
@@ -57,5 +65,8 @@ kicad-cli sch export netlist --format spice -o tapete.cir tapete.kicad_sch
   prueba empírica de brillo (`cableado.md` §3, Paso 6) es un gate real antes del armado.
 - **GPIO16 (contingencia):** si el TX del DFPlayer mide ~5 V, intercalar divisor 1k+2k
   en `DF_TX` (`cableado.md` §3, Paso 7). El esquemático representa el caso nominal (3.3 V, directo).
-- **Andamiaje:** `kisch.py`/`gen_tapete.py` son la herramienta de autoría, no el entregable
-  final; se purgan del snapshot de entrega (como `docs/superpowers/`).
+- **No purgar el generador en la entrega.** `kisch.py`/`gen_tapete.py`/`scripts/gen_esquematico.py`
+  son la herramienta de autoría del plano, y el artículo afirma explícitamente que el
+  esquemático se genera con un guion determinista que corre el ERC. Si se borran en el
+  snapshot, esa afirmación queda sin respaldo. No son rastro de IA: se conservan (a
+  diferencia de `docs/superpowers/`). Ver `ROADMAP.md` §5.
