@@ -56,8 +56,13 @@ kicad-cli sch export netlist --format spice -o tapete.cir tapete.kicad_sch
 - **Autoría programática** (no hay API oficial de Python para esquemáticos): el
   generador emite el S-expression y se valida con `kicad-cli`. Punto clave:
   el espacio del símbolo es Y-arriba y el del esquemático Y-abajo → el punto de
-  conexión absoluto de un pin es `(Sx + px, Sy − py)`. UUIDs deterministas
-  (salida reproducible byte a byte).
+  conexión absoluto de un pin es `(Sx + px, Sy − py)`. UUIDs deterministas: el
+  **`.kicad_sch` sale reproducible byte a byte**.
+- **El `.pdf` exportado NO es byte-idéntico entre corridas** (verificado): `kicad-cli`
+  estampa la hora de exportación en `/CreationDate`, y ese es el *único* byte que
+  cambia. Si tras regenerar `git status` solo marca `tapete.pdf`, es esto: se
+  descarta con `git checkout -- docs/hardware/kicad/tapete.pdf`. Lo determinista
+  —y lo que hay que vigilar— es el esquemático y su netlist.
 
 ## Notas
 
