@@ -19,8 +19,9 @@ forma completa; el cliente pone todo en marcha con el mínimo esfuerzo.
   lanzador. La ruta "clonar + correr scripts" es del **mantenedor** (Nivel 2).
 - **Construcción y verificación de artefactos Windows = GitHub Actions (runner `windows-latest`).**
   La máquina de desarrollo es Linux y no puede construir ni probar `.exe`/COM/drivers de Windows.
-- **Empaquetado:** `.exe` congelado (PyInstaller) como entrega principal; **`.bat` instalador
-  con venv como respaldo commiteado** (por si el congelado da guerra).
+- **Empaquetado:** `.exe` congelado (PyInstaller) como **única entrega al cliente**; el `.bat`
+  (`packaging/instalar.bat`) es una **conveniencia de desarrollo** para correr desde el checkout,
+  no un entregable. Si el freeze falla en CI, no se publica y se itera el build (ver §5.6/§11).
 - **Tratamiento completo** (sin presión de deadline): empaquetado + CI + instrucciones + docs.
 - **Chip USB-serial confirmado empíricamente = Silicon Labs CP210x** (`lsusb` → `10c4:ea60`).
 
