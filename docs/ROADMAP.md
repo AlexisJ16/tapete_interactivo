@@ -65,7 +65,13 @@ se borraron (recuperables en `ab69ba6`).
 
 **Pendiente:**
 
-- [ ] **Revisión profunda del documento** por el usuario, en varias sesiones, antes del envío.
+- [ ] **Sondeo profundo del artículo** — *próxima acción*, en chat fresco. Auditoría de punta
+      a punta antes de declararlo listo y enviarlo a revisión. Invariantes que ya costaron una
+      corrección y hay que vigilar: (a) ninguna cifra sin fuente en `scripts/experimentos.py`;
+      (b) ninguna magnitud de hardware sin datasheet o medición —la R del FSR en reposo está
+      **sin caracterizar**—; (c) E10 (latencia) y E11 (detección/umbral) son **pendientes**, no
+      se enuncian en pasado; (d) E8 (costo computacional) **no es determinista**: se cita como
+      orden de magnitud, nunca con valor exacto.
 - [ ] **Wokwi**: no se pudo ejecutar (el token vive en `~/.secrets`, de lectura bloqueada
       para el agente). Su aporte real es limitado: `firmware/diagram.json` solo instancia el
       ESP32, sin periféricos, así que sirve de *smoke* del firmware, no de validación del
