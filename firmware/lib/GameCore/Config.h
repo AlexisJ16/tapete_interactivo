@@ -19,10 +19,6 @@ constexpr int SONIDO_INICIO  = 1;  // aviso de inicio de sesion (START)
 constexpr int SONIDO_ACIERTO = 2;  // pisada correcta / cada LED de la exhibicion
 constexpr int SONIDO_RONDA   = 3;  // serie/patron completado (pase de ronda)
 constexpr int SONIDO_FIN     = 4;  // fin de sesion (FINISHED)
-// Alias transitorios (se eliminan en la Task 8, tras migrar los modos/tests):
-constexpr int SONIDO_INSTRUCCION = 1;
-constexpr int SONIDO_ERROR       = 3;
-constexpr int SONIDO_EXITO       = 4;
 
 // --- Mapa de pines ESP32 (ver shared/protocol.md y docs/hardware/cableado.md) -
 // FSR en ADC1 (GPIO 34-39 y 32-33). LEDs por LEDC/PWM.
