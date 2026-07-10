@@ -35,12 +35,12 @@ TEST_CASE("equilibrio: completar el patron es acierto y pasa al siguiente") {
     CHECK(contiene(col.eventos, Evento::led(5, 255)));
 }
 
-TEST_CASE("equilibrio: cada casilla parcial suena ACIERTO; completar suena RONDA") {
+TEST_CASE("equilibrio: la pisada parcial es muda; completar suena RONDA") {
     FakeHardware hw; Colector col;
     GameEngine motor(hw, col.sink());
     arrancar(motor);                  // patron ronda1 = [3,6]
-    hw.reloj = 500; motor.pisar(3);   // parcial
-    CHECK(contiene(col.eventos, Evento::sound(cfg::SONIDO_ACIERTO)));
+    hw.reloj = 500; motor.pisar(3);   // parcial: sin sonido
+    CHECK(cuenta(col.eventos, Evento::Tipo::SOUND) == 1);  // solo INICIO
     hw.reloj = 900; motor.pisar(6);   // completa
     CHECK(contiene(col.eventos, Evento::sound(cfg::SONIDO_RONDA)));
 }

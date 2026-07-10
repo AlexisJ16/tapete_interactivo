@@ -69,9 +69,8 @@ void ModoEquilibrio::pisar(int celda, uint32_t ms) {
                 if (ronda_ > rondas_) { fin_ = true; return; }   // fin: suena FIN (motor)
                 m_.sonido(cfg::SONIDO_RONDA);
                 nuevoPatron(ms);
-            } else {
-                m_.sonido(cfg::SONIDO_ACIERTO);                   // acierto parcial
             }
+            // Pisada parcial correcta: muda (Equilibrio solo suena al completar el patron).
         }
     } else {
         fallar(ms);  // pisada fuera del patron
