@@ -15,10 +15,14 @@ constexpr int LED_ENCENDIDO = 255; // brillo PWM maximo (0..255)
 constexpr int LED_APAGADO = 0;
 
 // --- Sonidos (archivos 000X.mp3 en el DFPlayer) -----------------------------
-constexpr int SONIDO_INSTRUCCION = 1;  // muestra de secuencia / inicio de ronda
-constexpr int SONIDO_ACIERTO     = 2;  // tono ascendente alegre
-constexpr int SONIDO_ERROR       = 3;  // tono grave
-constexpr int SONIDO_EXITO       = 4;  // secuencia/sesion completada
+constexpr int SONIDO_INICIO  = 1;  // aviso de inicio de sesion (START)
+constexpr int SONIDO_ACIERTO = 2;  // pisada correcta / cada LED de la exhibicion
+constexpr int SONIDO_RONDA   = 3;  // serie/patron completado (pase de ronda)
+constexpr int SONIDO_FIN     = 4;  // fin de sesion (FINISHED)
+// Alias transitorios (se eliminan en la Task 8, tras migrar los modos/tests):
+constexpr int SONIDO_INSTRUCCION = 1;
+constexpr int SONIDO_ERROR       = 3;
+constexpr int SONIDO_EXITO       = 4;
 
 // --- Mapa de pines ESP32 (ver shared/protocol.md y docs/hardware/cableado.md) -
 // FSR en ADC1 (GPIO 34-39 y 32-33). LEDs por LEDC/PWM.
@@ -80,6 +84,9 @@ inline int exhibicionOnMs(int nivel) {
 }
 // Pausa entre LEDs al exhibir (ms).
 inline int exhibicionGapMs(int nivel) { (void)nivel; return 250; }
+// Pausa clara entre fases (inicio, entre rondas, tras error) para una experiencia
+// amigable: da tiempo a ver el primer LED. No bloqueante (via actualizar()).
+inline int pausaMs(int nivel) { (void)nivel; return 1200; }
 }  // namespace memoria
 
 // --- Modo 3: Equilibrio y coordinacion --------------------------------------
