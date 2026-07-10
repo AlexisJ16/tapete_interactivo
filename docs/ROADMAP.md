@@ -6,15 +6,17 @@ pendiente. `CLAUDE.md` recoge las reglas durables; este documento, lo que cambia
 Mantener siempre la disciplina del proyecto: **TDD**, **una sola fuente de verdad**
 (`GameCore`), tests en verde antes de avanzar.
 
-> **PUNTO DE CONTINUACIÓN (2026-07-09).** **No hay deadline externo:** el cliente aprobó el
-> trabajo y la fecha queda a criterio del autor (lo antes posible, sin recortar calidad).
+> **PUNTO DE CONTINUACIÓN (2026-07-10).** **No hay deadline externo:** el cliente aprobó el
+> trabajo y la fecha queda a criterio del autor.
 >
-> **El artículo (§1) está auditado de punta a punta y listo para enviarse a revisión.** La
-> auditoría corrigió integridad, cifras, bibliografía y estilo; el detalle está en §1.
-> Queda una decisión humana: enviarlo.
+> **Foco actual: HARDWARE.** El artículo (§1) quedó **delegado a un redactor externo**: se le
+> entregó todo el material y un paquete de evidencia del software (`docs/evidencia/`). Ya no es
+> trabajo nuestro.
 >
-> El **CI está roto** (§2) y el **hardware está bloqueado y pausado** (§3). Se retoman ahora,
-> en ese orden.
+> **Diagnóstico del hardware RESUELTO (§3):** los 6 sensores FSR están **sanos**; la falla era
+> **mecánica** (el acrílico rígido no transmitía la fuerza al FSR). Sin acrílico detectan de
+> inmediato (pico ≈4068–4095, reposo 0). **En curso: prueba end-to-end sin acrílico de los 3
+> modos** (sensores + LEDs + audio + comunicación). El **CI** (§2) sigue roto y en espera.
 
 **Línea base del software:** `./scripts/run_all_tests.sh` → TODO VERDE (52 casos /
 2174 aserciones C++ + 137 pytest); `.venv/bin/pio run -e esp32dev` → SUCCESS. Si algo
@@ -24,7 +26,16 @@ con `scripts/demo_visual.py`.
 
 ---
 
-## 1. El artículo — PRIORIDAD ACTUAL
+## 1. El artículo — DELEGADO A UN REDACTOR EXTERNO
+
+> **Delegado (2026-07-10).** El artículo ya **no es trabajo nuestro**: lo redacta un tercero, a
+> quien se le entregó todo el material y un **paquete de evidencia del software** —
+> `docs/evidencia/GUIA_EVIDENCIA.md` (índice que responde su pedido punto por punto),
+> `docs/articulo/stack-tecnologico.md` (tecnologías y versiones) y `docs/evidencia/ejecucion/`
+> (logs, traza del protocolo de los 3 modos, golden vectors 8/8, capturas rotuladas del
+> dashboard/simulador, export CSV/PDF, código). Integridad sostenida: toda captura va rotulada
+> como software/simulador; no hay evidencia de hardware físico "funcionando". El detalle
+> histórico de la auditoría se conserva abajo como referencia para el redactor.
 
 Entregable académico del proyecto de grado. El **anteproyecto V3 es el documento guía del
 profesor y NO se edita**; el artículo es el único entregable editable, y es donde se
@@ -160,52 +171,56 @@ termina. Confirmar antes de tocar nada.
 todos los jobs, condiciones de disparo, y validar de punta a punta que un tag produce el
 ZIP descargable.
 
-## 3. Hardware físico — BLOQUEADO y pausado
+## 3. Hardware físico — DIAGNÓSTICO RESUELTO; prueba end-to-end en curso
 
-**Síntoma:** con el hardware montado en la caja (protoboard pegado, 6 FSR + LEDs, acrílico
-atornillado), **ninguna pisada llega al dashboard**, en ningún modo, pisando con fuerza.
+**Estado (2026-07-10): los 6 sensores están sanos; la falla era mecánica, no eléctrica.**
 
-**Evidencia medida (2026-07-08):**
+Antecedente (2026-07-08): con el acrílico atornillado, ninguna pisada llegaba al dashboard
+(0 `press` con umbral 2000 y 700; en modo calibración los 6 canales daban `act=0` en reposo).
+El enlace serie, el firmware y el motor sí funcionaban (llegaban eventos `score`).
 
-- Con `UMBRAL_PISADA = 2000`: sesiones 15–18 de `dashboard/tapete.sqlite` → **0 eventos `press`**.
-- Con `UMBRAL_PISADA = 700`: sesiones 19–22 → **0 `press` y 0 pisadas fantasma**. El reposo
-  está por debajo de 700 y el pico al pisar tampoco lo alcanza.
-- Modo calibración (`esp32dev_calib`), **en reposo**: los 6 canales dan `act=0 reposo=0
-  pico=0 rango=0`.
-- El enlace serie, el firmware y el motor **funcionan**: durante esas sesiones sí llegaron
-  eventos `score`. El fallo está aislado en la detección del FSR.
+**Diagnóstico (2026-07-10), medido en modo calibración `esp32dev_calib`:**
 
-`reposo=0` es compatible con un FSR sano y sin fuerza (R del sensor ≫ 10 kΩ del pull-down
-→ nodo ~0 V), así que ese bloque **no discrimina por sí solo**. El valor de reposo del FSR
-**no está medido** y no hay datasheet del sensor en `docs/hardware/datasheets/`: no se cite
-una magnitud concreta hasta caracterizarlo.
+- **Sin el acrílico, los 6 FSR responden de inmediato.** Pisando a fondo: `reposo=0` y `pico`
+  entre **4068 y 4095** (≈ fondo de escala del ADC de 4095) en los seis canales. El salto
+  reposo→pico es casi total: detección binaria robusta.
+- **El riel 3V3 estaba sano** (responden los seis): se descarta el Dupont suelto / ESP32
+  desasentado que se sospechaba por el "todos-cero".
+- **Causa confirmada: MECÁNICA.** El acrílico rígido atornillado reparte la fuerza en vez de
+  concentrarla en la zona activa (~1 cm) del FSR. Con acrílico no detecta; sin acrílico, sí
+  (verificado por el autor).
+- Umbral sugerido por el firmware: común ~1423, por canal ~1630. `UMBRAL_PISADA` sigue en
+  2000, que **ya detecta sin acrílico**; el definitivo se fija con la mecánica final.
 
-**Primer paso al retomar:** el bloque de calibración **mientras se mantiene pisado** un
-botón, mirando `act` en vivo (no `pico`).
+**Próxima acción (retomar aquí): prueba end-to-end SIN acrílico**, ya decidida con el autor.
+El humano flashea el firmware normal y juega los 3 modos con el dashboard por serial:
 
-- Si `act` sube → sensores vivos, es puramente umbral: fijarlo con los picos reales.
-- Si `act` sigue en 0 pisando a fondo → **no llega tensión al nodo**. Sospechoso: el riel
-  **3V3** de los FSR (Dupont suelto al atornillar, o **ESP32 mal asentado**). Ningún umbral
-  lo arregla: se va al multímetro (`cableado.md` §5).
-- Hacerlo también con el botón 5 (GPIO32) para separar «falla del riel» de «falla de un ADC».
+```
+cd firmware && pio run -e esp32dev -t upload        # firmware del juego (no calib)
+.venv/bin/python dashboard/app.py --serial /dev/ttyUSB0
+```
 
-**Estado físico de la placa:** el ESP32 quedó flasheado con **`esp32dev_calib`**, que no
-corre el juego ni WiFi (solo imprime el ADC por serial). Para volver a jugar hay que
-reflashear `esp32dev`. `UMBRAL_PISADA` está **revertido a 2000**; ningún valor está
-validado con el acrílico puesto.
+- **Velocidad n1**: recorrer los 6 botones (sensor + LED correcto + audio, celda por celda).
+- **Equilibrio n3**: coordinación de varios LEDs simultáneos (hasta 4 por patrón).
+- **Memoria n1**: secuencia (exhibición de LED + audio + orden).
+- Verificar el **mapeo LED↔celda** (que encienda la celda que se pisa) y el audio.
 
-**El agente nunca flashea ni abre el serial** (lo bloquea el hook `guard-flash.sh`). Lo hace
-el humano, con el skill `/bring-up`.
+**Pendiente tras la prueba:**
+1. **Decidir el acrílico final** (lo decide el autor con la evidencia): mantenerlo con un
+   **concentrador de fuerza** (disco/domo rígido centrado sobre cada FSR, entre FSR y acrílico)
+   + **recalibrar**, o prescindir de él. Elección declarada: *decidir tras la prueba*.
+2. **Fijar `UMBRAL_PISADA` definitivo** con esa mecánica (pisada suave de niño → probablemente
+   ~1500 o menos). Editar `Config.h`, reflashear.
+3. **Audio:** microSD FAT32 con `/mp3/0001.mp3`..`0004.mp3` (ver `audio/README.md`).
+4. **WiFi (opcional):** `cp firmware/src/secrets.h.example firmware/src/secrets.h` para usar
+   `--tcp <IP>` en vez de `--serial`.
 
-**Herramientas y notas:**
+**El agente nunca flashea ni abre el serial** (lo bloquea `guard-flash.sh`); lo hace el humano
+con el skill `/bring-up`. Instrumentos reales: solo multímetro + PC.
 
-- `scripts/verificar_pisadas.py` da veredicto por celda leyendo los eventos de una sesión en
-  SQLite, distinguiendo sensor **mudo** de **stuck-high**. La GUI no pinta las pisadas y
-  `GameEngine::pisar` solo emite `press` en RUNNING: el único rastro es la base de datos.
-- **LEDs:** no hay prueba determinista (no existe comando manual de LED). Cobertura máxima =
-  Modo 3 Equilibrio nivel 3 (4 celdas por patrón, 8 rondas); la comprobación es visual.
-- Pendientes de puesta en marcha: grabar la microSD en FAT32 con `/mp3/0001.mp3`..`0004.mp3`
-  (ver `audio/README.md`) y `cp firmware/src/secrets.h.example firmware/src/secrets.h`.
+**Herramientas:** `scripts/verificar_pisadas.py` da veredicto por celda desde la sesión SQLite
+(distingue sensor **mudo** de **stuck-high**). LEDs: sin comando manual; cobertura máxima =
+Equilibrio n3 (comprobación visual).
 
 ## 4. Backlog de funcionalidad (siempre con tests/golden primero)
 
