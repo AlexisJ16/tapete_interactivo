@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 import os
+import random
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -114,6 +115,10 @@ class Simulador:
         self.core.pisar(celda)
         self._drenar()
 
+    def resembrar(self):
+        """Re-siembra el RNG del core con una semilla aleatoria (tecla R)."""
+        self.comando({"cmd": "set_seed", "seed": random.randint(1, 0xFFFFFFFF)})
+
     # --- geometria ---
     def _rect_celda(self, celda: int):
         idx = celda - 1
@@ -181,6 +186,8 @@ class Simulador:
             self.comando({"cmd": "stop"})
         elif ev.key == pg.K_p:
             self.comando({"cmd": "pause"})
+        elif ev.key == pg.K_r:
+            self.resembrar()
 
     def correr(self):
         pg = self.pygame

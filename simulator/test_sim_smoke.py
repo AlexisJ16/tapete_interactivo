@@ -25,3 +25,13 @@ def test_suggest_no_rompe_el_sim():
     sim.core.cerrar(); sim.pygame.quit()
     assert sim.ultima_sugerencia.get("dir") == "up"
     assert sim.ultima_sugerencia.get("rate") == 100
+
+
+def test_resembrar_no_falla_headless():
+    from tapete_sim import Simulador
+    sim = Simulador(headless=True)
+    sim.resembrar()          # no debe lanzar; envia set_seed al core
+    sim.comando({"cmd": "set_mode", "mode": 1, "level": 1})
+    sim.comando({"cmd": "start"})
+    assert sim.estado == "running"
+    sim.core.cerrar()
