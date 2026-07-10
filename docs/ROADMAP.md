@@ -13,13 +13,21 @@ Mantener siempre la disciplina del proyecto: **TDD**, **una sola fuente de verda
 > entregó todo el material y un paquete de evidencia del software (`docs/evidencia/`). Ya no es
 > trabajo nuestro.
 >
-> **Diagnóstico del hardware RESUELTO (§3):** los 6 sensores FSR están **sanos**; la falla era
-> **mecánica** (el acrílico rígido no transmitía la fuerza al FSR). Sin acrílico detectan de
-> inmediato (pico ≈4068–4095, reposo 0). **En curso: prueba end-to-end sin acrílico de los 3
-> modos** (sensores + LEDs + audio + comunicación). El **CI** (§2) sigue roto y en espera.
+> **E2E sin acrílico OK** (2026-07-10): los 3 modos corren de punta a punta. Se corrigieron
+> tres detalles de juego y se añadió el sistema de audio (ver §3): (1) las secuencias ya
+> **varían por partida** (el dashboard siembra aleatorio); (2) Memoria tiene **pausas claras**
+> (~1,2 s) entre rondas; (3) el "LEDs de más" de Equilibrio se aisló como **eléctrico** (la
+> pantalla muestra el patrón correcto; GameCore emite exactamente *k*), con checklist de
+> multímetro en `docs/hardware/diagnostico-leds-equilibrio.md`. **Audio:** 4 tonos
+> (inicio/acierto/ronda/fin), error mudo, en `audio/000X.mp3`.
+>
+> **PRÓXIMA ACCIÓN:** el humano reflashea (`esp32dev`), copia `audio/000X.mp3` a `/mp3/` de la
+> microSD (FAT32) y hace una E2E de los 3 modos verificando audio, pausas y variedad de
+> secuencias; y corre el checklist para localizar el ghosting de LEDs de Equilibrio. El **CI**
+> (§2) sigue roto y en espera.
 
-**Línea base del software:** `./scripts/run_all_tests.sh` → TODO VERDE (52 casos /
-2174 aserciones C++ + 137 pytest); `.venv/bin/pio run -e esp32dev` → SUCCESS. Si algo
+**Línea base del software:** `./scripts/run_all_tests.sh` → TODO VERDE (58 casos /
+2186 aserciones C++ + 140 pytest); `.venv/bin/pio run -e esp32dev` → SUCCESS. Si algo
 está en rojo al empezar, arreglarlo antes de añadir nada. Esta máquina tiene display real
 (`DISPLAY=:0` / Wayland): se pueden lanzar el simulador y el dashboard, y generar capturas
 con `scripts/demo_visual.py`.
@@ -171,7 +179,7 @@ termina. Confirmar antes de tocar nada.
 todos los jobs, condiciones de disparo, y validar de punta a punta que un tag produce el
 ZIP descargable.
 
-## 3. Hardware físico — DIAGNÓSTICO RESUELTO; prueba end-to-end en curso
+## 3. Hardware físico — E2E hecha; detalles de juego corregidos; ghosting de LEDs pendiente
 
 **Estado (2026-07-10): los 6 sensores están sanos; la falla era mecánica, no eléctrica.**
 
@@ -192,18 +200,35 @@ El enlace serie, el firmware y el motor sí funcionaban (llegaban eventos `score
 - Umbral sugerido por el firmware: común ~1423, por canal ~1630. `UMBRAL_PISADA` sigue en
   2000, que **ya detecta sin acrílico**; el definitivo se fija con la mecánica final.
 
-**Próxima acción (retomar aquí): prueba end-to-end SIN acrílico**, ya decidida con el autor.
-El humano flashea el firmware normal y juega los 3 modos con el dashboard por serial:
+**E2E sin acrílico HECHA (2026-07-10): los 3 modos corren.** La prueba reveló tres detalles de
+juego, ya **corregidos en software** (todo en `GameCore`, fuente única; suite verde + firmware
+compila). Diseño y plan: `docs/superpowers/specs/2026-07-10-modos-audio-design.md` y
+`docs/superpowers/plans/2026-07-10-modos-audio.md`.
+
+1. **Secuencias siempre iguales → variables por partida.** El dashboard enviaba `set_seed` con
+   una semilla fija; ahora siembra aleatorio por partida (los tests/golden fijan semilla).
+2. **Memoria sin pausa → pausa clara (~1,2 s).** Fase no bloqueante `PAUSA` antes de la 1ª
+   exhibición, entre rondas y tras error, para que se vea el primer botón.
+3. **Equilibrio "LEDs de más" → aislado como ELÉCTRICO.** La pantalla muestra el patrón correcto
+   y GameCore emite exactamente *k* LEDs (verificado en el simulador); la divergencia está por
+   debajo de GameCore. Procedimiento de multímetro en `docs/hardware/diagnostico-leds-equilibrio.md`.
+
+**Sistema de audio (nuevo):** 4 tonos generados por `scripts/gen_audio.py` (numpy→ffmpeg, MP3
+mono 44,1k/128k) en `audio/000X.mp3`: `1` inicio, `2` pisada correcta / cada LED de la
+exhibición de Memoria, `3` serie/patrón completado, `4` fin. **La pisada incorrecta no suena.**
+En Equilibrio suena **solo al completar** el patrón (no por pisada parcial).
+
+**PRÓXIMA ACCIÓN (retomar aquí):** el humano reflashea y valida en hardware:
 
 ```
 cd firmware && pio run -e esp32dev -t upload        # firmware del juego (no calib)
+# copiar audio/0001.mp3..0004.mp3 a /mp3/ de la microSD (FAT32)
 .venv/bin/python dashboard/app.py --serial /dev/ttyUSB0
 ```
 
-- **Velocidad n1**: recorrer los 6 botones (sensor + LED correcto + audio, celda por celda).
-- **Equilibrio n3**: coordinación de varios LEDs simultáneos (hasta 4 por patrón).
-- **Memoria n1**: secuencia (exhibición de LED + audio + orden).
-- Verificar el **mapeo LED↔celda** (que encienda la celda que se pisa) y el audio.
+- Verificar los 4 sonidos, las pausas de Memoria y que las secuencias **cambian entre partidas**.
+- **Equilibrio:** correr el checklist de `diagnostico-leds-equilibrio.md` para localizar el
+  ghosting de LEDs (medir GPIO vs LED físico, cableado vs `Config.h`, retorno de tierra común).
 
 **Pendiente tras la prueba:**
 1. **Decidir el acrílico final** (lo decide el autor con la evidencia): mantenerlo con un

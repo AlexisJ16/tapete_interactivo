@@ -75,7 +75,7 @@ Mapa de sonidos (reemplaza el actual; se **elimina** el sonido de error). Cuatro
 | id | Constante | Evento | Memoria | Velocidad | Equilibrio |
 |----|-----------|--------|---------|-----------|------------|
 | 1 | `SONIDO_INICIO` | Inicio de sesión (START) | ✓ | ✓ | ✓ |
-| 2 | `SONIDO_ACIERTO` | Pisada correcta individual **y** cada LED de la exhibición | cada botón / exhibición | cada objetivo | cada botón del patrón |
+| 2 | `SONIDO_ACIERTO` | Pisada correcta individual **y** cada LED de la exhibición | cada botón / exhibición | cada objetivo | — (parciales mudas) |
 | 3 | `SONIDO_RONDA` | Serie/patrón completado | al completar la serie | — | al completar el patrón |
 | 4 | `SONIDO_FIN` | Fin de sesión (FINISHED) | ✓ | ✓ | ✓ |
 
@@ -84,6 +84,8 @@ Reglas para no encimar sonidos:
 - Si esa ronda es la **última** (fin de sesión), no suena S3: el motor emite **S4** al
   pasar a FINISHED.
 - Velocidad no tiene S3 (cada acierto ya es una ronda de un botón → solo S2).
+- Equilibrio suena **solo al completar** el patrón (S3); las pisadas parciales van mudas
+  (decisión del autor: "un sonido cuando se pulsaron TODOS los botones iluminados").
 - La **exhibición** de la secuencia en Memoria suena **S2 por cada LED mostrado** (el mismo
   tono que el niño oirá al pisar ese botón: asocia luz+sonido, refuerza la memoria).
 

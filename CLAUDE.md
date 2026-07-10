@@ -14,7 +14,7 @@ habla con un **dashboard** de PC en tiempo real.
 
 Las 6 fases del plan base están **completas y validadas**:
 
-- GameCore (RNG, protocolo, motor, 3 modos) — tests doctest, ~2174 aserciones.
+- GameCore (RNG, protocolo, motor, 3 modos) — tests doctest, ~2186 aserciones.
 - Simulador Pygame + puente ctypes + servidor TCP + golden runner.
 - Dashboard PyQt6 + SQLite + export CSV/PDF + integración (FuenteCore y FuenteTCP).
 - Firmware ESP32 (`EspHardware` + WiFi/TCP) — **compila para `esp32dev`**.
@@ -26,7 +26,7 @@ Las 6 fases del plan base están **completas y validadas**:
   protocolo Py/C++).
 - Empaquetado Windows (`packaging/`): `.exe` PyInstaller con `--serial auto`.
 
-`./scripts/run_all_tests.sh` → **TODO VERDE** (52 casos C++ / 2174 aserciones + 137 pytest).
+`./scripts/run_all_tests.sh` → **TODO VERDE** (58 casos C++ / 2186 aserciones + 140 pytest).
 `.venv/bin/pio run -e esp32dev` → **SUCCESS** (Flash ~60%, RAM ~14%).
 
 **El software en verde no significa el proyecto en verde.** El hardware físico, el CI y
