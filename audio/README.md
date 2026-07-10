@@ -10,14 +10,18 @@ Los pide el firmware/simulador por `id` (evento `{"ev":"sound","id":N}`).
 
 | Archivo | id | Cuándo suena |
 |---|---|---|
-| `0001.mp3` | 1 | Instrucción / muestra de secuencia / inicio de ronda |
-| `0002.mp3` | 2 | **Acierto** (tono ascendente alegre) |
-| `0003.mp3` | 3 | **Error** (tono grave) |
-| `0004.mp3` | 4 | **Éxito** (secuencia/sesión completada) |
+| `0001.mp3` | 1 | Inicio de sesión (Start) |
+| `0002.mp3` | 2 | Pisada correcta / cada LED de la exhibición (Memoria) |
+| `0003.mp3` | 3 | Serie/patrón completado (pase de ronda) |
+| `0004.mp3` | 4 | Fin de la sesión |
+
+La pisada incorrecta **no** lleva sonido.
 
 Notas:
 
+- Se generan con `scripts/gen_audio.py` (numpy → ffmpeg): MP3 mono 44,1 kHz /
+  128 kbps, perfil que el DFPlayer Mini reproduce con fiabilidad. Regenerarlos:
+  `.venv/bin/python scripts/gen_audio.py`.
 - Numéralos con 4 dígitos (`0001.mp3`, `0002.mp3`, …).
 - En el **simulador**, si faltan los archivos no pasa nada: simplemente no
   reproduce sonido (no falla).
-- Sonidos sugeridos: cortos (0,3–1 s), claros y amables para niños.
