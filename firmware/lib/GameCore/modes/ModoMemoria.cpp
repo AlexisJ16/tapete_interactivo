@@ -57,7 +57,10 @@ void ModoMemoria::actualizar(uint32_t ms) {
     if (fin_) return;
     if (fase_ == Fase::PAUSA) {
         if (ms < tTrans_) return;    // sigue en pausa
-        iniciarExhibicion(ms);       // vencida la pausa: arranca la exhibicion
+        // Arranca en el instante logico de fin de pausa (tTrans_), no en 'ms': si un
+        // update tarda (o el reloj salta), la exhibicion no se estira y el while de
+        // abajo se pone al dia procesando todas las transiciones vencidas.
+        iniciarExhibicion(tTrans_);
     }
     if (fase_ != Fase::EXHIBIENDO) return;
     // Procesa todas las transiciones de exhibicion ya vencidas (robusto frente a
