@@ -30,8 +30,7 @@ void ModoVelocidad::nuevoObjetivo(uint32_t ms) {
 void ModoVelocidad::fallar(uint32_t ms) {
     misses_++;
     if (objetivo_ != 0) m_.led(objetivo_, cfg::LED_APAGADO);
-    m_.sonido(cfg::SONIDO_ERROR);
-    m_.score(hits_, misses_, 0, ronda_);
+    m_.score(hits_, misses_, 0, ronda_);   // error mudo
     ronda_++;
     nuevoObjetivo(ms);
 }
@@ -49,9 +48,9 @@ void ModoVelocidad::pisar(int celda, uint32_t ms) {
         int rt = static_cast<int>(ms - inicioVentana_);
         hits_++;
         m_.led(objetivo_, cfg::LED_APAGADO);
-        m_.sonido(cfg::SONIDO_ACIERTO);
         m_.score(hits_, misses_, rt, ronda_);
         ronda_++;
+        if (ronda_ <= rondas_) m_.sonido(cfg::SONIDO_ACIERTO);  // no en la ronda final (suena FIN)
         nuevoObjetivo(ms);
     } else {
         fallar(ms);  // casilla equivocada

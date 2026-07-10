@@ -58,6 +58,17 @@ TEST_CASE("velocidad: pisar la casilla equivocada es un error") {
     CHECK(contiene(col.eventos, Evento::press(5, 200)));
     CHECK(contiene(col.eventos, Evento::score(2, 0, 1, 0, 1)));
     CHECK(contiene(col.eventos, Evento::led(4, 255)));  // pasa al siguiente objetivo
+    CHECK(cuenta(col.eventos, Evento::Tipo::SOUND) == 1);  // solo INICIO: el error es mudo
+}
+
+TEST_CASE("velocidad: cada acierto suena ACIERTO; el error no suena") {
+    FakeHardware hw; Colector col;
+    GameEngine motor(hw, col.sink());
+    arrancar(motor);                       // seed 12345, objetivo ronda1 = 3
+    hw.reloj = 300; motor.pisar(3);        // acierto
+    CHECK(contiene(col.eventos, Evento::sound(cfg::SONIDO_ACIERTO)));
+    hw.reloj = 600; motor.pisar(1);        // error (objetivo era 4)
+    CHECK(cuenta(col.eventos, Evento::Tipo::SOUND) == 2);  // INICIO + 1 ACIERTO
 }
 
 TEST_CASE("velocidad: termina tras completar todas las rondas (nivel 1 = 5)") {
