@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import logging
 import os
+import random
 import sqlite3
 import sys
 
@@ -31,8 +32,13 @@ from sesion import Sesion  # noqa: E402
 from storage import Almacen, AlmacenError  # noqa: E402
 
 NOMBRES_MODO = {1: "Memoria", 2: "Velocidad", 3: "Equilibrio"}
-SEMILLA_DEFECTO = 12345   # reproducibilidad del RNG; no es un control clinico
 LOGGER = logging.getLogger(__name__)
+
+
+def semilla_efectiva(preferida):
+    """Semilla de la partida: la fijada (smoke/tests reproducibles) o, si no se
+    fijo, una aleatoria no nula por partida — cada juego, una secuencia distinta."""
+    return preferida if preferida is not None else random.randint(1, 0xFFFFFFFF)
 
 
 def _qt():
@@ -231,7 +237,7 @@ class VentanaDashboard:
         self._degradado_transporte = False
         self.fuente = fuente or FuenteCore()
         self.ses = Sesion(_AlmacenSesion(self.almacen, self._marcar_escritura_almacen), self.fuente)
-        self.semilla = SEMILLA_DEFECTO   # fuera de la vista del doctor
+        self.semilla = None   # None = aleatoria por partida; los tests/smoke la fijan
 
         self.win = QtWidgets.QMainWindow()
         self.win.setWindowTitle("Tapete Interactivo — Pantalla del terapeuta")
@@ -389,7 +395,7 @@ class VentanaDashboard:
         if self.ses.estado in ("running", "paused"):
             return
         self.ses.set_perfil(self.in_perfil_id.text() or "anon", self.in_perfil_nombre.text() or "")
-        self.ses.sembrar(self.semilla)
+        self.ses.sembrar(semilla_efectiva(self.semilla))
         self.ses.configurar(self._modo(), self.sp_nivel.value())
         self.ses.iniciar()
 
