@@ -77,3 +77,24 @@ TEST_CASE("pisar(0) y pisar(99) se ignoran sin emitir eventos ni tocar el modo")
     hw.reloj = 300; motor.pisar(1);
     CHECK(col.eventos.size() > antes);
 }
+
+TEST_CASE("el motor suena INICIO al arrancar la sesion") {
+    FakeHardware hw; Colector col;
+    GameEngine motor(hw, col.sink());
+    motor.procesar(Comando::parsear(R"({"cmd":"set_seed","seed":1})"));
+    motor.procesar(Comando::parsear(R"({"cmd":"set_mode","mode":2,"level":1})"));
+    motor.procesar(Comando::parsear(R"({"cmd":"start"})"));
+    CHECK(contiene(col.eventos, Evento::sound(cfg::SONIDO_INICIO)));
+}
+
+TEST_CASE("el motor suena FIN al terminar la sesion") {
+    FakeHardware hw; Colector col;
+    GameEngine motor(hw, col.sink());
+    motor.procesar(Comando::parsear(R"({"cmd":"set_seed","seed":12345})"));
+    motor.procesar(Comando::parsear(R"({"cmd":"set_mode","mode":2,"level":1})"));
+    motor.procesar(Comando::parsear(R"({"cmd":"start"})"));
+    const int obj[5] = {3, 4, 5, 3, 6};                 // seed 12345, nivel 1 = 5 rondas
+    for (int i = 0; i < 5; ++i) { hw.reloj = 100 * (i + 1); motor.pisar(obj[i]); }
+    REQUIRE(motor.estado() == Estado::FINISHED);
+    CHECK(contiene(col.eventos, Evento::sound(cfg::SONIDO_FIN)));
+}

@@ -50,6 +50,7 @@ void GameEngine::crearModo(int id) {
 void GameEngine::revisarFin() {
     if (estado_ == Estado::RUNNING && modo_ && modo_->terminado()) {
         cambiarEstado(Estado::FINISHED);
+        sonido(cfg::SONIDO_FIN);
         apagarTodos();
     }
 }
@@ -95,6 +96,7 @@ void GameEngine::procesar(const proto::Comando& c) {
                 prevMisses_ = 0;
                 ultimaDirEmitida_ = adapt::Direccion::MANTENER;
                 cambiarEstado(Estado::RUNNING);
+                sonido(cfg::SONIDO_INICIO);
                 modo_->iniciar(0);
                 revisarFin();
             }
