@@ -1,0 +1,10 @@
+OK  velocidad_dos_aciertos
+OK  velocidad_timeout
+OK  velocidad_strict_dos_aciertos
+OK  memoria_juego_completo
+OK  equilibrio_juego_completo
+OK  velocidad_suggest_up
+OK  velocidad_suggest_down
+OK  velocidad_set_level_strict
+
+8/8 escenarios en verde

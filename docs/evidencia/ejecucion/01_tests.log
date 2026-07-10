@@ -1,0 +1,83 @@
+==============================================================
+ 1) Tests unitarios C++ (doctest)
+==============================================================
+--- compilando test_adaptacion ---
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases: 5 | 5 passed | 0 failed | 0 skipped
+[doctest] assertions: 7 | 7 passed | 0 failed |
+[doctest] Status: SUCCESS!
+OK test_adaptacion
+--- compilando test_core ---
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:    9 |    9 passed | 0 failed | 0 skipped
+[doctest] assertions: 2048 | 2048 passed | 0 failed |
+[doctest] Status: SUCCESS!
+OK test_core
+--- compilando test_modo_equilibrio ---
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  7 |  7 passed | 0 failed | 0 skipped
+[doctest] assertions: 28 | 28 passed | 0 failed |
+[doctest] Status: SUCCESS!
+OK test_modo_equilibrio
+--- compilando test_modo_memoria ---
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  4 |  4 passed | 0 failed | 0 skipped
+[doctest] assertions: 11 | 11 passed | 0 failed |
+[doctest] Status: SUCCESS!
+OK test_modo_memoria
+--- compilando test_modo_velocidad ---
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  8 |  8 passed | 0 failed | 0 skipped
+[doctest] assertions: 15 | 15 passed | 0 failed |
+[doctest] Status: SUCCESS!
+OK test_modo_velocidad
+--- compilando test_protocolo ---
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  8 |  8 passed | 0 failed | 0 skipped
+[doctest] assertions: 43 | 43 passed | 0 failed |
+[doctest] Status: SUCCESS!
+OK test_protocolo
+--- compilando test_protocolo_fuzz ---
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases: 3 | 3 passed | 0 failed | 0 skipped
+[doctest] assertions: 3 | 3 passed | 0 failed |
+[doctest] Status: SUCCESS!
+OK test_protocolo_fuzz
+--- compilando test_recomendador ---
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases:  8 |  8 passed | 0 failed | 0 skipped
+[doctest] assertions: 19 | 19 passed | 0 failed |
+[doctest] Status: SUCCESS!
+OK test_recomendador
+
+==============================================================
+ 2) Construir GameCore.so (para simulador / golden_runner)
+==============================================================
+OK build/libgamecore.so
+
+==============================================================
+ 3) Tests Python (golden vectors + integracion + protocolo)
+==============================================================
+........................................................................ [ 52%]
+.................................................................        [100%]
+137 passed in 65.41s (0:01:05)
+OK pytest
+
+==============================================================
+>>> TODO VERDE <<<

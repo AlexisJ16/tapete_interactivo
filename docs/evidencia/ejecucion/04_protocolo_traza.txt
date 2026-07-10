@@ -1,0 +1,236 @@
+# Traza del protocolo de comunicacion del Tapete Interactivo  (2026-07-10 14:19:06)
+# Generada por docs/evidencia/ejecucion/gen_traza_protocolo.py
+# 'cerebro' = nucleo GameCore corriendo como simulador de software.
+# El protocolo es identico al del ESP32 real (mismo codigo C++).
+# Las mismas lineas viajan por Serial 115200 o TCP 3333.
+
+========================================================================
+ DEMO 1 - Comunicacion por TCP (puerto real), identica a la del ESP32
+========================================================================
+ El servidor expone el mismo protocolo de lineas JSON que el ESP32 real
+ (que escucha en el puerto 3333). El dashboard se conecta como cliente.
+
+ [cliente conectado a 127.0.0.1:38997]
+
+ PC      -> cerebro : {"cmd":"ping"}
+ cerebro -> PC      : {"ev":"hello","fw":"1.0.0","cells":6}
+
+========================================================================
+ DEMO 2 - Modo 2 (Velocidad) — dialogo completo del protocolo
+ Escenario determinista = golden vector 'velocidad_strict_dos_aciertos'
+========================================================================
+
+ PC      -> cerebro : {"cmd":"set_seed","seed":12345}
+ PC      -> cerebro : {"cmd":"set_mode","mode":2,"level":1}   (t=0 ms)
+ PC      -> cerebro : {"cmd":"start"}   (t=0 ms)
+ cerebro -> PC      : {"ev":"state","mode":2,"status":"running"}
+ cerebro -> PC      : {"ev":"led","cell":3,"level":255}
+ [pisada casilla 3 <- equivale al FSR]   (t=400 ms)
+ cerebro -> PC      : {"ev":"press","cell":3,"ms":400}
+ cerebro -> PC      : {"ev":"led","cell":3,"level":0}
+ cerebro -> PC      : {"ev":"sound","id":2}
+ cerebro -> PC      : {"ev":"score","mode":2,"hits":1,"misses":0,"rt_ms":400,"round":1}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":255}
+ [pisada casilla 4 <- equivale al FSR]   (t=900 ms)
+ cerebro -> PC      : {"ev":"press","cell":4,"ms":900}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":0}
+ cerebro -> PC      : {"ev":"sound","id":2}
+ cerebro -> PC      : {"ev":"score","mode":2,"hits":2,"misses":0,"rt_ms":500,"round":2}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":255}
+
+========================================================================
+ DEMO 3 - Modo 1 (Memoria) — dialogo completo del protocolo
+ Escenario determinista = golden vector 'memoria_juego_completo'
+========================================================================
+
+ PC      -> cerebro : {"cmd":"set_seed","seed":777}
+ PC      -> cerebro : {"cmd":"set_mode","mode":1,"level":1}   (t=0 ms)
+ PC      -> cerebro : {"cmd":"start"}   (t=0 ms)
+ cerebro -> PC      : {"ev":"state","mode":1,"status":"running"}
+ cerebro -> PC      : {"ev":"led","cell":1,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":2,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":3,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":6,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":255}
+ cerebro -> PC      : {"ev":"sound","id":1}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":255}
+ cerebro -> PC      : {"ev":"sound","id":1}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":0}
+ [pisada casilla 4 <- equivale al FSR]   (t=20000 ms)
+ cerebro -> PC      : {"ev":"press","cell":4,"ms":20000}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":255}
+ [pisada casilla 5 <- equivale al FSR]   (t=20100 ms)
+ cerebro -> PC      : {"ev":"press","cell":5,"ms":20100}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":255}
+ cerebro -> PC      : {"ev":"sound","id":4}
+ cerebro -> PC      : {"ev":"score","mode":1,"hits":1,"misses":0,"rt_ms":18650,"round":2}
+ cerebro -> PC      : {"ev":"led","cell":1,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":2,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":3,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":6,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":255}
+ cerebro -> PC      : {"ev":"sound","id":1}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":255}
+ cerebro -> PC      : {"ev":"sound","id":1}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":2,"level":255}
+ cerebro -> PC      : {"ev":"sound","id":1}
+ cerebro -> PC      : {"ev":"led","cell":2,"level":0}
+ [pisada casilla 4 <- equivale al FSR]   (t=40000 ms)
+ cerebro -> PC      : {"ev":"press","cell":4,"ms":40000}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":255}
+ [pisada casilla 5 <- equivale al FSR]   (t=40100 ms)
+ cerebro -> PC      : {"ev":"press","cell":5,"ms":40100}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":255}
+ [pisada casilla 2 <- equivale al FSR]   (t=40200 ms)
+ cerebro -> PC      : {"ev":"press","cell":2,"ms":40200}
+ cerebro -> PC      : {"ev":"led","cell":2,"level":255}
+ cerebro -> PC      : {"ev":"sound","id":4}
+ cerebro -> PC      : {"ev":"score","mode":1,"hits":2,"misses":0,"rt_ms":17800,"round":3}
+ cerebro -> PC      : {"ev":"led","cell":1,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":2,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":3,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":6,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":255}
+ cerebro -> PC      : {"ev":"sound","id":1}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":255}
+ cerebro -> PC      : {"ev":"sound","id":1}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":2,"level":255}
+ cerebro -> PC      : {"ev":"sound","id":1}
+ cerebro -> PC      : {"ev":"led","cell":2,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":3,"level":255}
+ cerebro -> PC      : {"ev":"sound","id":1}
+ cerebro -> PC      : {"ev":"led","cell":3,"level":0}
+ [pisada casilla 4 <- equivale al FSR]   (t=60000 ms)
+ cerebro -> PC      : {"ev":"press","cell":4,"ms":60000}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":255}
+ [pisada casilla 5 <- equivale al FSR]   (t=60100 ms)
+ cerebro -> PC      : {"ev":"press","cell":5,"ms":60100}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":255}
+ [pisada casilla 2 <- equivale al FSR]   (t=60200 ms)
+ cerebro -> PC      : {"ev":"press","cell":2,"ms":60200}
+ cerebro -> PC      : {"ev":"led","cell":2,"level":255}
+ [pisada casilla 3 <- equivale al FSR]   (t=60300 ms)
+ cerebro -> PC      : {"ev":"press","cell":3,"ms":60300}
+ cerebro -> PC      : {"ev":"led","cell":3,"level":255}
+ cerebro -> PC      : {"ev":"sound","id":4}
+ cerebro -> PC      : {"ev":"score","mode":1,"hits":3,"misses":0,"rt_ms":16950,"round":4}
+ cerebro -> PC      : {"ev":"led","cell":1,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":2,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":3,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":6,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":255}
+ cerebro -> PC      : {"ev":"sound","id":1}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":255}
+ cerebro -> PC      : {"ev":"sound","id":1}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":2,"level":255}
+ cerebro -> PC      : {"ev":"sound","id":1}
+ cerebro -> PC      : {"ev":"led","cell":2,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":3,"level":255}
+ cerebro -> PC      : {"ev":"sound","id":1}
+ cerebro -> PC      : {"ev":"led","cell":3,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":6,"level":255}
+ cerebro -> PC      : {"ev":"sound","id":1}
+ cerebro -> PC      : {"ev":"led","cell":6,"level":0}
+ [pisada casilla 4 <- equivale al FSR]   (t=80000 ms)
+ cerebro -> PC      : {"ev":"press","cell":4,"ms":80000}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":255}
+ [pisada casilla 5 <- equivale al FSR]   (t=80100 ms)
+ cerebro -> PC      : {"ev":"press","cell":5,"ms":80100}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":255}
+ [pisada casilla 2 <- equivale al FSR]   (t=80200 ms)
+ cerebro -> PC      : {"ev":"press","cell":2,"ms":80200}
+ cerebro -> PC      : {"ev":"led","cell":2,"level":255}
+ [pisada casilla 3 <- equivale al FSR]   (t=80300 ms)
+ cerebro -> PC      : {"ev":"press","cell":3,"ms":80300}
+ cerebro -> PC      : {"ev":"led","cell":3,"level":255}
+ [pisada casilla 6 <- equivale al FSR]   (t=80400 ms)
+ cerebro -> PC      : {"ev":"press","cell":6,"ms":80400}
+ cerebro -> PC      : {"ev":"led","cell":6,"level":255}
+ cerebro -> PC      : {"ev":"sound","id":4}
+ cerebro -> PC      : {"ev":"score","mode":1,"hits":4,"misses":0,"rt_ms":16100,"round":5}
+ cerebro -> PC      : {"ev":"suggest","mode":1,"from":1,"level":2,"dir":"up","rate":100,"window":4}
+ cerebro -> PC      : {"ev":"state","mode":1,"status":"finished"}
+ cerebro -> PC      : {"ev":"led","cell":1,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":2,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":3,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":6,"level":0}
+
+========================================================================
+ DEMO 4 - Modo 3 (Equilibrio) — dialogo completo del protocolo
+ Escenario determinista = golden vector 'equilibrio_juego_completo'
+========================================================================
+
+ PC      -> cerebro : {"cmd":"set_seed","seed":2024}
+ PC      -> cerebro : {"cmd":"set_mode","mode":3,"level":1}   (t=0 ms)
+ PC      -> cerebro : {"cmd":"start"}   (t=0 ms)
+ cerebro -> PC      : {"ev":"state","mode":3,"status":"running"}
+ cerebro -> PC      : {"ev":"led","cell":3,"level":255}
+ cerebro -> PC      : {"ev":"led","cell":6,"level":255}
+ [pisada casilla 3 <- equivale al FSR]   (t=500 ms)
+ cerebro -> PC      : {"ev":"press","cell":3,"ms":500}
+ [pisada casilla 6 <- equivale al FSR]   (t=600 ms)
+ cerebro -> PC      : {"ev":"press","cell":6,"ms":600}
+ cerebro -> PC      : {"ev":"sound","id":4}
+ cerebro -> PC      : {"ev":"score","mode":3,"hits":1,"misses":0,"rt_ms":600,"round":1}
+ cerebro -> PC      : {"ev":"led","cell":3,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":6,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":255}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":255}
+ [pisada casilla 5 <- equivale al FSR]   (t=700 ms)
+ cerebro -> PC      : {"ev":"press","cell":5,"ms":700}
+ [pisada casilla 4 <- equivale al FSR]   (t=800 ms)
+ cerebro -> PC      : {"ev":"press","cell":4,"ms":800}
+ cerebro -> PC      : {"ev":"sound","id":4}
+ cerebro -> PC      : {"ev":"score","mode":3,"hits":2,"misses":0,"rt_ms":200,"round":2}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":6,"level":255}
+ cerebro -> PC      : {"ev":"led","cell":2,"level":255}
+ [pisada casilla 6 <- equivale al FSR]   (t=900 ms)
+ cerebro -> PC      : {"ev":"press","cell":6,"ms":900}
+ [pisada casilla 2 <- equivale al FSR]   (t=1000 ms)
+ cerebro -> PC      : {"ev":"press","cell":2,"ms":1000}
+ cerebro -> PC      : {"ev":"sound","id":4}
+ cerebro -> PC      : {"ev":"score","mode":3,"hits":3,"misses":0,"rt_ms":200,"round":3}
+ cerebro -> PC      : {"ev":"led","cell":6,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":2,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":255}
+ cerebro -> PC      : {"ev":"led","cell":1,"level":255}
+ [pisada casilla 5 <- equivale al FSR]   (t=1100 ms)
+ cerebro -> PC      : {"ev":"press","cell":5,"ms":1100}
+ [pisada casilla 1 <- equivale al FSR]   (t=1200 ms)
+ cerebro -> PC      : {"ev":"press","cell":1,"ms":1200}
+ cerebro -> PC      : {"ev":"sound","id":4}
+ cerebro -> PC      : {"ev":"score","mode":3,"hits":4,"misses":0,"rt_ms":200,"round":4}
+ cerebro -> PC      : {"ev":"suggest","mode":3,"from":1,"level":2,"dir":"up","rate":100,"window":4}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":1,"level":0}
+ cerebro -> PC      : {"ev":"state","mode":3,"status":"finished"}
+ cerebro -> PC      : {"ev":"led","cell":1,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":2,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":3,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":4,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":5,"level":0}
+ cerebro -> PC      : {"ev":"led","cell":6,"level":0}
+
+ Leyenda de eventos (ver protocol.md, seccion 3):
+   state = cambio de estado del motor    led   = encendido/apagado de un LED
+   press = pisada detectada              sound = peticion de audio 000X.mp3
+   score = metricas (aciertos/fallos, tiempo de reaccion, ronda)

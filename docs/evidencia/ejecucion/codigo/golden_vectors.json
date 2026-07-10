@@ -1,0 +1,182 @@
+{
+  "version": "1.0.0",
+  "description": "Vectores de oro: escenarios deterministas (entrada -> salida esperada) que GameCore debe reproducir EXACTAMENTE. Como el simulador carga el mismo GameCore.so compilado, ejecutar estos vectores contra el .so valida simultaneamente 'C++' y 'simulador': hay una sola implementacion de la logica.",
+  "schema": {
+    "scenario": {
+      "name": "identificador unico",
+      "match": "'strict' = el stream emitido debe ser EXACTAMENTE 'expected'; 'subsequence' = 'expected' debe aparecer EN ORDEN como subsecuencia del stream emitido (permite eventos intermedios).",
+      "config": { "mode": "1|2|3", "level": "entero", "seed": "semilla xorshift32 (uint32 != 0)" },
+      "timeline": "lista de pasos ordenados por 't' (ms de sesion). Cada paso es uno de: {t, cmd:{...}} para inyectar un comando, o {t, press:N} para simular la pisada de la casilla N en el ms 't'. Entre pasos el motor avanza el reloj hasta 't' y procesa update().",
+      "expected": "lista de eventos (objetos del protocolo) que se comparan segun 'match'."
+    },
+    "rng": "cell = (xorshift32(seed) % 6) + 1. seed=12345 -> casillas [3,4,5,3,6,1,1,3]."
+  },
+  "scenarios": [
+    {
+      "name": "velocidad_dos_aciertos",
+      "match": "subsequence",
+      "config": { "mode": 2, "level": 1, "seed": 12345 },
+      "timeline": [
+        { "t": 0,   "cmd": { "cmd": "set_seed", "seed": 12345 } },
+        { "t": 0,   "cmd": { "cmd": "set_mode", "mode": 2, "level": 1 } },
+        { "t": 0,   "cmd": { "cmd": "start" } },
+        { "t": 400, "press": 3 },
+        { "t": 900, "press": 4 }
+      ],
+      "expected": [
+        { "ev": "state", "mode": 2, "status": "running" },
+        { "ev": "led", "cell": 3, "level": 255 },
+        { "ev": "press", "cell": 3, "ms": 400 },
+        { "ev": "score", "mode": 2, "hits": 1, "misses": 0, "rt_ms": 400, "round": 1 },
+        { "ev": "led", "cell": 4, "level": 255 },
+        { "ev": "press", "cell": 4, "ms": 900 },
+        { "ev": "score", "mode": 2, "hits": 2, "misses": 0, "rt_ms": 500, "round": 2 }
+      ]
+    },
+    {
+      "name": "velocidad_timeout",
+      "match": "subsequence",
+      "config": { "mode": 2, "level": 1, "seed": 12345 },
+      "timeline": [
+        { "t": 0,    "cmd": { "cmd": "set_seed", "seed": 12345 } },
+        { "t": 0,    "cmd": { "cmd": "set_mode", "mode": 2, "level": 1 } },
+        { "t": 0,    "cmd": { "cmd": "start" } },
+        { "t": 5000, "press": 3 }
+      ],
+      "expected": [
+        { "ev": "state", "mode": 2, "status": "running" },
+        { "ev": "led", "cell": 3, "level": 255 },
+        { "ev": "score", "mode": 2, "hits": 0, "misses": 1, "rt_ms": 0, "round": 1 }
+      ]
+    },
+    {
+      "name": "velocidad_strict_dos_aciertos",
+      "match": "strict",
+      "config": { "mode": 2, "level": 1, "seed": 12345 },
+      "timeline": [
+        { "t": 0,   "cmd": { "cmd": "set_mode", "mode": 2, "level": 1 } },
+        { "t": 0,   "cmd": { "cmd": "start" } },
+        { "t": 400, "press": 3 },
+        { "t": 900, "press": 4 }
+      ],
+      "expected": [
+        { "ev": "state", "mode": 2, "status": "running" },
+        { "ev": "led", "cell": 3, "level": 255 },
+        { "ev": "press", "cell": 3, "ms": 400 },
+        { "ev": "led", "cell": 3, "level": 0 },
+        { "ev": "sound", "id": 2 },
+        { "ev": "score", "mode": 2, "hits": 1, "misses": 0, "rt_ms": 400, "round": 1 },
+        { "ev": "led", "cell": 4, "level": 255 },
+        { "ev": "press", "cell": 4, "ms": 900 },
+        { "ev": "led", "cell": 4, "level": 0 },
+        { "ev": "sound", "id": 2 },
+        { "ev": "score", "mode": 2, "hits": 2, "misses": 0, "rt_ms": 500, "round": 2 },
+        { "ev": "led", "cell": 5, "level": 255 }
+      ]
+    },
+    {
+      "name": "memoria_juego_completo",
+      "match": "subsequence",
+      "config": { "mode": 1, "level": 1, "seed": 777 },
+      "_nota": "seed 777 -> secuencia [4,5,2,3,6]. Longitud inicial 2, maxima 5. Se juega hasta 'finished'. Los pasos en t grande dejan que actualizar() vacie la fase de EXHIBICION antes de pisar.",
+      "timeline": [
+        { "t": 0, "cmd": { "cmd": "set_mode", "mode": 1, "level": 1 } },
+        { "t": 0, "cmd": { "cmd": "start" } },
+        { "t": 20000, "press": 4 }, { "t": 20100, "press": 5 },
+        { "t": 40000, "press": 4 }, { "t": 40100, "press": 5 }, { "t": 40200, "press": 2 },
+        { "t": 60000, "press": 4 }, { "t": 60100, "press": 5 }, { "t": 60200, "press": 2 }, { "t": 60300, "press": 3 },
+        { "t": 80000, "press": 4 }, { "t": 80100, "press": 5 }, { "t": 80200, "press": 2 }, { "t": 80300, "press": 3 }, { "t": 80400, "press": 6 }
+      ],
+      "expected": [
+        { "ev": "state", "mode": 1, "status": "running" },
+        { "ev": "led", "cell": 4, "level": 255 },
+        { "ev": "sound", "id": 4 },
+        { "ev": "led", "cell": 2, "level": 255 },
+        { "ev": "state", "mode": 1, "status": "finished" }
+      ]
+    },
+    {
+      "name": "equilibrio_juego_completo",
+      "match": "subsequence",
+      "config": { "mode": 3, "level": 1, "seed": 2024 },
+      "_nota": "seed 2024 -> patrones [3,6],[5,4],[6,2],[5,1]. 4 rondas. Se completan todas hasta 'finished'.",
+      "timeline": [
+        { "t": 0, "cmd": { "cmd": "set_mode", "mode": 3, "level": 1 } },
+        { "t": 0, "cmd": { "cmd": "start" } },
+        { "t": 500, "press": 3 }, { "t": 600, "press": 6 },
+        { "t": 700, "press": 5 }, { "t": 800, "press": 4 },
+        { "t": 900, "press": 6 }, { "t": 1000, "press": 2 },
+        { "t": 1100, "press": 5 }, { "t": 1200, "press": 1 }
+      ],
+      "expected": [
+        { "ev": "state", "mode": 3, "status": "running" },
+        { "ev": "led", "cell": 3, "level": 255 },
+        { "ev": "led", "cell": 6, "level": 255 },
+        { "ev": "sound", "id": 4 },
+        { "ev": "state", "mode": 3, "status": "finished" }
+      ]
+    },
+    {
+      "name": "velocidad_suggest_up",
+      "match": "subsequence",
+      "config": { "mode": 2, "level": 1, "seed": 12345 },
+      "_nota": "4 aciertos llenan la ventana (W=4); tasa 1.0 -> sugiere subir a nivel 2 (rate 100). objetivos seed 12345 = [3,4,5,3].",
+      "timeline": [
+        { "t": 0,    "cmd": { "cmd": "set_mode", "mode": 2, "level": 1 } },
+        { "t": 0,    "cmd": { "cmd": "start" } },
+        { "t": 400,  "press": 3 },
+        { "t": 800,  "press": 4 },
+        { "t": 1200, "press": 5 },
+        { "t": 1600, "press": 3 }
+      ],
+      "expected": [
+        { "ev": "state", "mode": 2, "status": "running" },
+        { "ev": "suggest", "mode": 2, "from": 1, "level": 2, "dir": "up", "rate": 100, "window": 4 }
+      ]
+    },
+    {
+      "name": "velocidad_suggest_down",
+      "match": "subsequence",
+      "config": { "mode": 2, "level": 2, "seed": 12345 },
+      "_nota": "4 fallos (pisar siempre la casilla 1, nunca objetivo) -> tasa 0 -> bajar a nivel 1.",
+      "timeline": [
+        { "t": 0,   "cmd": { "cmd": "set_mode", "mode": 2, "level": 2 } },
+        { "t": 0,   "cmd": { "cmd": "start" } },
+        { "t": 100, "press": 1 },
+        { "t": 200, "press": 1 },
+        { "t": 300, "press": 1 },
+        { "t": 400, "press": 1 }
+      ],
+      "expected": [
+        { "ev": "state", "mode": 2, "status": "running" },
+        { "ev": "suggest", "mode": 2, "from": 2, "level": 1, "dir": "down", "rate": 0, "window": 4 }
+      ]
+    },
+    {
+      "name": "velocidad_set_level_strict",
+      "match": "strict",
+      "config": { "mode": 2, "level": 1, "seed": 12345 },
+      "_nota": "set_level a nivel 3 en RUNNING: NO recrea el modo; la ronda 2 usa ventana(3)=1200 (timeout a t=1400), contadores intactos. Sin suggest (solo 2 scores < W).",
+      "timeline": [
+        { "t": 0,    "cmd": { "cmd": "set_mode", "mode": 2, "level": 1 } },
+        { "t": 0,    "cmd": { "cmd": "start" } },
+        { "t": 100,  "cmd": { "cmd": "set_level", "level": 3 } },
+        { "t": 200,  "press": 3 },
+        { "t": 1400 }
+      ],
+      "expected": [
+        { "ev": "state", "mode": 2, "status": "running" },
+        { "ev": "led", "cell": 3, "level": 255 },
+        { "ev": "press", "cell": 3, "ms": 200 },
+        { "ev": "led", "cell": 3, "level": 0 },
+        { "ev": "sound", "id": 2 },
+        { "ev": "score", "mode": 2, "hits": 1, "misses": 0, "rt_ms": 200, "round": 1 },
+        { "ev": "led", "cell": 4, "level": 255 },
+        { "ev": "led", "cell": 4, "level": 0 },
+        { "ev": "sound", "id": 3 },
+        { "ev": "score", "mode": 2, "hits": 1, "misses": 1, "rt_ms": 0, "round": 2 },
+        { "ev": "led", "cell": 5, "level": 255 }
+      ]
+    }
+  ]
+}

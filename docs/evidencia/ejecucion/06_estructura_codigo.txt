@@ -1,0 +1,14 @@
+# Panorama del codigo del Tapete Interactivo  (2026-07-10)
+# Lineas por componente (excluye .venv, build, .pio, vendor de doctest).
+
+Componente                         archivos   lineas
+---------------------------------- --------   ------
+GameCore (logica portable, C++)          17     1418
+Firmware ESP32 (C++)                      3      341
+Tests C++ (doctest)                      10      844
+Simulador (Python)                       18     1507
+Dashboard (Python)                       23     3387
+Scripts (Python + Bash)                  11     1210
+
+Pruebas: 52 casos / 2174 aserciones (C++ doctest) + 137 (pytest) = TODO VERDE
+Golden vectors: 8 escenarios deterministas reproducidos byte a byte (05_golden_vectors.txt)
