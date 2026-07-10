@@ -9,14 +9,15 @@ Mantener siempre la disciplina del proyecto: **TDD**, **una sola fuente de verda
 > **PUNTO DE CONTINUACIÓN (2026-07-09).** **No hay deadline externo:** el cliente aprobó el
 > trabajo y la fecha queda a criterio del autor (lo antes posible, sin recortar calidad).
 >
-> **Prioridad total y exclusiva: el artículo (§1).** Debe enviarse a revisión. Nada más se
-> toca hasta que esté terminado.
+> **El artículo (§1) está auditado de punta a punta y listo para enviarse a revisión.** La
+> auditoría corrigió integridad, cifras, bibliografía y estilo; el detalle está en §1.
+> Queda una decisión humana: enviarlo.
 >
-> El **CI está roto** (§2) y el **hardware está bloqueado y pausado** (§3). Ambos se
-> retoman *después* del artículo, en ese orden.
+> El **CI está roto** (§2) y el **hardware está bloqueado y pausado** (§3). Se retoman ahora,
+> en ese orden.
 
 **Línea base del software:** `./scripts/run_all_tests.sh` → TODO VERDE (52 casos /
-2174 aserciones C++ + 135 pytest); `.venv/bin/pio run -e esp32dev` → SUCCESS. Si algo
+2174 aserciones C++ + 137 pytest); `.venv/bin/pio run -e esp32dev` → SUCCESS. Si algo
 está en rojo al empezar, arreglarlo antes de añadir nada. Esta máquina tiene display real
 (`DISPLAY=:0` / Wayland): se pueden lanzar el simulador y el dashboard, y generar capturas
 con `scripts/demo_visual.py`.
@@ -43,7 +44,7 @@ se borraron (recuperables en `ab69ba6`).
 
 **Hecho (2026-07-09):**
 
-- [x] Unificación en un solo documento (~11 900 palabras, 30 páginas, 4 figuras, 5 tablas).
+- [x] Unificación en un solo documento fuente (`docs/articulo/articulo.md`).
 - [x] Bibliografía: 29 referencias **verificadas una a una en línea**. Detectada una cita
       **fabricada** (IEEE Access 2023 con autores y páginas que no corresponden a su DOI);
       corregidos el apellido de Rodríguez-Timaná y el DOI de Bausela. Descartadas las
@@ -59,19 +60,72 @@ se borraron (recuperables en `ab69ba6`).
       funcionales, cajetín, etiquetas hacia afuera; **netlist idéntico**: 47 nets nodo a
       nodo, verificado, y cotejado con `Config.h` por `circuit-reviewer`). Diagrama de
       bloques con graphviz, leyendo los GPIO de `Config.h`. Simulación ngspice del divisor
-      del FSR = **evidencia E9**. Artículo: 33 páginas, 8 figuras, 6 tablas, Anexo A con el
-      esquemático completo. Todo regenerable: `scripts/gen_esquematico.py`,
+      del FSR = **evidencia E9**. Artículo: 8 figuras, 6 tablas, Anexo A con el esquemático
+      completo. Todo regenerable: `scripts/gen_esquematico.py`,
       `scripts/gen_diagrama_bloques.py`, `scripts/experimentos.py`.
 
-**Pendiente:**
+      > No se anotan aquí páginas ni palabras del `.docx`/`.pdf`: cambian en cada build y
+      > su fuente es el documento construido, no este roadmap.
 
-- [ ] **Sondeo profundo del artículo** — *próxima acción*, en chat fresco. Auditoría de punta
-      a punta antes de declararlo listo y enviarlo a revisión. Invariantes que ya costaron una
-      corrección y hay que vigilar: (a) ninguna cifra sin fuente en `scripts/experimentos.py`;
-      (b) ninguna magnitud de hardware sin datasheet o medición —la R del FSR en reposo está
-      **sin caracterizar**—; (c) E10 (latencia) y E11 (detección/umbral) son **pendientes**, no
-      se enuncian en pasado; (d) E8 (costo computacional) **no es determinista**: se cita como
-      orden de magnitud, nunca con valor exacto.
+- [x] **Evidencia con un solo generador (2026-07-09).** Se retiraron `generar_evidencia.py`
+      y `simulator/evidencia.py` (duplicaban `evidencia_modos.py` con el modo fijo en
+      Velocidad, y recomputaban por su cuenta el barrido que ya iba a `resultados.json`).
+      La figura de adaptación se dibuja ahora **del mismo dict** que se serializa, así que
+      no puede divergir del número publicado; se renombró `E2_adaptacion.png` →
+      `E3_adaptacion.png` para casar con la etiqueta E3 del artículo. Retirados los PNG
+      huérfanos `E3_niveles.png` y `E4_trayectoria.png` (el artículo no los usaba: los
+      sustituyen la Tabla 4 y la Figura 5). Citadas las Tablas 3 y 6, que no se
+      referenciaban por número en el cuerpo.
+
+- [x] **Sondeo profundo del artículo (2026-07-09).** Auditoría de punta a punta antes de
+      enviarlo a revisión: veracidad, cifras, bibliografía, redacción y rastros de IA.
+      Hallazgos corregidos:
+      - **Integridad.** El artículo afirmaba que *todas* sus cifras salían de un solo guion:
+        falso para los conteos de robustez (salen del código de los tests), la huella de
+        recursos (la da el compilador) y la cobertura de la suite. Afirmación acotada a lo
+        que es cierto, en Resultados y en «Disponibilidad de la evidencia».
+      - **E8 desincronizado.** El texto citaba medianas concretas (≈5 ns, 450–500 ns, ≈6 µs)
+        que ya no coincidían con `resultados.json` (6,0 / 669,6 / 8,04). Se **eliminaron** los
+        valores puntuales: el bench no es determinista y solo se enuncia como orden de
+        magnitud. Además «más de seis órdenes de magnitud» es falso con el máximo observado
+        (1059,8 ns → 9,4·10⁵): se rebajó a **cinco**, robusto en todo el rango.
+      - **Cobertura.** «135 pruebas en Python» → **137** (medido).
+      - **Bibliografía.** Verificadas las 29 entradas contra Crossref/editor. **Ninguna
+        fabricada.** Corregidos: `grieco2015down` (Seligsohn *Karen*, no Kate; Schwartz
+        *Alison*, no Allison), `degraaf2026latam` (año 2025→**2026**: vol. 28(1) es enero de
+        2026), `wibowo2020fsr` (Khoeron *Slamet*, no Sahrul) y `latash2008hypotonia` (su DOI
+        `10.3104/reviews.2074` da **404** en doi.org y Crossref → sustituido por la URL del
+        editor, que sí resuelve).
+      - **Formato APA.** citeproc desplazaba las partículas: «Graaf, G. de», «(Fels et al.)».
+        Apellidos protegidos con llaves en el `.bib` → «de Graaf», «van der Fels», «te
+        Wierike», «de Mello», «Da Luz». Ojo: la prosa ya decía «van der Fels» y la cita decía
+        «Fels» — incoherencia visible solo en el PDF.
+      - **Rastros de IA.** Eliminadas las 10 flechas `→` de la prosa, 43 negritas markdown de
+        énfasis (se conservan solo los rótulos de entrada de párrafo y las celdas de tabla) y
+        las construcciones características: «conviene…», «merece…», «Ahora bien», «Dicho de
+        otro modo», «lejos de ser», «aparentemente modesto», antítesis del tipo «no solo
+        parece X: hace Y» y «el algoritmo recomienda, el terapeuta decide».
+      - **Maquetación.** El esquemático (Figura 8, `height=82%`) flotaba hasta el interior
+        de la bibliografía; y el Anexo A estaba antes de las Referencias. Movido el Anexo
+        detrás de Referencias y fijada la figura con `float`/`fig-pos="H"` (paquete añadido
+        al preámbulo). Orden final: Referencias → Anexo A en página propia.
+      - Verificado: 8 figuras y 6 tablas, **todas citadas** por número; E1–E11 coherentes;
+        29/29 referencias citadas, ninguna huérfana; sin metadatos ni texto de IA en
+        `.docx`/`.pdf`.
+
+**Pendiente antes de someterlo (decisión humana):**
+
+- **Front/back matter que exigen muchas revistas:** declaración de **conflicto de
+  intereses**, de **financiación** y **autor de correspondencia** designado. Hoy el artículo
+  no los trae. Añadir según pida la revista destino.
+- **Las 52 rayas (—):** son incisos legítimos del español, pero es la única simbología que
+  un lector escéptico podría asociar a IA por densidad. Pendiente decidir si se hace una
+  pasada dirigida (muchas se convierten en comas/paréntesis sin perder nada).
+- **Aviso de fondo, no editable:** E10/E11 pendientes → objetivo (iii) parcial; dos fuentes
+  MDPI y una de cuartil medio (JASE). Un revisor probablemente preguntará por la validación
+  física ausente. Es el estado del proyecto, no un defecto.
+
+**Pendiente:**
 - [ ] **Wokwi**: no se pudo ejecutar (el token vive en `~/.secrets`, de lectura bloqueada
       para el agente). Su aporte real es limitado: `firmware/diagram.json` solo instancia el
       ESP32, sin periféricos, así que sirve de *smoke* del firmware, no de validación del

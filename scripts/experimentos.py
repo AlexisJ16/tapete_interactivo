@@ -87,6 +87,31 @@ def montecarlo() -> dict:
             "Memoria": {"habilidad": 0.85, "por_longitud": memoria}}
 
 
+def figura_adaptacion(datos: dict, salida: str) -> str:
+    """E3: recomendacion frente al desempeno, modo Velocidad. Dibuja `datos`, no recomputa."""
+    dir_color = {"up": "#2ca02c", "down": "#d62728", "keep": "#7f7f7f"}
+    filas = datos["Velocidad"]
+    x = [f["habilidad"] * 100 for f in filas]
+    y = [f["tasa"] for f in filas]
+
+    fig, eje = plt.subplots(figsize=(6, 4))
+    eje.plot(x, y, "-", color="#1f77b4", zorder=1, label="tasa de acierto")
+    for f, xi, yi in zip(filas, x, y):
+        eje.scatter([xi], [yi], color=dir_color[f["dir"]], zorder=3, s=45)
+    for direccion, color in dir_color.items():
+        eje.scatter([], [], color=color, label=f"sugiere: {direccion}")
+    eje.set_xlabel("habilidad simulada del jugador (%)")
+    eje.set_ylabel("tasa de acierto en la sesión (%)")
+    eje.grid(alpha=0.3)
+    eje.legend(fontsize=8)
+    fig.suptitle("Recomendación adaptativa frente al desempeño (Velocidad, nivel 2)", y=1.02)
+    fig.text(0.5, -0.06, PIE, ha="center", fontsize=7, style="italic")
+    ruta = os.path.join(salida, "E3_adaptacion.png")
+    fig.savefig(ruta, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    return ruta
+
+
 def figura_convergencia(datos: dict, salida: str) -> str:
     fig, ejes = plt.subplots(1, 3, figsize=(11, 3.4), sharey=True)
     for eje, modo in zip(ejes, MODOS):
@@ -249,11 +274,7 @@ def main(salida: str = SALIDA) -> int:
         "coste_computacional": coste_computacional(),
         "analogico": analogico(),
     }
-    # El articulo afirma que UN solo guion reproduce todas sus figuras. Para que sea
-    # cierto, aqui se regeneran tambien las del modo Velocidad (E2/E3/E4).
-    import generar_evidencia
-    generar_evidencia.main(salida)
-
+    figura_adaptacion(datos["adaptacion"], salida)
     figura_convergencia(datos["convergencia"], salida)
     figura_montecarlo(datos["montecarlo"], salida)
     figura_analogico(datos["analogico"], salida)
