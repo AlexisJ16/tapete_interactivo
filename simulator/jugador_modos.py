@@ -14,7 +14,6 @@ import json
 from core_bridge import CoreBridge
 from jugador_sim import _xorshift32
 
-SONIDO_INSTRUCCION = 1  # Config.h: acompana cada LED de la exhibicion de Memoria.
 CELDAS = 6
 
 # La exhibicion de Memoria separa dos LEDs por `gap` = 250 ms (Config.h). Con todas
@@ -44,7 +43,6 @@ def jugar_memoria(nivel: int, seed: int, habilidad: float,
 
     secuencia: list[int] = []
     encendidas: set[int] = set()
-    pendiente: int | None = None   # LED encendido a la espera de su sonido de instruccion
     entrada = False                # ¿el motor ya espera las pisadas?
     idx = 0
     t_ultimo_led = 0
@@ -52,7 +50,7 @@ def jugar_memoria(nivel: int, seed: int, habilidad: float,
     finished = False
 
     def drenar(t: int) -> None:
-        nonlocal pendiente, entrada, idx, t_ultimo_led, finished, secuencia
+        nonlocal entrada, idx, t_ultimo_led, finished, secuencia
         for linea in b.drenar_eventos():
             e = json.loads(linea)
             ev = e.get("ev")
@@ -60,19 +58,16 @@ def jugar_memoria(nivel: int, seed: int, habilidad: float,
                 t_ultimo_led = t
                 if e["level"] > 0:
                     encendidas.add(e["cell"])
-                    pendiente = e["cell"]
+                    # Un LED que se enciende mientras aun no toca pisar (fase de
+                    # exhibicion) es un paso de la secuencia. Los LEDs que confirman
+                    # una pisada (fase de entrada) no cuentan.
+                    if not entrada:
+                        secuencia.append(e["cell"])
                 else:
                     encendidas.discard(e["cell"])
-            elif ev == "sound" and e.get("id") == SONIDO_INSTRUCCION:
-                # Solo los LEDs de la exhibicion llevan sonido de instruccion; los
-                # que confirman una pisada correcta, no.
-                if pendiente is not None:
-                    secuencia.append(pendiente)
-                    pendiente = None
             elif ev == "score":
                 scores.append(e)
                 secuencia = []       # el motor reexhibe: acierto (crece) o error (repite)
-                pendiente = None
                 entrada = False
                 idx = 0
             elif ev == "suggest":
