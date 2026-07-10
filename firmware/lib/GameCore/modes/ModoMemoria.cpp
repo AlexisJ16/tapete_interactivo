@@ -18,18 +18,25 @@ void ModoMemoria::iniciar(uint32_t ms) {
     hits_ = 0;
     misses_ = 0;
     fin_ = false;
-    iniciarExhibicion(ms);
+    iniciarPausa(ms);   // pausa inicial: deja oir el sonido de inicio antes de exhibir
+}
+
+// Pausa clara (todo apagado) antes de (re)exhibir: al inicio, entre rondas y tras error.
+void ModoMemoria::iniciarPausa(uint32_t ms) {
+    apagarTodo();
+    fase_ = Fase::PAUSA;
+    tTrans_ = ms + static_cast<uint32_t>(cfg::memoria::pausaMs(m_.nivelActual()));
 }
 
 void ModoMemoria::iniciarExhibicion(uint32_t ms) {
     onMs_ = cfg::memoria::exhibicionOnMs(m_.nivelActual());   // nivel dinamico por ronda
     gapMs_ = cfg::memoria::exhibicionGapMs(m_.nivelActual());
-    apagarTodo();
+    // No hace falta apagarTodo(): siempre se entra tras iniciarPausa(), que ya apago.
     fase_ = Fase::EXHIBIENDO;
     idxShow_ = 0;
     ledEncendido_ = true;
     m_.led(seq_[0], cfg::LED_ENCENDIDO);
-    m_.sonido(cfg::SONIDO_INSTRUCCION);
+    m_.sonido(cfg::SONIDO_ACIERTO);   // tono por LED de la exhibicion
     tTrans_ = ms + static_cast<uint32_t>(onMs_);
 }
 
@@ -47,7 +54,12 @@ void ModoMemoria::crecer() {
 }
 
 void ModoMemoria::actualizar(uint32_t ms) {
-    if (fin_ || fase_ != Fase::EXHIBIENDO) return;
+    if (fin_) return;
+    if (fase_ == Fase::PAUSA) {
+        if (ms < tTrans_) return;    // sigue en pausa
+        iniciarExhibicion(ms);       // vencida la pausa: arranca la exhibicion
+    }
+    if (fase_ != Fase::EXHIBIENDO) return;
     // Procesa todas las transiciones de exhibicion ya vencidas (robusto frente a
     // la frecuencia con que se llame a actualizar).
     while (fase_ == Fase::EXHIBIENDO && ms >= tTrans_) {
@@ -62,7 +74,7 @@ void ModoMemoria::actualizar(uint32_t ms) {
             tTrans_ += static_cast<uint32_t>(gapMs_);
         } else {
             m_.led(seq_[idxShow_], cfg::LED_ENCENDIDO);
-            m_.sonido(cfg::SONIDO_INSTRUCCION);
+            m_.sonido(cfg::SONIDO_ACIERTO);   // tono por LED de la exhibicion
             ledEncendido_ = true;
             tTrans_ += static_cast<uint32_t>(onMs_);
         }
@@ -80,20 +92,21 @@ void ModoMemoria::pisar(int celda, uint32_t ms) {
         if (inputIndex_ >= len_) {
             // Secuencia completa.
             ++hits_;
-            m_.sonido(cfg::SONIDO_EXITO);
             m_.score(hits_, misses_, static_cast<int>(ms - tInicioInput_), len_);
             if (len_ >= longitudMax_) {
-                fin_ = true;
+                fin_ = true;   // fin: suena FIN (motor)
                 return;
             }
+            m_.sonido(cfg::SONIDO_RONDA);
             crecer();
-            iniciarExhibicion(ms);
+            iniciarPausa(ms);
+        } else {
+            m_.sonido(cfg::SONIDO_ACIERTO);   // acierto intermedio
         }
     } else {
-        // Pisada incorrecta: error y se repite la MISMA secuencia.
+        // Pisada incorrecta: error mudo; pausa y se repite la MISMA secuencia.
         ++misses_;
-        m_.sonido(cfg::SONIDO_ERROR);
         m_.score(hits_, misses_, 0, len_);
-        iniciarExhibicion(ms);
+        iniciarPausa(ms);
     }
 }

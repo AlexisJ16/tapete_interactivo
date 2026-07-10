@@ -22,9 +22,10 @@ public:
     bool terminado() const override { return fin_; }
 
 private:
-    enum class Fase { EXHIBIENDO, ENTRADA };
+    enum class Fase { PAUSA, EXHIBIENDO, ENTRADA };
 
     void apagarTodo();
+    void iniciarPausa(uint32_t ms);
     void iniciarExhibicion(uint32_t ms);
     void iniciarEntrada(uint32_t ms);
     void crecer();
@@ -37,7 +38,7 @@ private:
     int seq_[16];
     int len_ = 0;
 
-    Fase fase_ = Fase::EXHIBIENDO;
+    Fase fase_ = Fase::PAUSA;
     int idxShow_ = 0;
     bool ledEncendido_ = false;
     uint32_t tTrans_ = 0;     // instante de la proxima transicion de exhibicion
