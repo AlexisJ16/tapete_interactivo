@@ -29,10 +29,20 @@ TEST_CASE("equilibrio: completar el patron es acierto y pasa al siguiente") {
     hw.reloj = 500;  motor.pisar(3);
     hw.reloj = 900;  motor.pisar(6);  // patron [3,6] completo
 
-    CHECK(contiene(col.eventos, Evento::sound(cfg::SONIDO_EXITO)));
+    CHECK(contiene(col.eventos, Evento::sound(cfg::SONIDO_RONDA)));
     CHECK(contieneScore(col.eventos, /*mode*/ 3, /*hits*/ 1, /*misses*/ 0, /*round*/ 1));
     // Siguiente patron [5,4]: aparece un LED nuevo.
     CHECK(contiene(col.eventos, Evento::led(5, 255)));
+}
+
+TEST_CASE("equilibrio: cada casilla parcial suena ACIERTO; completar suena RONDA") {
+    FakeHardware hw; Colector col;
+    GameEngine motor(hw, col.sink());
+    arrancar(motor);                  // patron ronda1 = [3,6]
+    hw.reloj = 500; motor.pisar(3);   // parcial
+    CHECK(contiene(col.eventos, Evento::sound(cfg::SONIDO_ACIERTO)));
+    hw.reloj = 900; motor.pisar(6);   // completa
+    CHECK(contiene(col.eventos, Evento::sound(cfg::SONIDO_RONDA)));
 }
 
 TEST_CASE("equilibrio: pisar fuera del patron es error") {
@@ -42,7 +52,7 @@ TEST_CASE("equilibrio: pisar fuera del patron es error") {
 
     hw.reloj = 500; motor.pisar(1);  // 1 no esta en [3,6]
 
-    CHECK(contiene(col.eventos, Evento::sound(cfg::SONIDO_ERROR)));
+    CHECK(cuenta(col.eventos, Evento::Tipo::SOUND) == 1);  // solo INICIO: error mudo
     CHECK(contieneScore(col.eventos, 3, /*hits*/ 0, /*misses*/ 1, /*round*/ 1));
 }
 
@@ -53,7 +63,7 @@ TEST_CASE("equilibrio: agotar el tiempo limite es error") {
 
     hw.reloj = 6000; motor.actualizar();  // limite nivel 1 = 5000 ms
 
-    CHECK(contiene(col.eventos, Evento::sound(cfg::SONIDO_ERROR)));
+    CHECK(cuenta(col.eventos, Evento::Tipo::SOUND) == 1);  // solo INICIO: timeout mudo
     CHECK(contieneScore(col.eventos, 3, 0, 1, 1));
 }
 

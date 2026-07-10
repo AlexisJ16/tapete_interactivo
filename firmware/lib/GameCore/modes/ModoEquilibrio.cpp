@@ -41,8 +41,7 @@ void ModoEquilibrio::apagarPatron() {
 
 void ModoEquilibrio::fallar(uint32_t ms) {
     misses_++;
-    m_.sonido(cfg::SONIDO_ERROR);
-    m_.score(hits_, misses_, 0, ronda_);
+    m_.score(hits_, misses_, 0, ronda_);   // error mudo
     apagarPatron();
     ronda_++;
     nuevoPatron(ms);
@@ -64,11 +63,14 @@ void ModoEquilibrio::pisar(int celda, uint32_t ms) {
             if (pisadasOk_ >= k_) {
                 // Patron completo.
                 hits_++;
-                m_.sonido(cfg::SONIDO_EXITO);
                 m_.score(hits_, misses_, static_cast<int>(ms - tInicio_), ronda_);
                 apagarPatron();
                 ronda_++;
+                if (ronda_ > rondas_) { fin_ = true; return; }   // fin: suena FIN (motor)
+                m_.sonido(cfg::SONIDO_RONDA);
                 nuevoPatron(ms);
+            } else {
+                m_.sonido(cfg::SONIDO_ACIERTO);                   // acierto parcial
             }
         }
     } else {
