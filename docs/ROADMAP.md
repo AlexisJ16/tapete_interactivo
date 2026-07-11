@@ -13,18 +13,20 @@ Mantener siempre la disciplina del proyecto: **TDD**, **una sola fuente de verda
 > entregó todo el material y un paquete de evidencia del software (`docs/evidencia/`). Ya no es
 > trabajo nuestro.
 >
-> **E2E sin acrílico OK** (2026-07-10): los 3 modos corren de punta a punta. Se corrigieron
-> tres detalles de juego y se añadió el sistema de audio (ver §3): (1) las secuencias ya
-> **varían por partida** (el dashboard siembra aleatorio); (2) Memoria tiene **pausas claras**
-> (~1,2 s) entre rondas; (3) el "LEDs de más" de Equilibrio se aisló como **eléctrico** (la
-> pantalla muestra el patrón correcto; GameCore emite exactamente *k*), con checklist de
-> multímetro en `docs/hardware/diagnostico-leds-equilibrio.md`. **Audio:** 4 tonos
-> (inicio/acierto/ronda/fin), error mudo, en `audio/000X.mp3`.
+> **EL TAPETE FUNCIONA DE PUNTA A PUNTA (2026-07-11).** Los 3 modos corren en hardware real
+> y **el audio suena**. En esta tanda: (1) las secuencias ya **varían por partida**; (2)
+> Memoria tiene **pausas claras** (~1,2 s); (3) sistema de **audio** de 4 tonos
+> (inicio/acierto/ronda/fin; error mudo), validado en el tapete.
 >
-> **PRÓXIMA ACCIÓN:** el humano reflashea (`esp32dev`), copia `audio/000X.mp3` a `/mp3/` de la
-> microSD (FAT32) y hace una E2E de los 3 modos verificando audio, pausas y variedad de
-> secuencias; y corre el checklist para localizar el ghosting de LEDs de Equilibrio. El **CI**
-> (§2) sigue roto y en espera.
+> **El silencio del audio tenía dos causas, ambas resueltas (§3):** faltaban los
+> **condensadores de desacople** (el amplificador de 4 Ω hundía el riel de 5 V del USB y el
+> DFPlayer se reiniciaba en bucle) y el firmware llamaba a `begin()` a los 50 ms cuando el
+> módulo tarda 1–3 s en montar la SD (quedaba mudo toda la sesión). **Límite verificado:**
+> `VOLUMEN_AUDIO=15`; a 30 vuelve el brownout y **deja de sonar**.
+>
+> **PRÓXIMA ACCIÓN (decidida con el autor): normalizar los tonos** — que suenen lo más
+> fuertes, nítidos y claros posibles **sin pedir más corriente** (ver §3, "Audio — pendiente").
+> El **CI** (§2) sigue roto y en espera.
 
 **Línea base del software:** `./scripts/run_all_tests.sh` → TODO VERDE (58 casos /
 2186 aserciones C++ + 140 pytest); `.venv/bin/pio run -e esp32dev` → SUCCESS. Si algo
@@ -213,22 +215,48 @@ compila). Diseño y plan: `docs/superpowers/specs/2026-07-10-modos-audio-design.
    y GameCore emite exactamente *k* LEDs (verificado en el simulador); la divergencia está por
    debajo de GameCore. Procedimiento de multímetro en `docs/hardware/diagnostico-leds-equilibrio.md`.
 
-**Sistema de audio (nuevo):** 4 tonos generados por `scripts/gen_audio.py` (numpy→ffmpeg, MP3
-mono 44,1k/128k) en `audio/000X.mp3`: `1` inicio, `2` pisada correcta / cada LED de la
-exhibición de Memoria, `3` serie/patrón completado, `4` fin. **La pisada incorrecta no suena.**
-En Equilibrio suena **solo al completar** el patrón (no por pisada parcial).
+**Sistema de audio — FUNCIONA EN HARDWARE (2026-07-11).** 4 tonos de `scripts/gen_audio.py`
+(numpy→ffmpeg, MP3 mono 44,1k/128k) en `audio/000X.mp3`: `1` inicio, `2` pisada correcta / cada
+LED de la exhibición de Memoria, `3` serie/patrón completado, `4` fin. **La pisada incorrecta no
+suena.** En Equilibrio suena **solo al completar** el patrón.
 
-**PRÓXIMA ACCIÓN (retomar aquí):** el humano reflashea y valida en hardware:
+**El silencio tenía DOS causas encadenadas (ambas resueltas):**
 
-```
-cd firmware && pio run -e esp32dev -t upload        # firmware del juego (no calib)
-# copiar audio/0001.mp3..0004.mp3 a /mp3/ de la microSD (FAT32)
-.venv/bin/python dashboard/app.py --serial /dev/ttyUSB0
-```
+1. **HARDWARE — faltaba el desacople.** Sin condensadores, el amplificador (parlante de 4 Ω)
+   pide un pico que **hunde el riel de 5 V del USB**: el DFPlayer **se reiniciaba en bucle** al
+   reproducir (repetía `microSD ONLINE`), acababa colgado (`TimeOut`; **no revive con el botón
+   EN — hay que cortar la alimentación**) y no sonaba nada. Montados **100 µF + 100 nF**
+   (VCC-GND del módulo) y **1000 µF** (rieles de 5 V): **0 reinicios** y suena. Síntoma
+   documentado en `cableado.md` §7.
+2. **FIRMWARE — `begin()` demasiado pronto.** Se llamaba a los 50 ms con timeout de 500 ms, pero
+   el módulo tarda **1–3 s** en montar la SD → `audioOk_=false` y el tapete quedaba **mudo toda
+   la sesión sin reintentar**. Ahora espera 1,5 s, timeout 1 s y reintenta 3 veces.
 
-- Verificar los 4 sonidos, las pausas de Memoria y que las secuencias **cambian entre partidas**.
-- **Equilibrio:** correr el checklist de `diagnostico-leds-equilibrio.md` para localizar el
-  ghosting de LEDs (medir GPIO vs LED físico, cableado vs `Config.h`, retorno de tierra común).
+**Límite de volumen (verificado en banco):** `cfg::VOLUMEN_AUDIO = 15`. A **30 (máximo) vuelve el
+brownout y DEJA DE SONAR** — el parlante de 4 Ω sobre USB no sostiene el pico ni con el desacople.
+Para subirlo, ir de a poco (18/20/22) verificando con el entorno **`esp32dev_audio`** (firmware de
+diagnóstico: prueba UART → microSD → reproducción y **cuenta los reinicios del módulo**).
+
+### PRÓXIMA ACCIÓN (retomar aquí) — normalizar los tonos
+
+Decidida con el autor (2026-07-11): que suenen **lo más fuertes, nítidos y claros posibles SIN
+pedir más corriente**. La vía NO es subir el volumen del módulo (topa en el brownout), sino el
+propio archivo, en `scripts/gen_audio.py`:
+
+- **Normalizar el pico** a ~0,95 (hoy se generan a amplitud 0,6: se desperdicia rango).
+- **Comprimir la dinámica** para subir el RMS (*loudness* percibido) **sin subir el pico**, que es
+  lo que dispara el consumo del amplificador.
+- **Subir la frecuencia** a la zona de máxima sensibilidad del oído y de mejor rendimiento de un
+  altavoz pequeño (~2–4 kHz): **mucho más volumen percibido con la misma potencia**.
+- **Alargar los tonos** (hoy 0,157–0,81 s; el de acierto es casi imperceptible) a ~0,5 s, con un
+  breve silencio inicial para que el DFPlayer no se coma el ataque.
+
+Tras regenerarlos: copiar `audio/000X.mp3` a `/mp3/` de la microSD y reflashear no hace falta
+(los tonos viven en la SD, no en el firmware).
+
+**Equilibrio — ghosting de LEDs: A CONFIRMAR.** En la E2E del 2026-07-11 el autor reportó que
+**los 3 modos funcionan bien** y no volvió a mencionar LEDs de más. No se corrió el checklist de
+`diagnostico-leds-equilibrio.md`, que **queda disponible por si reaparece**.
 
 **Pendiente tras la prueba:**
 1. **Decidir el acrílico final** (lo decide el autor con la evidencia): mantenerlo con un
