@@ -327,7 +327,7 @@ Para contrastarlas se ejecutaron 200 semillas independientes por punto y se agre
 | Memoria | $h = 0{,}85$, $L = 3$ | 337 | 0,593 | ± 0,052 | 0,614 | Sí |
 | Memoria | $h = 0{,}85$, $L = 4$ | 396 | 0,505 | ± 0,049 | 0,522 | Sí |
 | Memoria | $h = 0{,}85$, $L = 5$ | 471 | 0,425 | ± 0,045 | 0,444 | Sí |
-| Memoria | $h = 0{,}85$, $L = 6$ | 520 | 0,385 | ± 0,042 | 0,377 | Sí |
+| Memoria | $h = 0{,}85$, $L = 6$ | 519 | 0,383 | ± 0,042 | 0,377 | Sí |
 
 ![Verificación estadística de la regla de dificultad sobre 200 semillas. Los puntos son las proporciones medidas con su intervalo de confianza del 95 %; la línea discontinua, la predicción analítica. Simulación determinista.](../evidencia/E6_montecarlo.png)
 
@@ -365,7 +365,7 @@ El resultado de interés práctico es la traducción del umbral. El firmware con
 
 Esta caracterización acota el espacio de calibración pendiente (E11) sin necesidad del prototipo: fija el objetivo que la instrumentación física debe verificar. No lo sustituye, porque la relación entre la fuerza aplicada y la resistencia del sensor depende del área de contacto y de la distribución de la carga bajo la tapa, y esa relación solo puede establecerse midiendo.
 
-Sobre la etapa de actuación, la misma simulación estima una corriente de 10,1 mA por grupo de tres diodos, unos 3,4 mA por diodo, con la resistencia de 110 Ω que fija la corriente de cada grupo. Esta cifra debe leerse con más cautela que la anterior: a diferencia del divisor, que es puramente resistivo, el modelo del diodo y la tensión de saturación del transistor Darlington son valores asumidos, no medidos. Se reporta como estimación de orden de magnitud, pendiente de confirmación con multímetro sobre el circuito armado. El valor inicial fue de 2,2 kΩ, tomado del inventario disponible, con el que cada diodo recibía unos 192 µA y la iluminación resultaba demasiado débil; la sustitución por 110 Ω multiplica la corriente por un factor cercano a veinte y mantiene el consumo del conjunto de seis grupos en unos 61 mA, un orden de magnitud por debajo del límite del arreglo Darlington.
+Sobre la etapa de actuación, la misma simulación estima una corriente de 10,1 mA por grupo de tres diodos, unos 3,4 mA por diodo, con la resistencia de 110 Ω que fija la corriente de cada grupo. Esta cifra debe leerse con más cautela que la anterior: a diferencia del divisor, que es puramente resistivo, el modelo del diodo y la tensión de saturación del transistor Darlington son valores asumidos, no medidos. Se reporta como estimación de orden de magnitud, pendiente de confirmación con multímetro sobre el circuito armado. El valor inicial fue de 2,2 kΩ, tomado del inventario disponible, con el que cada diodo recibía unos 192 µA y la iluminación resultaba demasiado débil; la sustitución por 110 Ω multiplica la corriente por un factor cercano a veinte y mantiene el consumo del conjunto de seis grupos en unos 61 mA; cada canal del arreglo Darlington conduce así 10,1 mA, muy por debajo de los 500 mA que su hoja de datos declara como máximo por canal.
 
 ## Prototipo físico
 
