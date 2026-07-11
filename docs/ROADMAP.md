@@ -256,14 +256,19 @@ Los tonos sonaban flojos y el volumen del módulo ya topaba, así que la gananci
 archivo** (`scripts/gen_audio.py`). Diseño:
 `docs/superpowers/specs/2026-07-11-normalizacion-audio-design.md`.
 
-**Medido sobre el MP3 decodificado (lo que oye el DFPlayer):**
+**Medido sobre el MP3 decodificado en ambas columnas** (lo que oye el DFPlayer; comparar la onda
+cruda con el MP3 mezclaría bases y la cifra no sería honesta):
 
-| id | Antes | Ahora | Ganancia |
+| id | Antes | Ahora | Ganancia de RMS |
 |---|---|---|---|
-| 1 inicio | 0,54 s · RMS 0,403 · 783 Hz | 0,63 s · RMS 0,590 · 3137 Hz | **+3,3 dB** |
-| 2 acierto | 0,12 s · RMS 0,400 · 1567 Hz | 0,25 s · RMS 0,576 · 3136 Hz | **+3,2 dB** |
-| 3 ronda | 0,42 s · RMS 0,404 · 1048 Hz | 0,53 s · RMS 0,589 · 4187 Hz | **+3,3 dB** |
-| 4 fin | 0,77 s · RMS 0,339 · 1049 Hz | 0,93 s · RMS 0,540 · 4187 Hz | **+4,0 dB** |
+| 1 inicio | 0,57 s · RMS 0,383 · 783 Hz | 0,63 s · RMS 0,590 · 3137 Hz | **+3,8 dB** |
+| 2 acierto | 0,16 s · RMS 0,380 · 1567 Hz | 0,25 s · RMS 0,576 · 3136 Hz | **+3,6 dB** |
+| 3 ronda | 0,47 s · RMS 0,383 · 1048 Hz | 0,53 s · RMS 0,589 · 4187 Hz | **+3,7 dB** |
+| 4 fin | 0,81 s · RMS 0,322 · 1049 Hz | 0,93 s · RMS 0,540 · 4187 Hz | **+4,5 dB** |
+
+A eso se suma la ganancia **percibida** por el cambio de frecuencia, que no se puede cuantificar
+sin medir el altavoz: es la razón principal del salto, pero **no se cifra aquí** porque no está
+medida.
 
 Cómo: melodías **transpuestas dos octavas** (2–4 kHz: pico de sensibilidad del oído y mejor
 rendimiento del altavoz pequeño; **la única palanca gratis en corriente**), **armónicos** 2f/3f
@@ -283,6 +288,13 @@ rendimiento del altavoz pequeño; **la única palanca gratis en corriente**), **
 **Ojo — "sin más corriente" es solo medio cierto:** gratis es la **frecuencia**; subir pico y RMS
 sí pide más potencia (de pico y media). El desacople amortigua picos, no consumo medio. **Por eso
 falta el veredicto en el tapete.**
+
+**Cuestión abierta que conviene mirar en la misma prueba — la banda de 2–4 kHz.** Se eligió por
+ser el pico de sensibilidad del **oído típico**, pero la hipoacusia es frecuente en el síndrome de
+Down y, cuando es neurosensorial, degrada precisamente los **agudos**. No es un defecto (nadie ha
+escuchado aún los tonos nuevos en el tapete), sino un supuesto que **solo se confirma escuchando
+con los usuarios reales**. Si se viera que no los perciben bien, la palanca es bajar una octava —
+al coste de rendimiento del altavoz—, y esa decisión es del autor/terapeuta, no del agente.
 
 **PENDIENTE (autor):** copiar `audio/000X.mp3` a `/mp3/` de la microSD y jugar una sesión de cada
 modo. **No hace falta reflashear** (los tonos viven en la SD). Criterio: suenan más fuertes **y
