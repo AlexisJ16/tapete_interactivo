@@ -17,8 +17,15 @@
 
 #include "Config.h"
 
+// Volumen MODERADO (0..30). La doc del proyecto lo exige: parlante de 4 Ohm
+// alimentado desde el USB del PC -> a volumen alto los picos del amplificador
+// hunden la tension y reinician el modulo (ver cableado.md §7).
+static constexpr uint8_t VOLUMEN = 15;
+
 static DFRobotDFPlayerMini player;
 static bool ok = false;
+static int resets = 0;        // veces que el modulo se re-inicializo (= se reinicio)
+static int finPista = 0;      // pistas que terminaron de sonar enteras
 
 // Vacia la cola de mensajes del DFPlayer traduciendo los codigos a texto.
 static void detalle() {
@@ -31,8 +38,14 @@ static void detalle() {
             case WrongStack:           Serial.println("WrongStack"); break;
             case DFPlayerCardInserted: Serial.println("microSD insertada"); break;
             case DFPlayerCardRemoved:  Serial.println("microSD retirada"); break;
-            case DFPlayerCardOnline:   Serial.println("microSD ONLINE"); break;
-            case DFPlayerPlayFinished: Serial.print("fin de pista "); Serial.println(v); break;
+            case DFPlayerCardOnline:
+                ++resets;   // el modulo solo anuncia esto al ARRANCAR: si se repite, se reinicio
+                Serial.println("microSD ONLINE  <<< EL MODULO SE REINICIO");
+                break;
+            case DFPlayerPlayFinished:
+                ++finPista;
+                Serial.print("fin de pista "); Serial.println(v);
+                break;
             case DFPlayerError:
                 Serial.print("ERROR: ");
                 switch (v) {
@@ -96,10 +109,9 @@ void setup() {
 
     Serial.println();
     Serial.println("--- CAPA 1 OK: el DFPlayer responde por UART. Interrogando la microSD ---");
-    player.volume(30);              // volumen maximo (0..30)
+    player.volume(VOLUMEN);         // MODERADO: ver nota arriba
     delay(200);
-    Serial.print("volumen leido : "); Serial.println(player.readVolume());
-    Serial.print("estado        : "); Serial.println(player.readState());
+    Serial.print("volumen fijado: "); Serial.println(VOLUMEN);
     int n = player.readFileCounts();
     Serial.print("archivos en SD: "); Serial.println(n);
     if (n <= 0) {
@@ -107,17 +119,33 @@ void setup() {
         Serial.println("    Formatea la microSD en FAT32 y copia /mp3/0001.mp3 .. 0004.mp3");
     }
     detalle();
+    resets = 0;   // los mensajes del arranque no cuentan como reinicio
 
     Serial.println();
-    Serial.println("--- CAPA 3: reproduciendo /mp3/000N.mp3 a volumen 30 ---");
-    Serial.println("    NOTA: copia un MP3 NORMAL (cancion, >5 s) como /mp3/0005.mp3.");
-    Serial.println("    Si 0005 SUENA y 0001-0004 no -> el problema son nuestros archivos");
-    Serial.println("    (duran 0,16-0,81 s; el DFPlayer no reproduce bien pistas tan cortas).");
+    Serial.println("--- CAPA 3: reproduciendo /mp3/000N.mp3 (volumen 15) ---");
+    Serial.println("    Si ves 'EL MODULO SE REINICIO' -> el amplificador pide mas corriente");
+    Serial.println("    de la que hay: parlante mal conectado (un hilo a GND), faltan los caps");
+    Serial.println("    de desacople, o la alimentacion no aguanta el pico.");
     Serial.println();
+}
+
+// Traduce readState(): 0=parado, 1=reproduciendo, 2=pausa, -1=no responde.
+static void estado() {
+    int s = player.readState();
+    Serial.print("   estado: ");
+    switch (s) {
+        case 0:  Serial.println("0 (parado)"); break;
+        case 1:  Serial.println("1 (REPRODUCIENDO)"); break;
+        case 2:  Serial.println("2 (pausa)"); break;
+        case -1: Serial.println("-1 (NO RESPONDE: el modulo se colgo)"); break;
+        default: Serial.print(s); Serial.println(" (?)"); break;
+    }
 }
 
 void loop() {
     if (!ok) { delay(3000); return; }
+    resets = 0;
+    finPista = 0;
     for (int i = 1; i <= 5; ++i) {
         Serial.print(">> playMp3Folder(");
         Serial.print(i);
@@ -128,9 +156,25 @@ void loop() {
             detalle();
             delay(50);
         }
-        Serial.print("   estado tras la pista: ");
-        Serial.println(player.readState());
+        estado();
     }
-    Serial.println("--- ciclo completo; repitiendo ---");
+    Serial.println();
+    Serial.println("======== VEREDICTO DEL CICLO ========");
+    Serial.print("reinicios del modulo : "); Serial.println(resets);
+    Serial.print("pistas que terminaron: "); Serial.println(finPista);
+    if (resets > 0) {
+        Serial.println(">>> El modulo SE REINICIA al reproducir = SOBRECORRIENTE/ALIMENTACION.");
+        Serial.println("    1) Parlante: un hilo a SPK_1 y otro a SPK_2. NINGUNO a GND");
+        Serial.println("       (GND esta EN MEDIO de los dos pines: es la trampa clasica).");
+        Serial.println("       Con todo apagado, mide continuidad de cada hilo del parlante a");
+        Serial.println("       GND: debe ser INFINITA. Si pita, ahi esta el corto.");
+        Serial.println("    2) Caps de desacople en VCC-GND del modulo: 100 uF + 100 nF.");
+        Serial.println("    3) PRUEBA CLAVE: desconecta el parlante y vuelve a correr esto.");
+        Serial.println("       Si sin parlante NO hay reinicios -> el fallo esta en la salida.");
+    } else if (finPista > 0) {
+        Serial.println(">>> El modulo reproduce ENTERO y estable. Si aun no se oye nada,");
+        Serial.println("    el fallo esta en el parlante o su cableado (SPK_1/SPK_2).");
+    }
+    Serial.println("=====================================");
     Serial.println();
 }
