@@ -155,10 +155,30 @@ se borraron (recuperables en `ab69ba6`).
       hoy la conectividad se expresa por etiquetas de red, lo cual es correcto y pasa ERC,
       pero un plano con hilos exigiría reescribir `kisch.py`. Decidido dejarlo como anexo.
 
-## 2. CI — ROTO, pendiente de revisión exhaustiva (después del artículo)
+## 2. CI — ARREGLADO (2026-07-11). El `.exe` no arrancaba, y nadie podía verlo
 
-`.github/workflows/ci.yml` existe con 5 jobs, pero **no entrega lo que debe entregar**: el
-ZIP del Release nunca se ha producido. No darlo por hecho.
+> **Causa raíz, medida (no inferida).** `windows-smoke` se colgaba hasta el límite de 6 h del
+> runner. La hipótesis que había escrita aquí —un `QMessageBox` modal en `main()`— era **falsa**:
+> `--smoke` se intercepta antes de `main()` y `smoke()` no entra en el bucle de eventos de Qt.
+>
+> Lo real: **PyInstaller 6.11.1 (nov-2024) empaqueta mal numpy 2.5.1** (sus *hooks* son
+> anteriores). El `.exe` **moría al importar matplotlib** (`No module named
+> 'numpy._core._exceptions'`). Y como se compila con `console=False`, **ese error no se veía por
+> ningún lado**: el proceso se quedaba colgado. **No era un fallo de CI: el ZIP que se iba a
+> entregar al médico NO ABRÍA.** El CI era el único sitio donde podía verse.
+>
+> **Fix:** `pyinstaller==6.21.0`. Además, para que esto no vuelva a ser invisible: el `.exe` en
+> modo smoke escribe su traza en `smoke.log` y monta un *watchdog*
+> (`faulthandler.dump_traceback_later`) que vuelca el **stack** si no termina en 60 s; el job
+> declara `timeout-minutes: 5` y publica el log. **CI verde de punta a punta**, smoke incluido.
+
+**Lección transversal (mordió dos veces el mismo día):** un **diálogo modal sin nadie que haga
+clic cuelga para siempre**. Colgó el smoke del `.exe` (6 h de runner) y, al añadir el "Guardar
+como", colgó la suite entera de pytest. Red de seguridad: `dashboard/conftest.py` neutraliza
+`QFileDialog`/`QInputDialog` en todos los tests.
+
+**Queda pendiente:** validar que un **tag** produce el ZIP del Release (`windows-release` solo
+corre con tags; nunca se ha ejercitado).
 
 **Evidencia medida (2026-07-09), no inferida:**
 
@@ -325,6 +345,15 @@ Equilibrio n3 (comprobación visual).
 
 ## 4. Backlog de funcionalidad (siempre con tests/golden primero)
 
+- [x] **Historia clínica del paciente (2026-07-11).** Tres fallos que salieron **usando** la
+      app, no de los tests: (1) "Exportar" sin sesión hacía `return` **en silencio** —el médico
+      pulsaba y no pasaba nada—; (2) cuando exportaba, el archivo caía en `dashboard/reportes/`,
+      una carpeta interna que el médico nunca abre (y dentro del `.exe`, enterrada en el bundle)
+      → ahora **pregunta dónde guardar**, empieza en Documentos y propone nombre con paciente y
+      fecha; (3) **no había forma de consultar una terapia pasada**: la pestaña Histórico solo
+      tenía un combo y una gráfica → ahora lista la **tabla de terapias del niño** y exporta
+      **cualquiera** a CSV/PDF. El niño se **elige de una lista** (antes se tecleaba el id en cada
+      sesión: un "juan"/"Juan" le partía la historia clínica en dos).
 - [ ] **Patrones de parpadeo** más ricos: barrido de inicio de ronda; error = 3 parpadeos
       rápidos; acierto = LED sólido. No bloqueante en el motor, fijado con golden vectors.
 - [ ] **Modo Equilibrio — subnivel «orden específico»** (hoy es «cualquier orden»).
@@ -332,7 +361,6 @@ Equilibrio n3 (comprobación visual).
 - [ ] **Modo Velocidad — ventana adaptativa** según desempeño reciente.
 - [ ] **Parámetros configurables por el terapeuta** desde el dashboard, no solo niveles
       fijos en `Config.h`.
-- [ ] **Gráficas de evolución** por perfil y **vista de historial** de sesiones.
 - [ ] **Reconexión TCP automática** si el ESP32 se cae (hoy `FuenteTCP` no reintenta).
 - [ ] **Sim pygame como cliente TCP**: hoy `servidor.py` existe pero la ventana pygame usa su
       propio core embebido; unirlos cierra el bucle simulador↔dashboard en red.
