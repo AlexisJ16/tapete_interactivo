@@ -32,10 +32,19 @@ void EspHardware::begin() {
 
     // DFPlayer Mini por Serial2 (RX=GPIO16, TX=GPIO17).
     Serial2.begin(9600, SERIAL_8N1, cfg::PIN_DFPLAYER_RX, cfg::PIN_DFPLAYER_TX);
-    delay(50);
-    audioOk_ = player_.begin(Serial2, /*isACK=*/true, /*doReset=*/true);
+
+    // El DFPlayer tarda 1-3 s tras encender en montar la microSD y contestar, y el
+    // begin() de la libreria solo espera 500 ms. Con el delay(50) de antes fallaba,
+    // audioOk_ quedaba en false y el tapete se quedaba MUDO toda la sesion (sin
+    // reintentar). Se espera a que arranque y se reintenta antes de rendirse.
+    delay(1500);
+    player_.setTimeOut(1000);
+    for (int intento = 0; intento < 3 && !audioOk_; ++intento) {
+        audioOk_ = player_.begin(Serial2, /*isACK=*/true, /*doReset=*/true);
+        if (!audioOk_) delay(1000);
+    }
     if (audioOk_) {
-        player_.volume(22);  // 0..30
+        player_.volume(cfg::VOLUMEN_AUDIO);
     }
 }
 

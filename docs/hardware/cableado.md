@@ -375,6 +375,17 @@ Solo se usan **VCC, RX, TX, SPK_1, SPK_2 y GND** (todos en la columna izquierda)
   del DFPlayer. Convención: ESP32 **TX2(17) → RX** del módulo; ESP32 **RX2(16) ← TX**.
 - **Desacople (cols 42–44, mitad inferior):** **1×** **100 µF / 16 V** entre VCC y GND
   (**pata `+` larga al VCC**, banda `−` a GND) **+ 1× 100 nF** ("104", sin polaridad).
+  Añade además el **1000 µF / 16 V** entre los **rieles de 5 V** (`+` y `−`): es la reserva
+  de carga del bus (BOM ítem 13).
+
+> ⚠️ **Los caps NO son opcionales — verificado en banco (2026-07-11).** Sin ellos, el
+> amplificador (parlante de 4 Ω) pide un pico que **hunde el riel de 5 V del USB**: el
+> DFPlayer **se reinicia en bucle** en cuanto se le pide reproducir (repite `microSD
+> ONLINE`), acaba **colgado** (`TimeOut`, y ya no revive con el botón EN: hay que **cortar
+> la alimentación**) y **no suena nada**. Montados los tres caps, el módulo quedó estable
+> (**0 reinicios**) y el parlante sonó. Para diagnosticar esto hay un firmware dedicado:
+> `pio run -e esp32dev_audio -t upload` (prueba UART → microSD → reproducción y cuenta los
+> reinicios).
 - **microSD FAT32** con `/mp3/0001.mp3` … `/mp3/0004.mp3` (ver `audio/README.md`).
 
 > ⚠️ **Protege el ESP32 — línea DFPlayer TX → GPIO16.** GPIO16 **no es 5V-tolerante**.
