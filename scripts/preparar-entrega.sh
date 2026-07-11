@@ -35,7 +35,7 @@ git archive --format=tar HEAD | tar -x -C "$DEST"
 
 echo "== 2/5  Depurando rastros de las herramientas de desarrollo"
 cd "$DEST"
-rm -rf docs/superpowers .claude CLAUDE.md scripts/wokwi-mcp.sh
+rm -rf docs/superpowers .claude CLAUDE.md scripts/wokwi-mcp.sh scripts/preparar-entrega.sh
 
 # Menciones dentro de archivos que SI se entregan.
 # El ROADMAP se entrega (decision del autor), pero su §5 explica como se purga esta
@@ -44,7 +44,14 @@ sed -i '/^## 5\. Cierre/,$d' docs/ROADMAP.md
 sed -i 's|`CLAUDE\.md` recoge las reglas durables; este documento, lo que cambia\.|Este documento recoge lo que cambia: estado y trabajo pendiente.|' docs/ROADMAP.md
 sed -i '/^## MCP servers/,/^## [^M]/{ /^## [^M]/!d }' docs/hardware/TOOLING.md
 sed -i '/^## Subagentes y skills/,$d' docs/hardware/TOOLING.md
-sed -i 's|(`\.claude/agents/datasheet-reader\.md`) extrae pinouts/specs de aqui\.|Los pinouts y especificaciones de esta carpeta son la fuente para el diseño.|I' docs/hardware/datasheets/README.md
+python3 - <<'PY'
+import pathlib
+p = pathlib.Path("docs/hardware/datasheets/README.md")
+p.write_text(p.read_text(encoding="utf-8").replace(
+    "El subagente `datasheet-reader`\n(`.claude/agents/datasheet-reader.md`) extrae pinouts/specs de aquí.",
+    "De aquí salen los pinouts y las especificaciones citadas en el diseño."),
+    encoding="utf-8")
+PY
 sed -i 's|^// Task 2\.6 (docs/superpowers/plans/[^)]*): las|// Robustez: las|' firmware/test/test_core/test_gameengine.cpp
 sed -i '/docs\/superpowers/d' docs/hardware/kicad/README.md scripts/gen_audio.py
 # Restos genericos (rutas de specs/planes citadas en prosa).
