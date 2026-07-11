@@ -542,5 +542,13 @@ if __name__ == "__main__":
         sys.stdout = sys.stdout or _devnull
         sys.stderr = sys.stderr or _devnull
     if "--smoke" in sys.argv:
+        # El .exe windowed no tiene consola: si el smoke se cuelga no deja NINGUNA
+        # pista (asi consumio las 6 h del runner de CI, sin diagnostico). La traza va
+        # a un archivo, y un watchdog vuelca el stack y mata el proceso si no termina.
+        import faulthandler
+        _log = open("smoke.log", "w", buffering=1)
+        sys.stdout = sys.stderr = _log
+        faulthandler.enable(_log)
+        faulthandler.dump_traceback_later(60, exit=True)
         sys.exit(smoke())
     sys.exit(main())

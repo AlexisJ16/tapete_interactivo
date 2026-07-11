@@ -167,6 +167,9 @@ jobs:
     name: Windows — smoke del .exe SIN deps de dev (gate de evidencia)
     needs: windows-build
     runs-on: windows-latest
+    # Sin esto, un .exe que no termina consume las 6 h del runner (paso de 2026-07-09:
+    # el job murio al limite duro). Falla en 5 min y deja el log.
+    timeout-minutes: 5
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -180,7 +183,15 @@ jobs:
         shell: bash
         env:
           QT_QPA_PLATFORM: offscreen
-        run: ./TapeteDashboard/TapeteDashboard.exe --smoke
+          QT_DEBUG_PLUGINS: '1'   # si Qt no encuentra su plugin de plataforma, lo dice aqui
+        run: |
+          set +e
+          ./TapeteDashboard/TapeteDashboard.exe --smoke
+          code=$?
+          echo "--- exit code: $code ---"
+          echo "--- smoke.log (el .exe no tiene consola: su traza va aqui) ---"
+          cat smoke.log 2>/dev/null || cat TapeteDashboard/smoke.log 2>/dev/null || echo "(no se genero smoke.log: el .exe murio antes de arrancar Python)"
+          exit $code
 
   windows-release:
     name: Windows — adjuntar el ZIP al Release (solo tags)
