@@ -14,22 +14,24 @@ Mantener siempre la disciplina del proyecto: **TDD**, **una sola fuente de verda
 > trabajo nuestro.
 >
 > **EL TAPETE FUNCIONA DE PUNTA A PUNTA (2026-07-11).** Los 3 modos corren en hardware real
-> y **el audio suena**. En esta tanda: (1) las secuencias ya **varían por partida**; (2)
-> Memoria tiene **pausas claras** (~1,2 s); (3) sistema de **audio** de 4 tonos
-> (inicio/acierto/ronda/fin; error mudo), validado en el tapete.
+> —**incluidas las luces de Equilibrio**— y **el audio suena**. La **mecánica quedó decidida**
+> (§3): **el acrílico NO va sobre los sensores**; los FSR van arriba del todo y encima solo
+> lleva el **vinilo translúcido** del gráfico. Con esa pila, `UMBRAL_PISADA = 2000` detecta.
 >
-> **El silencio del audio tenía dos causas, ambas resueltas (§3):** faltaban los
-> **condensadores de desacople** (el amplificador de 4 Ω hundía el riel de 5 V del USB y el
-> DFPlayer se reiniciaba en bucle) y el firmware llamaba a `begin()` a los 50 ms cuando el
-> módulo tarda 1–3 s en montar la SD (quedaba mudo toda la sesión). **Límite verificado:**
-> `VOLUMEN_AUDIO=15`; a 30 vuelve el brownout y **deja de sonar**.
+> **Tonos normalizados (2026-07-11):** +3,2–4,0 dB de RMS y energía llevada a 3,1–4,2 kHz,
+> **sin subir el volumen del módulo** (que topa en 15 por brownout). Ver §3.
 >
-> **PRÓXIMA ACCIÓN (decidida con el autor): normalizar los tonos** — que suenen lo más
-> fuertes, nítidos y claros posibles **sin pedir más corriente** (ver §3, "Audio — pendiente").
-> El **CI** (§2) sigue roto y en espera.
+> **PRÓXIMA ACCIÓN — la única abierta del hardware: el veredicto del autor en el tapete.**
+> Copiar `audio/000X.mp3` a `/mp3/` de la microSD y jugar una sesión de cada modo. Criterio:
+> suenan **más fuertes** y **siguen sonando** (sin cortes ni mudez). Si aparecieran cortes o
+> silencio, es brownout: bajar `PICO`/`COMPRESION` en `scripts/gen_audio.py` y regenerar —
+> **no hay que reflashear**, los tonos viven en la SD.
+>
+> Después de eso, del proyecto solo quedan el **CI** (§2, roto y en espera) y la **entrega**
+> (§5).
 
 **Línea base del software:** `./scripts/run_all_tests.sh` → TODO VERDE (58 casos /
-2186 aserciones C++ + 140 pytest); `.venv/bin/pio run -e esp32dev` → SUCCESS. Si algo
+2186 aserciones C++ + 144 pytest); `.venv/bin/pio run -e esp32dev` → SUCCESS. Si algo
 está en rojo al empezar, arreglarlo antes de añadir nada. Esta máquina tiene display real
 (`DISPLAY=:0` / Wayland): se pueden lanzar el simulador y el dashboard, y generar capturas
 con `scripts/demo_visual.py`.
@@ -181,7 +183,18 @@ termina. Confirmar antes de tocar nada.
 todos los jobs, condiciones de disparo, y validar de punta a punta que un tag produce el
 ZIP descargable.
 
-## 3. Hardware físico — E2E hecha; detalles de juego corregidos; ghosting de LEDs pendiente
+## 3. Hardware físico — mecánica decidida; los 3 modos y el audio funcionan
+
+> **CIERRE DE LA MECÁNICA (2026-07-11, decidido y probado por el autor).** **El acrílico no
+> va sobre los sensores:** la lámina se montó **encima de la tapa plástica** de la caja, y los
+> **FSR quedan arriba del todo**; lo único que los cubre es el **vinilo translúcido delgado**
+> del gráfico. Probado con un papel encima: **los 3 modos funcionan, incluidas las luces de
+> Equilibrio**. Con esta pila, `UMBRAL_PISADA = 2000` detecta bien y **se queda como está**
+> (si un niño pisara demasiado flojo, bajarlo a ~1500 en `Config.h` y reflashear).
+>
+> Queda cerrado, por tanto, todo lo que este apartado listaba como pendiente: la decisión del
+> acrílico, el umbral y el **ghosting de LEDs de Equilibrio** (no reaparece; el checklist de
+> `docs/hardware/diagnostico-leds-equilibrio.md` se conserva por si volviera).
 
 **Estado (2026-07-10): los 6 sensores están sanos; la falla era mecánica, no eléctrica.**
 
@@ -237,36 +250,48 @@ brownout y DEJA DE SONAR** — el parlante de 4 Ω sobre USB no sostiene el pico
 Para subirlo, ir de a poco (18/20/22) verificando con el entorno **`esp32dev_audio`** (firmware de
 diagnóstico: prueba UART → microSD → reproducción y **cuenta los reinicios del módulo**).
 
-### PRÓXIMA ACCIÓN (retomar aquí) — normalizar los tonos
+### Tonos normalizados (2026-07-11) — HECHO en software, PENDIENTE el veredicto en el tapete
 
-Decidida con el autor (2026-07-11): que suenen **lo más fuertes, nítidos y claros posibles SIN
-pedir más corriente**. La vía NO es subir el volumen del módulo (topa en el brownout), sino el
-propio archivo, en `scripts/gen_audio.py`:
+Los tonos sonaban flojos y el volumen del módulo ya topaba, así que la ganancia se buscó **en el
+archivo** (`scripts/gen_audio.py`). Diseño:
+`docs/superpowers/specs/2026-07-11-normalizacion-audio-design.md`.
 
-- **Normalizar el pico** a ~0,95 (hoy se generan a amplitud 0,6: se desperdicia rango).
-- **Comprimir la dinámica** para subir el RMS (*loudness* percibido) **sin subir el pico**, que es
-  lo que dispara el consumo del amplificador.
-- **Subir la frecuencia** a la zona de máxima sensibilidad del oído y de mejor rendimiento de un
-  altavoz pequeño (~2–4 kHz): **mucho más volumen percibido con la misma potencia**.
-- **Alargar los tonos** (hoy 0,157–0,81 s; el de acierto es casi imperceptible) a ~0,5 s, con un
-  breve silencio inicial para que el DFPlayer no se coma el ataque.
+**Medido sobre el MP3 decodificado (lo que oye el DFPlayer):**
 
-Tras regenerarlos: copiar `audio/000X.mp3` a `/mp3/` de la microSD y reflashear no hace falta
-(los tonos viven en la SD, no en el firmware).
+| id | Antes | Ahora | Ganancia |
+|---|---|---|---|
+| 1 inicio | 0,54 s · RMS 0,403 · 783 Hz | 0,63 s · RMS 0,590 · 3137 Hz | **+3,3 dB** |
+| 2 acierto | 0,12 s · RMS 0,400 · 1567 Hz | 0,25 s · RMS 0,576 · 3136 Hz | **+3,2 dB** |
+| 3 ronda | 0,42 s · RMS 0,404 · 1048 Hz | 0,53 s · RMS 0,589 · 4187 Hz | **+3,3 dB** |
+| 4 fin | 0,77 s · RMS 0,339 · 1049 Hz | 0,93 s · RMS 0,540 · 4187 Hz | **+4,0 dB** |
 
-**Equilibrio — ghosting de LEDs: A CONFIRMAR.** En la E2E del 2026-07-11 el autor reportó que
-**los 3 modos funcionan bien** y no volvió a mencionar LEDs de más. No se corrió el checklist de
-`diagnostico-leds-equilibrio.md`, que **queda disponible por si reaparece**.
+Cómo: melodías **transpuestas dos octavas** (2–4 kHz: pico de sensibilidad del oído y mejor
+rendimiento del altavoz pequeño; **la única palanca gratis en corriente**), **armónicos** 2f/3f
+(brillo), **compresión** `tanh` (sube el RMS sin subir el pico) y **silencio inicial** de 30 ms
+(el DFPlayer se come el ataque).
 
-**Pendiente tras la prueba:**
-1. **Decidir el acrílico final** (lo decide el autor con la evidencia): mantenerlo con un
-   **concentrador de fuerza** (disco/domo rígido centrado sobre cada FSR, entre FSR y acrílico)
-   + **recalibrar**, o prescindir de él. Elección declarada: *decidir tras la prueba*.
-2. **Fijar `UMBRAL_PISADA` definitivo** con esa mecánica (pisada suave de niño → probablemente
-   ~1500 o menos). Editar `Config.h`, reflashear.
-3. **Audio:** microSD FAT32 con `/mp3/0001.mp3`..`0004.mp3` (ver `audio/README.md`).
-4. **WiFi (opcional):** `cp firmware/src/secrets.h.example firmware/src/secrets.h` para usar
-   `--tcp <IP>` en vez de `--serial`.
+**Dos hallazgos que fijaron el diseño (y que son ahora tests):**
+
+- **El pico se fija midiendo el MP3, no la onda.** A 0,95 el MP3 decodificado llegaba a **1,018**
+  (crujido), y el *overshoot* del codificador **no es monótono** (a 0,92 se dispara a 1,107): el
+  margen se mide, no se deduce. **`PICO = 0,86`** → decodifican ≤ 0,945.
+- **El tono de acierto NO se alarga a 0,5 s** (como pedía el plan viejo): suena en cada pisada y
+  en cada LED de la exhibición, y la cadencia mínima de `Config.h` es de **550 ms**
+  (`exhibicionOnMs` 300 + `gap` 250). Como el DFPlayer corta la pista en curso, se truncaría y
+  sonaría a chasquido. Se queda en **0,22 s** y gana fuerza por frecuencia, no por duración.
+
+**Ojo — "sin más corriente" es solo medio cierto:** gratis es la **frecuencia**; subir pico y RMS
+sí pide más potencia (de pico y media). El desacople amortigua picos, no consumo medio. **Por eso
+falta el veredicto en el tapete.**
+
+**PENDIENTE (autor):** copiar `audio/000X.mp3` a `/mp3/` de la microSD y jugar una sesión de cada
+modo. **No hace falta reflashear** (los tonos viven en la SD). Criterio: suenan más fuertes **y
+siguen sonando**. Si aparecen cortes o mudez → es brownout → bajar `PICO`/`COMPRESION` y
+regenerar (se conserva la ganancia de frecuencia); si hay duda, `esp32dev_audio` cuenta reinicios
+del módulo (0 = sano).
+
+**WiFi (opcional):** `cp firmware/src/secrets.h.example firmware/src/secrets.h` para usar
+`--tcp <IP>` en vez de `--serial`.
 
 **El agente nunca flashea ni abre el serial** (lo bloquea `guard-flash.sh`); lo hace el humano
 con el skill `/bring-up`. Instrumentos reales: solo multímetro + PC.

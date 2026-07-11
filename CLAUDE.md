@@ -26,7 +26,7 @@ Las 6 fases del plan base están **completas y validadas**:
   protocolo Py/C++).
 - Empaquetado Windows (`packaging/`): `.exe` PyInstaller con `--serial auto`.
 
-`./scripts/run_all_tests.sh` → **TODO VERDE** (58 casos C++ / 2186 aserciones + 140 pytest).
+`./scripts/run_all_tests.sh` → **TODO VERDE** (58 casos C++ / 2186 aserciones + 144 pytest).
 `.venv/bin/pio run -e esp32dev` → **SUCCESS** (Flash ~60%, RAM ~14%).
 
 **El software en verde no significa el proyecto en verde.** El hardware físico, el CI y
@@ -108,6 +108,13 @@ cd firmware && ../.venv/bin/pio run -e esp32dev
   asumir solo la API 3.x (`ledcAttach`/`ledcWrite(pin,...)`).
 - **PEP 668:** usar siempre el `.venv` del proyecto, no el pip del sistema.
 - **Audio ESP32:** los MP3 van en `/mp3/000X.mp3` de la SD (`playMp3Folder`).
+- **Los tonos (`scripts/gen_audio.py`) tienen dos límites duros, fijados en
+  `simulator/test_audio.py`.** (1) El de **acierto no se alarga**: suena en cada pisada y en cada
+  LED de la exhibición, y el DFPlayer **corta la pista en curso**, así que debe caber en la
+  cadencia mínima de `Config.h` (`exhibicionOnMs` 300 + `gap` 250 = **550 ms**) o se oye un
+  chasquido. (2) El **pico no pasa de 0,86**: el codificador MP3 añade un *overshoot* **no
+  monótono** (a 0,95 decodifica a 1,018 → crujido) y por eso **se mide en el MP3 decodificado**,
+  nunca en la onda. Subir el volumen es otra trampa distinta: `VOLUMEN_AUDIO` topa en 15 (brownout).
 - **`set_mode`/`set_level` en sesión activa NO deben recrear el modo sin iniciarlo** — era
   corrupción de memoria en GameCore (`patron_`/`enPatron_` basura → `led` con celda corrupta →
   crash del dashboard bajo clics rápidos; **afectaba también al ESP32**). En RUNNING/PAUSED apagan

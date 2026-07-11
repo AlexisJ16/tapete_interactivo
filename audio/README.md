@@ -22,6 +22,13 @@ Notas:
 - Se generan con `scripts/gen_audio.py` (numpy → ffmpeg): MP3 mono 44,1 kHz /
   128 kbps, perfil que el DFPlayer Mini reproduce con fiabilidad. Regenerarlos:
   `.venv/bin/python scripts/gen_audio.py`.
+- **Están normalizados para sonar fuerte sin subir el volumen del módulo** (que topa
+  en `VOLUMEN_AUDIO=15`: por encima hay brownout). Melodías en 2–4 kHz, pico 0,86 y
+  compresión. Dos límites que **no** se deben tocar a la ligera: el tono `0002`
+  (acierto) es corto **a propósito** —debe caber en la cadencia de 550 ms del motor o
+  el DFPlayer lo trunca— y el pico no sube de 0,86 —por encima, el MP3 clipea al
+  decodificarse y suena a crujido—. Ambos límites están fijados en
+  `simulator/test_audio.py`.
 - Numéralos con 4 dígitos (`0001.mp3`, `0002.mp3`, …).
 - En el **simulador**, si faltan los archivos no pasa nada: simplemente no
   reproduce sonido (no falla).
