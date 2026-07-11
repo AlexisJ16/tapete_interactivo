@@ -121,7 +121,10 @@ jobs:
       - name: Instalar dependencias Python
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt -r simulator/requirements.txt -r dashboard/requirements.txt pyinstaller==6.11.1
+          # PyInstaller 6.11.1 (nov-2024) empaquetaba mal numpy 2.5: el .exe moria con
+          # "No module named 'numpy._core._exceptions'" al importar matplotlib, y como se
+          # compila sin consola, el error era invisible y el proceso se colgaba (6 h de runner).
+          pip install -r requirements-dev.txt -r simulator/requirements.txt -r dashboard/requirements.txt pyinstaller==6.21.0
 
       - name: Correr la suite (mismo runner, via bash, PYBIN=python)
         shell: bash
