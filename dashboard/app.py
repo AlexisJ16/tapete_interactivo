@@ -32,6 +32,9 @@ from sesion import Sesion  # noqa: E402
 from storage import Almacen, AlmacenError  # noqa: E402
 
 NOMBRES_MODO = {1: "Memoria", 2: "Velocidad", 3: "Equilibrio"}
+COLUMNAS_HISTORIAL = ["Fecha", "Modo", "Nivel", "Aciertos", "Errores", "Tasa", "Estado"]
+# El medico no tiene por que leer los estados internos del motor en ingles.
+NOMBRES_ESTADO = {"finished": "Completada", "stopped": "Detenida", "idle": "Sin terminar"}
 LOGGER = logging.getLogger(__name__)
 
 
@@ -63,10 +66,54 @@ def _abrir_almacen(ruta: str, on_degradado=None) -> Almacen:
         return Almacen(":memory:")
 
 
-class PanelAnalitica:
-    """Vista de evidencia/historial: evolucion del desempeno por perfil con
-    matplotlib embebido. LEE del Almacen via analitica.serie_evolucion (no
-    duplica logica de juego). Encapsula el widget para poder probarla headless."""
+FILTRO_ARCHIVO = {"csv": "Hoja de calculo (*.csv)", "pdf": "Documento PDF (*.pdf)"}
+
+
+class ExportaReportes:
+    """Guardar reportes como en cualquier programa de Windows: preguntando DONDE.
+
+    Antes se escribia a una carpeta interna del programa ('dashboard/reportes/'), que
+    el medico nunca abre y que dentro del .exe queda enterrada en el bundle. Lo comparten
+    la pantalla en vivo (sesion actual) y el historico (cualquier sesion pasada)."""
+
+    def _pedir_ruta_guardado(self, sugerido: str, filtro: str) -> str:
+        _, _, QtWidgets = _qt()
+        ruta, _f = QtWidgets.QFileDialog.getSaveFileName(None, "Guardar reporte", sugerido, filtro)
+        return ruta
+
+    def _nombre_sugerido(self, sesion_id: int, fmt: str) -> str:
+        s = self.almacen.sesion(sesion_id) or {}
+        paciente = s.get("perfil_id") or "paciente"
+        fecha = (s.get("inicio") or "")[:10] or "sin-fecha"
+        return f"sesion_{sesion_id}_{paciente}_{fecha}.{fmt}"
+
+    def _exportar_sesion(self, sesion_id, fmt: str, etiqueta) -> None:
+        if sesion_id is None:
+            etiqueta.setText("No hay ninguna sesion que exportar. Juega una, "
+                             "o elige una terapia pasada en la pestaña Historico.")
+            return
+        QtCore, _, _ = _qt()
+        docs = QtCore.QStandardPaths.writableLocation(
+            QtCore.QStandardPaths.StandardLocation.DocumentsLocation) or os.path.expanduser("~")
+        ruta = self._pedir_ruta_guardado(os.path.join(docs, self._nombre_sugerido(sesion_id, fmt)),
+                                         FILTRO_ARCHIVO[fmt])
+        if not ruta:
+            etiqueta.setText("Exportacion cancelada.")
+            return
+        try:
+            (exportar_csv if fmt == "csv" else exportar_pdf)(self.almacen, sesion_id, ruta)
+        except (OSError, ReporteError) as e:
+            etiqueta.setText(f"Error al exportar: {e}")
+            return
+        etiqueta.setText(f"Exportado: {ruta}")
+
+
+class PanelAnalitica(ExportaReportes):
+    """Historia clinica del paciente: la TABLA de sus terapias (cualquiera se puede
+    exportar, aunque sea de hace semanas) y la evolucion de su desempeno.
+
+    LEE del Almacen (no duplica logica de juego). Encapsula el widget para poder
+    probarla headless."""
 
     def __init__(self, almacen):
         QtCore, QtGui, QtWidgets = _qt()
@@ -80,12 +127,30 @@ class PanelAnalitica:
         barra = QtWidgets.QHBoxLayout()
         self.cb_perfil = QtWidgets.QComboBox()
         b_refrescar = QtWidgets.QPushButton("Refrescar")
-        b_png = QtWidgets.QPushButton("Exportar PNG")
-        barra.addWidget(QtWidgets.QLabel("Perfil")); barra.addWidget(self.cb_perfil)
+        b_png = QtWidgets.QPushButton("Exportar grafica (PNG)")
+        barra.addWidget(QtWidgets.QLabel("Paciente")); barra.addWidget(self.cb_perfil)
         barra.addWidget(b_refrescar); barra.addStretch(1); barra.addWidget(b_png)
         lay.addLayout(barra)
 
-        self.fig = Figure(figsize=(7, 7.5))
+        # --- tabla de terapias del paciente: es la historia clinica ---
+        self.tabla = QtWidgets.QTableWidget(0, len(COLUMNAS_HISTORIAL))
+        self.tabla.setHorizontalHeaderLabels(COLUMNAS_HISTORIAL)
+        self.tabla.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
+        self.tabla.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.SingleSelection)
+        self.tabla.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.tabla.horizontalHeader().setStretchLastSection(True)
+        self.tabla.setMaximumHeight(220)
+        lay.addWidget(self.tabla)
+
+        acciones = QtWidgets.QHBoxLayout()
+        b_csv = QtWidgets.QPushButton("Exportar la terapia elegida (CSV)")
+        b_pdf = QtWidgets.QPushButton("Exportar la terapia elegida (PDF)")
+        self.lbl_export = QtWidgets.QLabel("")
+        acciones.addWidget(self.lbl_export); acciones.addStretch(1)
+        acciones.addWidget(b_csv); acciones.addWidget(b_pdf)
+        lay.addLayout(acciones)
+
+        self.fig = Figure(figsize=(7, 5.5))
         self.canvas = FigureCanvasQTAgg(self.fig)
         lay.addWidget(self.canvas)
         self.lbl = QtWidgets.QLabel("")
@@ -93,8 +158,56 @@ class PanelAnalitica:
 
         b_refrescar.clicked.connect(self.refrescar)
         b_png.clicked.connect(self._exportar_dialogo)
-        self.cb_perfil.currentIndexChanged.connect(self._graficar_actual)
+        b_csv.clicked.connect(lambda: self.exportar_seleccionada("csv"))
+        b_pdf.clicked.connect(lambda: self.exportar_seleccionada("pdf"))
+        self.cb_perfil.currentIndexChanged.connect(self._perfil_cambiado)
         self.refrescar()
+
+    # --- historia clinica ---
+
+    def seleccionar_perfil(self, perfil_id: str) -> None:
+        idx = self.cb_perfil.findData(perfil_id)
+        if idx >= 0:
+            self.cb_perfil.setCurrentIndex(idx)
+        self._perfil_cambiado()
+
+    def _perfil_cambiado(self):
+        ejecutar_seguro(self._llenar_tabla, LOGGER)
+        self._graficar_actual()
+
+    def _llenar_tabla(self):
+        _, _, QtWidgets = _qt()
+        pid = self.cb_perfil.currentData()
+        self._sesiones = self.almacen.sesiones(pid) if pid else []
+        self.tabla.setRowCount(len(self._sesiones))
+        for fila, s in enumerate(self._sesiones):
+            hits, misses = s.get("hits") or 0, s.get("misses") or 0
+            total = hits + misses
+            estado = s.get("estado_final")
+            celdas = [
+                (s.get("inicio") or "")[:16].replace("T", "  "),   # ISO -> legible
+                NOMBRES_MODO.get(s.get("modo"), str(s.get("modo"))),
+                str(s.get("nivel") or ""),
+                str(hits),
+                str(misses),
+                f"{100 * hits // total}%" if total else "-",
+                NOMBRES_ESTADO.get(estado, estado or "Sin terminar"),
+            ]
+            for col, texto in enumerate(celdas):
+                self.tabla.setItem(fila, col, QtWidgets.QTableWidgetItem(texto))
+        self.tabla.resizeColumnsToContents()
+        if self._sesiones:
+            self.tabla.selectRow(len(self._sesiones) - 1)   # la mas reciente, que es la que interesa
+
+    def exportar_seleccionada(self, fmt: str) -> None:
+        ejecutar_seguro(lambda: self._exportar_seleccionada_interno(fmt), LOGGER)
+
+    def _exportar_seleccionada_interno(self, fmt: str) -> None:
+        fila = self.tabla.currentRow()
+        if fila < 0 or fila >= len(getattr(self, "_sesiones", [])):
+            self.lbl_export.setText("Elige primero una terapia de la tabla.")
+            return
+        self._exportar_sesion(self._sesiones[fila]["id"], fmt, self.lbl_export)
 
     def refrescar(self):
         ejecutar_seguro(self._refrescar_interno, LOGGER)
@@ -110,7 +223,7 @@ class PanelAnalitica:
             idx = self.cb_perfil.findData(actual)
             self.cb_perfil.setCurrentIndex(idx if idx >= 0 else 0)
         self.cb_perfil.blockSignals(False)
-        self._graficar_actual()
+        self._perfil_cambiado()
 
     def _graficar_actual(self):
         ejecutar_seguro(self._graficar_actual_interno, LOGGER)
@@ -165,9 +278,18 @@ class PanelAnalitica:
         ejecutar_seguro(self._exportar_dialogo_interno, LOGGER)
 
     def _exportar_dialogo_interno(self):
-        os.makedirs(os.path.join(DIR, "reportes"), exist_ok=True)
-        pid = self.cb_perfil.currentData() or "perfil"
-        ruta = os.path.join(DIR, "reportes", f"evolucion_{pid}.png")
+        QtCore, _, _ = _qt()
+        pid = self.cb_perfil.currentData()
+        if not pid:
+            self.lbl.setText("Elige primero un niño.")
+            return
+        docs = QtCore.QStandardPaths.writableLocation(
+            QtCore.QStandardPaths.StandardLocation.DocumentsLocation) or os.path.expanduser("~")
+        ruta = self._pedir_ruta_guardado(os.path.join(docs, f"evolucion_{pid}.png"),
+                                         "Imagen (*.png)")
+        if not ruta:
+            self.lbl.setText("Exportacion cancelada.")
+            return
         self.exportar(ruta)
         self.lbl.setText(f"Exportado: {ruta}")
 
@@ -207,7 +329,7 @@ class _AlmacenSesion:
         return resultado
 
 
-class VentanaDashboard:
+class VentanaDashboard(ExportaReportes):
     """Encapsula la ventana principal (sin heredar de Qt para facilitar el smoke)."""
 
     def __init__(self, fuente=None, almacen=None):
@@ -254,8 +376,10 @@ class VentanaDashboard:
         # --- barra de controles (sin semilla: no es clinica) ---
         ctrl = QtWidgets.QHBoxLayout()
         ctrl.setSpacing(8)
-        self.in_perfil_id = QtWidgets.QLineEdit("p001"); self.in_perfil_id.setMaximumWidth(90)
-        self.in_perfil_nombre = QtWidgets.QLineEdit("Juan"); self.in_perfil_nombre.setMaximumWidth(150)
+        # Paciente: se elige de la lista de los ya creados. Antes se tecleaba el id en
+        # cada sesion, y un "juan"/"Juan" partia la historia del niño en dos casos.
+        self.cb_paciente = QtWidgets.QComboBox(); self.cb_paciente.setMinimumWidth(180)
+        self.b_nuevo_paciente = QtWidgets.QPushButton("Nuevo niño…")
         self.cb_modo = QtWidgets.QComboBox()
         for i in (1, 2, 3):
             self.cb_modo.addItem(f"{i} - {NOMBRES_MODO[i]}", i)
@@ -264,8 +388,8 @@ class VentanaDashboard:
         self.b_start = QtWidgets.QPushButton("Iniciar"); self.b_start.setObjectName("start")
         self.b_pause = QtWidgets.QPushButton("Pausa")
         self.b_stop = QtWidgets.QPushButton("Detener"); self.b_stop.setObjectName("stop")
-        for w, etq in [(self.in_perfil_id, "Niño (ID)"), (self.in_perfil_nombre, "Nombre")]:
-            ctrl.addWidget(QtWidgets.QLabel(etq)); ctrl.addWidget(w)
+        ctrl.addWidget(QtWidgets.QLabel("Niño")); ctrl.addWidget(self.cb_paciente)
+        ctrl.addWidget(self.b_nuevo_paciente)
         ctrl.addWidget(QtWidgets.QLabel("Modo")); ctrl.addWidget(self.cb_modo)
         ctrl.addWidget(QtWidgets.QLabel("Nivel")); ctrl.addWidget(self.sp_nivel)
         ctrl.addStretch(1)
@@ -313,6 +437,8 @@ class VentanaDashboard:
 
         # --- conexiones ---
         self.b_start.clicked.connect(self._start)
+        self.b_nuevo_paciente.clicked.connect(self._nuevo_paciente)
+        self.recargar_pacientes()
         # ses.detener/pausar viven en sesion.py (fuera de alcance de esta tarea):
         # se envuelven en el punto de conexion, no se puede tocar su cuerpo.
         self.b_stop.clicked.connect(lambda: ejecutar_seguro(self.ses.detener, LOGGER))
@@ -394,7 +520,9 @@ class VentanaDashboard:
         self.ses.bombear()
         if self.ses.estado in ("running", "paused"):
             return
-        self.ses.set_perfil(self.in_perfil_id.text() or "anon", self.in_perfil_nombre.text() or "")
+        pid = self.cb_paciente.currentData()
+        nombre = self.cb_paciente.currentText().split(" - ", 1)[-1] if pid else ""
+        self.ses.set_perfil(pid or "anon", nombre)
         self.ses.sembrar(semilla_efectiva(self.semilla))
         self.ses.configurar(self._modo(), self.sp_nivel.value())
         self.ses.iniciar()
@@ -423,17 +551,39 @@ class VentanaDashboard:
         ejecutar_seguro(lambda: self._exportar_interno(fmt), LOGGER)
 
     def _exportar_interno(self, fmt):
-        if self.ses.sesion_id is None:
+        self._exportar_sesion(self.ses.sesion_id, fmt, self.lbl_export)
+
+    # --- pacientes ---
+
+    def recargar_pacientes(self):
+        """Llena el selector con los niños ya creados, conservando el elegido."""
+        actual = self.cb_paciente.currentData()
+        self.cb_paciente.blockSignals(True)
+        self.cb_paciente.clear()
+        for p in self.almacen.perfiles():
+            self.cb_paciente.addItem(f"{p['id']} - {p['nombre']}", p["id"])
+        if self.cb_paciente.count():
+            idx = self.cb_paciente.findData(actual)
+            self.cb_paciente.setCurrentIndex(idx if idx >= 0 else 0)
+        self.cb_paciente.blockSignals(False)
+
+    def _nuevo_paciente(self):
+        ejecutar_seguro(self._nuevo_paciente_interno, LOGGER)
+
+    def _nuevo_paciente_interno(self):
+        _, _, QtWidgets = _qt()
+        nombre, ok = QtWidgets.QInputDialog.getText(None, "Nuevo niño", "Nombre del niño:")
+        if not ok or not nombre.strip():
             return
-        ruta = os.path.join(DIR, "reportes", f"sesion_{self.ses.sesion_id}.{fmt}")
-        try:
-            os.makedirs(os.path.join(DIR, "reportes"), exist_ok=True)
-            (exportar_csv if fmt == "csv" else exportar_pdf)(self.almacen, self.ses.sesion_id, ruta)
-        except (OSError, ReporteError) as e:
-            # Frontera GUI: un fallo de E/S (makedirs o export) degrada a mensaje, no crashea.
-            self.lbl_export.setText(f"Error al exportar: {e}")
+        ident, ok = QtWidgets.QInputDialog.getText(
+            None, "Nuevo niño", "Identificador (sin espacios; p. ej. su historia clinica):")
+        if not ok or not ident.strip():
             return
-        self.lbl_export.setText(f"Exportado: {ruta}")
+        self.almacen.upsert_perfil(ident.strip(), nombre.strip())
+        self.recargar_pacientes()
+        idx = self.cb_paciente.findData(ident.strip())
+        if idx >= 0:
+            self.cb_paciente.setCurrentIndex(idx)
 
     def tick(self):
         ejecutar_seguro(self._tick_interno, LOGGER, on_error=self._marcar_error_tick)

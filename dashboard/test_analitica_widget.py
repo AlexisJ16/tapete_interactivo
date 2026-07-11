@@ -61,8 +61,9 @@ def test_dashboard_registra_y_su_analitica_lo_muestra():
     historico que la propia pestaña de analitica grafica (una sola fuente)."""
     _app()
     v = VentanaDashboard(fuente=FuenteCore(), almacen=Almacen(":memory:"))
-    v.in_perfil_id.setText("p001")
-    v.in_perfil_nombre.setText("Juan")
+    v.almacen.upsert_perfil("p001", "Juan")     # el niño se elige de la lista, ya no se teclea
+    v.recargar_pacientes()
+    v.cb_paciente.setCurrentIndex(v.cb_paciente.findData("p001"))
     v.semilla = 12345
     v.cb_modo.setCurrentIndex(1)  # Velocidad
     v.sp_nivel.setValue(1)

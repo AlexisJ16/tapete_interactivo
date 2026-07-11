@@ -203,12 +203,14 @@ def test_aplicar_sin_datos_no_lanza_ni_cambia_nivel():
     assert v.sp_nivel.value() == nivel_antes
 
 
-def test_exportar_sin_sesion_no_lanza_ni_crea_archivo():
+def test_exportar_sin_sesion_avisa_y_no_lanza():
+    # Antes exigia SILENCIO (lbl vacio). Era el bug: el medico pulsaba y no pasaba nada.
     v = _ventana()
     assert v.ses.sesion_id is None
     v._exportar("csv")
+    assert "sesion" in v.lbl_export.text().lower()
     v._exportar("pdf")
-    assert v.lbl_export.text() == ""
+    assert v.lbl_export.text()
 
 
 # --- Task 2.4: storage y export degradan sin tumbar la GUI ---
@@ -281,29 +283,27 @@ def test_exportar_csv_sesion_valida_sin_eventos_exporta_igual(tmp_path):
     assert os.path.exists(ruta)
 
 
-def test_exportar_gui_con_sesion_invalida_no_crashea_y_muestra_error():
+def test_exportar_gui_con_sesion_invalida_no_crashea_y_muestra_error(tmp_path, monkeypatch):
     # Simula una sesion cuyo id no esta en el almacen (equivalente, desde la
     # frontera, a que storage/reports fallen): _exportar no debe propagar.
     v = _ventana()
     v.ses.sesion_id = 9999
+    monkeypatch.setattr(v, "_pedir_ruta_guardado",
+                        lambda sugerido, filtro: str(tmp_path / "x.out"))
     v._exportar("csv")
     assert "Error" in v.lbl_export.text()
     v._exportar("pdf")
     assert "Error" in v.lbl_export.text()
 
 
-def test_exportar_gui_makedirs_falla_no_crashea_y_muestra_error(tmp_path, monkeypatch):
-    # Si "reportes" ya existe como archivo plano (no directorio), os.makedirs(...,
-    # exist_ok=True) lanza FileExistsError pese a exist_ok=True (exist_ok solo
-    # perdona si el target YA es un directorio). Esa excepcion no debe propagar
-    # fuera del slot de Qt (hoy vive fuera del try/except de _exportar).
-    import app
-    monkeypatch.setattr(app, "DIR", str(tmp_path))
-    (tmp_path / "reportes").write_text("no soy un directorio")
-
+def test_exportar_a_una_ruta_imposible_no_crashea_y_muestra_error(tmp_path, monkeypatch):
+    # El medico elige (o teclea) una ruta donde no se puede escribir: un directorio que
+    # no existe. El fallo de E/S degrada a mensaje, no tumba la GUI.
     v = _ventana()
     sid = v.almacen.iniciar_sesion(None, 1, 1)
     v.ses.sesion_id = sid
+    imposible = str(tmp_path / "no" / "existe" / "reporte.csv")
+    monkeypatch.setattr(v, "_pedir_ruta_guardado", lambda sugerido, filtro: imposible)
 
     v._exportar("csv")   # no debe lanzar
 
@@ -547,13 +547,15 @@ def test_aplicar_nivel_con_bug_interno_no_aborta_la_app_y_lo_registra(monkeypatc
     assert "bug interno simulado en set_nivel" in caplog.text
 
 
-def test_exportar_con_bug_interno_no_aborta_la_app_y_lo_registra(monkeypatch, caplog):
+def test_exportar_con_bug_interno_no_aborta_la_app_y_lo_registra(monkeypatch, caplog, tmp_path):
     # Distinto de test_exportar_gui_con_sesion_invalida_*: aqui el fallo NO es
     # OSError/ReporteError (ya manejados desde 2.4), es un bug imprevisto en
     # el propio exportar_csv -- exactamente lo que 4.1 debe cubrir.
     import app
     v = _ventana()
     v.ses.sesion_id = v.almacen.iniciar_sesion(None, 1, 1)
+    monkeypatch.setattr(v, "_pedir_ruta_guardado",
+                        lambda sugerido, filtro: str(tmp_path / "r.csv"))
 
     def _boom(*a, **kw):
         raise RuntimeError("bug interno simulado en exportar_csv")
