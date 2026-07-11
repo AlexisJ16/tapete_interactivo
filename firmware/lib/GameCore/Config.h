@@ -26,10 +26,11 @@ constexpr int PIN_FSR[CELDAS]  = {36, 39, 34, 35, 32, 33};
 constexpr int PIN_LED[CELDAS]  = {4, 5, 18, 19, 21, 23};
 constexpr int PIN_DFPLAYER_TX  = 17;  // TX2 del ESP32 -> RX DFPlayer
 constexpr int PIN_DFPLAYER_RX  = 16;  // RX2 del ESP32 <- TX DFPlayer
-// Volumen del DFPlayer (0..30). MODERADO a proposito: el parlante es de 4 Ohm y
-// todo se alimenta del USB (ver docs/hardware/cableado.md §7). A volumen alto los
-// picos del amplificador hunden el riel de 5 V y el modulo se reinicia.
-constexpr int VOLUMEN_AUDIO    = 15;
+// Volumen del DFPlayer. RANGO REAL 0..30 (el modulo no admite mas; 30 = maximo).
+// Al maximo, con el parlante de 4 Ohm alimentado por USB, los picos del amplificador
+// solo se sostienen gracias al desacople de cableado.md §7 (100 uF + 100 nF + 1000 uF).
+// Si el modulo se reinicia o el sonido se corta/distorsiona, bajar a ~22.
+constexpr int VOLUMEN_AUDIO    = 30;
 constexpr int UMBRAL_PISADA    = 2000;  // lectura ADC (0..4095) para considerar pisada
 
 // --- Servidor TCP -----------------------------------------------------------
