@@ -21,7 +21,8 @@
 | 9 | R 10 kΩ | 1/4 W | 8 | en mano | 6 pull-down de FSR + 2 reserva |
 | 10 | R 1 kΩ | 1/4 W | 2 | comprado | 1 línea serie DFPlayer + 1 divisor GPIO16 |
 | 11 | R 2 kΩ | 1/4 W | 3 | comprado | Divisor GPIO16 (contingencia) + reserva |
-| 12 | R 2.2 kΩ | 1/4 W | 9 | comprado | **6× serie de grupo LED** (1 por grupo) + 3 reserva |
+| 12 | R 2.2 kΩ | 1/4 W | 9 | comprado | ~~6× serie de grupo LED~~ → **sustituidas el 2026-07-11** (brillo muy tenue). Hoy: **reserva** |
+| 12b | **R 110 Ω** | 1/4 W | 6 en uso | añadido por el autor (2026-07-11) | **6× serie de grupo LED** (1 por grupo). Cantidad total en inventario: **no registrada** |
 | **Capacitores** | | | | | |
 | 13 | Electrolítico | 1000 µF / 16 V | 2 | comprado | Desacople del bus de 5 V |
 | 14 | Electrolítico | 100 µF / 16 V | 2 | comprado | Desacople VCC del DFPlayer |
@@ -55,7 +56,8 @@ presentar el presupuesto.
 | Resistencia 10 kΩ | 8 | en mano | | |
 | Resistencia 1 kΩ | 2 | comprado | | |
 | Resistencia 2 kΩ | 3 | comprado | | |
-| Resistencia 2.2 kΩ | 9 | comprado | | |
+| Resistencia 2.2 kΩ | 9 | comprado | | sustituidas en los grupos LED (2026-07-11) |
+| **Resistencia 110 Ω** | 6 en uso | añadido por el autor | | serie de los 6 grupos LED |
 | Cap. electrolítico 1000 µF 16 V | 2 | comprado | | |
 | Cap. electrolítico 100 µF 16 V | 2 | comprado | | |
 | Cap. cerámico 100 nF | 5 | comprado | | |
@@ -75,15 +77,16 @@ presentar el presupuesto.
   - **1 kΩ** → resistencia en serie de la línea DFPlayer `TX2 → RX`.
   - **1 kΩ + 2 kΩ** → divisor de tensión para `DFPlayer TX → GPIO16`, **solo si**
     el TX del módulo mide 5 V (medir con multímetro; la mayoría emite 3.3 V).
-  - **6 × 2.2 kΩ** → serie de los 6 grupos LED (1 por grupo); **3 × 2.2 kΩ** de reserva.
-- **Brillo de los LEDs — límite físico aceptado:** no hay resistencias de valor
-  bajo (~15–47 Ω) para llevar los LEDs a corriente plena. Las 2× 1 kΩ están
-  asignadas al DFPlayer y al divisor GPIO16, así que los 6 grupos LED usan **2.2 kΩ**
-  (6 de las 9 de reserva). Cada LED recibe **<1 mA** (exacto: ngspice + multímetro):
-  **brillo tenue pero visible** (los LEDs van directo en la superficie, por los
-  huecos que se hacen en el acrílico). Es el máximo alcanzable con el inventario
-  actual (decisión del autor: no comprar más). Ver `cableado.md` §3 (Paso 6).
+  - **6 × 110 Ω** → serie de los 6 grupos LED (1 por grupo). Las **9 × 2.2 kΩ** quedan de
+    reserva.
+- **Brillo de los LEDs — resuelto el 2026-07-11 (ya no es un límite aceptado).** El diseño
+  original usaba **2.2 kΩ** (lo que había en el inventario): **<1 mA por LED**, un brillo
+  demasiado tenue. El autor las sustituyó por **110 Ω**, con lo que cada grupo pide **10,1 mA**
+  y cada LED **3,4 mA** (ngspice, `spice/grupo_led.cir`). Los 6 grupos suman **~61 mA**, muy
+  dentro de los límites del ULN2803A (500 mA/canal de máximo absoluto) y **sin perturbar al
+  DFPlayer** (verificado: 3 modos × 3 niveles con audio). El máximo del LED es **DESCONOCIDO**
+  (no hay datasheet del LED en el repo). Ver `cableado.md` §3 (Paso 6).
 - **Energía:** única fuente = **el PC al ESP32 por cable USB** (5 V). No se usa
-  power bank ni toma de red. Con LEDs tenues + volumen moderado, el puerto USB
-  del PC alcanza para todo el circuito.
+  power bank ni toma de red. Con los 6 grupos de LED (~61 mA) y `VOLUMEN_AUDIO = 15`, el
+  puerto USB del PC alcanza para todo el circuito — verificado en hardware.
 - **No se compró** ESP32 ni ULN de repuesto (presupuesto).

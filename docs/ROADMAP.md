@@ -21,17 +21,15 @@ Mantener siempre la disciplina del proyecto: **TDD**, **una sola fuente de verda
 > **Tonos normalizados (2026-07-11):** +3,2–4,0 dB de RMS y energía llevada a 3,1–4,2 kHz,
 > **sin subir el volumen del módulo** (que topa en 15 por brownout). Ver §3.
 >
-> **PRÓXIMA ACCIÓN — la única abierta del hardware: el veredicto del autor en el tapete.**
-> Copiar `audio/000X.mp3` a `/mp3/` de la microSD y jugar una sesión de cada modo. Criterio:
-> suenan **más fuertes** y **siguen sonando** (sin cortes ni mudez). Si aparecieran cortes o
-> silencio, es brownout: bajar `PICO`/`COMPRESION` en `scripts/gen_audio.py` y regenerar —
-> **no hay que reflashear**, los tonos viven en la SD.
+> **VALIDADO EN HARDWARE (2026-07-11).** Con los **tonos nuevos** en la microSD y las
+> **resistencias de LED cambiadas a 110 Ω** (el autor las subió de brillo), el tapete corre
+> **los 3 modos × los 3 niveles** sin brownout: el audio suena y no se corta, incluido
+> Equilibrio n3, que es el peor caso de corriente (4 grupos de LED encendidos + tonos).
 >
-> Después de eso, del proyecto solo quedan el **CI** (§2, roto y en espera) y la **entrega**
-> (§5).
+> **Del proyecto solo quedan el CI** (§2, roto y en espera) **y la entrega** (§5).
 
 **Línea base del software:** `./scripts/run_all_tests.sh` → TODO VERDE (58 casos /
-2186 aserciones C++ + 144 pytest); `.venv/bin/pio run -e esp32dev` → SUCCESS. Si algo
+2186 aserciones C++ + 145 pytest); `.venv/bin/pio run -e esp32dev` → SUCCESS. Si algo
 está en rojo al empezar, arreglarlo antes de añadir nada. Esta máquina tiene display real
 (`DISPLAY=:0` / Wayland): se pueden lanzar el simulador y el dashboard, y generar capturas
 con `scripts/demo_visual.py`.
@@ -296,11 +294,24 @@ escuchado aún los tonos nuevos en el tapete), sino un supuesto que **solo se co
 con los usuarios reales**. Si se viera que no los perciben bien, la palanca es bajar una octava —
 al coste de rendimiento del altavoz—, y esa decisión es del autor/terapeuta, no del agente.
 
-**PENDIENTE (autor):** copiar `audio/000X.mp3` a `/mp3/` de la microSD y jugar una sesión de cada
-modo. **No hace falta reflashear** (los tonos viven en la SD). Criterio: suenan más fuertes **y
-siguen sonando**. Si aparecen cortes o mudez → es brownout → bajar `PICO`/`COMPRESION` y
-regenerar (se conserva la ganancia de frecuencia); si hay duda, `esp32dev_audio` cuenta reinicios
-del módulo (0 = sano).
+**VERIFICADO EN EL TAPETE (2026-07-11):** con los tonos nuevos en la microSD, el autor jugó los
+**3 modos × 3 niveles** y **todo funciona**, sin cortes ni mudez — y con los LEDs ya a 110 Ω, que
+piden ~20× más corriente que antes. El margen del riel de 5 V aguanta. Si alguna vez reapareciera
+el silencio, el remedio sigue siendo bajar `PICO`/`COMPRESION` y regenerar (no hace falta
+reflashear: los tonos viven en la SD), y `esp32dev_audio` cuenta reinicios del módulo (0 = sano).
+
+### Resistencias de los LEDs: 2.2 kΩ → 110 Ω (2026-07-11)
+
+El brillo con 2.2 kΩ era **demasiado tenue** (~0,19 mA por LED), así que el autor las cambió por
+**110 Ω**: cada grupo pasa a **10,1 mA** y cada LED a **3,4 mA** (ngspice, `spice/grupo_led.cir`),
+**~61 mA** con los 6 grupos. Sigue muy dentro del ULN2803A (500 mA/canal de máximo absoluto) y
+**no perturba al DFPlayer**. Fuentes actualizadas: `cableado.md`, `00_diseno_circuito.md`,
+`materiales.md`, `spice/grupo_led.cir` (+ test).
+
+> ⚠️ **Lección: no cambiar componentes con el circuito energizado.** Al sustituir las resistencias
+> con el USB puesto, el glitch **colgó el DFPlayer**: mudo total, y **no revivió con EN ni
+> reseteando el ESP32**. Solo volvió al **desconectar y reconectar el USB**. Es el mismo modo de
+> fallo del brownout (`cableado.md` §7): parecía una avería y no lo era.
 
 **WiFi (opcional):** `cp firmware/src/secrets.h.example firmware/src/secrets.h` para usar
 `--tcp <IP>` en vez de `--serial`.

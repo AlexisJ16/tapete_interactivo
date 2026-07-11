@@ -25,7 +25,7 @@
       {
         "habilidad": 0.0,
         "hits": 0,
-        "misses": 46,
+        "misses": 31,
         "tasa": 0.0,
         "rondas": 3,
         "dir": "down"
@@ -33,7 +33,7 @@
       {
         "habilidad": 0.1,
         "hits": 0,
-        "misses": 45,
+        "misses": 31,
         "tasa": 0.0,
         "rondas": 3,
         "dir": "down"
@@ -41,40 +41,40 @@
       {
         "habilidad": 0.2,
         "hits": 1,
-        "misses": 34,
-        "tasa": 2.9,
+        "misses": 25,
+        "tasa": 3.8,
         "rondas": 4,
         "dir": "down"
       },
       {
         "habilidad": 0.3,
         "hits": 1,
-        "misses": 34,
-        "tasa": 2.9,
+        "misses": 25,
+        "tasa": 3.8,
         "rondas": 4,
         "dir": "down"
       },
       {
         "habilidad": 0.4,
         "hits": 1,
-        "misses": 33,
-        "tasa": 2.9,
+        "misses": 24,
+        "tasa": 4.0,
         "rondas": 4,
         "dir": "down"
       },
       {
         "habilidad": 0.5,
         "hits": 1,
-        "misses": 32,
-        "tasa": 3.0,
+        "misses": 24,
+        "tasa": 4.0,
         "rondas": 4,
         "dir": "down"
       },
       {
         "habilidad": 0.6,
         "hits": 3,
-        "misses": 23,
-        "tasa": 11.5,
+        "misses": 18,
+        "tasa": 14.3,
         "rondas": 6,
         "dir": "down"
       },
@@ -461,56 +461,56 @@
           "sesion": 1,
           "nivel": 4,
           "hits": 0,
-          "misses": 38,
+          "misses": 27,
           "tasa": 0.0
         },
         {
           "sesion": 2,
           "nivel": 3,
           "hits": 0,
-          "misses": 40,
+          "misses": 28,
           "tasa": 0.0
         },
         {
           "sesion": 3,
           "nivel": 2,
           "hits": 0,
-          "misses": 46,
+          "misses": 31,
           "tasa": 0.0
         },
         {
           "sesion": 4,
           "nivel": 1,
           "hits": 0,
-          "misses": 58,
+          "misses": 36,
           "tasa": 0.0
         },
         {
           "sesion": 5,
           "nivel": 1,
           "hits": 0,
-          "misses": 58,
+          "misses": 36,
           "tasa": 0.0
         },
         {
           "sesion": 6,
           "nivel": 1,
           "hits": 0,
-          "misses": 58,
+          "misses": 36,
           "tasa": 0.0
         },
         {
           "sesion": 7,
           "nivel": 1,
           "hits": 0,
-          "misses": 58,
+          "misses": 36,
           "tasa": 0.0
         },
         {
           "sesion": 8,
           "nivel": 1,
           "hits": 0,
-          "misses": 58,
+          "misses": 36,
           "tasa": 0.0
         }
       ]
@@ -842,9 +842,9 @@
         },
         {
           "longitud": 6,
-          "rondas": 520,
-          "medido": 0.38461538461538464,
-          "ic95": 0.04181586094620958,
+          "rondas": 519,
+          "medido": 0.3834296724470135,
+          "ic95": 0.04183180091567048,
           "teorico": 0.37714951562499993,
           "coincide": true
         }
@@ -854,19 +854,19 @@
   "coste_computacional": {
     "repeticiones": 7,
     "tick_ns": {
-      "mediana": 6.0,
-      "min": 4.1,
-      "max": 10.7
+      "mediana": 6.5,
+      "min": 4.0,
+      "max": 11.8
     },
     "pisada_ns": {
-      "mediana": 669.6,
-      "min": 459.2,
-      "max": 1059.8
+      "mediana": 755.8,
+      "min": 427.3,
+      "max": 1027.0
     },
     "sesion_us": {
-      "mediana": 8.04,
-      "min": 5.51,
-      "max": 12.72
+      "mediana": 9.07,
+      "min": 5.13,
+      "max": 12.32
     },
     "cpu": "Intel Core i7-1355U",
     "nota": "no determinista: depende del procesador y de la carga de la maquina"
@@ -944,10 +944,10 @@
     "v_umbral_2000_v": 1.6117216117216118,
     "max_error_vs_teoria_v": 2.85714285741534e-06,
     "grupo_led": {
-      "v_anodo": 3.731136,
+      "v_anodo": 3.885754,
       "v_catodo": 0.9,
-      "i_grupo_a": 0.0005767565,
-      "i_led_a": 0.0001922522,
+      "i_grupo_a": 0.01012951,
+      "i_led_a": 0.003376504,
       "nota": "estimacion de orden de magnitud; modelo de diodo y V_CE(sat) asumidos, pendientes de confirmar con multimetro"
     }
   }

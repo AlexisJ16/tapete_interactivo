@@ -16,21 +16,24 @@ ESP32 al centro del piso corre la lógica y se comunica con el dashboard de PC.
 | Subsistema | Componentes | Etapa |
 |---|---|---|
 | Sensado | 6× FSR 402 + 6× 10 kΩ (pull-down) | Divisores de voltaje, 3V3 |
-| Iluminación | 18× LED blanco (6 grupos de 3) + 6× 2.2 kΩ + **1× ULN2803A** | Conmutación a 5 V |
+| Iluminación | 18× LED blanco (6 grupos de 3) + 6× 110 Ω + **1× ULN2803A** | Conmutación a 5 V |
 | Audio | DFPlayer Mini + microSD + **parlante 4 Ω** | UART, 5 V |
 | Cómputo/red | ESP32 DevKit 30 pines | — |
 | Energía | **PC → ESP32 por USB** (5 V), regulador interno (3V3) | 4 rieles |
 
 ## 2. Decisiones congeladas (con el autor)
 
-1. **LEDs con ULN2803A a 5 V**, un grupo de 3 en paralelo por botón, **2.2 kΩ** en
-   serie. El brillo resultante es **tenue pero visible** (no hay resistencias de
-   valor bajo para más corriente; es el máximo alcanzable con el inventario —
-   decisión de no comprar más). Detalle en `cableado.md` §3 (Paso 6) y `materiales.md` §3.
+1. **LEDs con ULN2803A a 5 V**, un grupo de 3 en paralelo por botón, **110 Ω** en
+   serie (**cambiado el 2026-07-11**: las **2.2 kΩ** iniciales dejaban el brillo demasiado
+   tenue —~0,19 mA por LED—; con 110 Ω cada grupo pide **10,1 mA** / **3,4 mA por LED**,
+   ngspice). Los ~61 mA de los 6 grupos **no** perturban al DFPlayer: verificado en hardware
+   (3 modos × 3 niveles con audio). Detalle en `cableado.md` §3 (Paso 6) y `materiales.md` §3.
 2. **DFPlayer con parlante 4 Ω** a SPK1/SPK2 (el amplificador del módulo lo maneja).
    El firmware degrada con gracia si el audio no inicializa (`audioOk_`).
 3. **Alimentación: solo el PC al ESP32 por USB** (5 V). Sin power bank ni toma de
-   red. Con LEDs tenues + volumen moderado, el puerto USB del PC alcanza.
+   red. Con los 6 grupos de LED (~61 mA) y `VOLUMEN_AUDIO = 15`, el puerto USB del PC
+   alcanza — verificado. El margen **no** es infinito: a volumen 30 el riel se hunde y el
+   DFPlayer enmudece (`Config.h`).
 4. **24 hilos** tapa→protoboard (4 por botón). Cables largos por **encadenado
    M-F + M-M soldado + termorretráctil**.
 5. Caja transparente **40 × 28 × 13 cm**; protoboard al centro del piso; 6 botones

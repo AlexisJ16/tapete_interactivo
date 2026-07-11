@@ -3916,7 +3916,7 @@
 				)
 			)
 		)
-		(property "Value" "2.2k"
+		(property "Value" "110"
 			(at 342.9 60.96 0)
 			(effects
 				(font
@@ -4014,7 +4014,7 @@
 				)
 			)
 		)
-		(property "Value" "2.2k"
+		(property "Value" "110"
 			(at 367.03 60.96 0)
 			(effects
 				(font
@@ -4112,7 +4112,7 @@
 				)
 			)
 		)
-		(property "Value" "2.2k"
+		(property "Value" "110"
 			(at 392.43 60.96 0)
 			(effects
 				(font
@@ -4210,7 +4210,7 @@
 				)
 			)
 		)
-		(property "Value" "2.2k"
+		(property "Value" "110"
 			(at 342.9 116.84 0)
 			(effects
 				(font
@@ -4308,7 +4308,7 @@
 				)
 			)
 		)
-		(property "Value" "2.2k"
+		(property "Value" "110"
 			(at 367.03 116.84 0)
 			(effects
 				(font
@@ -4406,7 +4406,7 @@
 				)
 			)
 		)
-		(property "Value" "2.2k"
+		(property "Value" "110"
 			(at 392.43 116.84 0)
 			(effects
 				(font
@@ -5887,7 +5887,7 @@
 		)
 		(uuid "b47285e6-949c-5827-a290-2c81f08e63b8")
 	)
-	(text "BLOQUE 3 - ACTUACION (5V): 5V -[2k2]- anodo LED ; catodo -> OUTk del ULN2803A"
+	(text "BLOQUE 3 - ACTUACION (5V): 5V -[110R]- anodo LED ; catodo -> OUTk del ULN2803A"
 		(at 330 30 0)
 		(effects
 			(font

@@ -26,7 +26,7 @@ Las 6 fases del plan base están **completas y validadas**:
   protocolo Py/C++).
 - Empaquetado Windows (`packaging/`): `.exe` PyInstaller con `--serial auto`.
 
-`./scripts/run_all_tests.sh` → **TODO VERDE** (58 casos C++ / 2186 aserciones + 144 pytest).
+`./scripts/run_all_tests.sh` → **TODO VERDE** (58 casos C++ / 2186 aserciones + 145 pytest).
 `.venv/bin/pio run -e esp32dev` → **SUCCESS** (Flash ~60%, RAM ~14%).
 
 **El software en verde no significa el proyecto en verde.** El hardware físico, el CI y
@@ -108,6 +108,11 @@ cd firmware && ../.venv/bin/pio run -e esp32dev
   asumir solo la API 3.x (`ledcAttach`/`ledcWrite(pin,...)`).
 - **PEP 668:** usar siempre el `.venv` del proyecto, no el pip del sistema.
 - **Audio ESP32:** los MP3 van en `/mp3/000X.mp3` de la SD (`playMp3Folder`).
+- **El DFPlayer mudo casi nunca es una avería: está COLGADO.** Un bajón de tensión —o un glitch
+  por **tocar el protoboard con el USB conectado**— lo cuelga, y **no revive con EN ni reseteando
+  el ESP32**: hay que **desconectar y reconectar la alimentación**. Pasó al cambiar las
+  resistencias de los LEDs en caliente (2026-07-11) y parecía una avería grave. Antes de
+  diagnosticar nada, cortar la alimentación y reintentar.
 - **Los tonos (`scripts/gen_audio.py`) tienen dos límites duros, fijados en
   `simulator/test_audio.py`.** (1) El de **acierto no se alarga**: suena en cada pisada y en cada
   LED de la exhibición, y el DFPlayer **corta la pista en curso**, así que debe caber en la

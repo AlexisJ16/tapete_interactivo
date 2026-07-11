@@ -4,7 +4,7 @@ Fuente de verdad de conectividad: docs/hardware/cableado.md §1/§4 + Config.h.
 Construccion CUMULATIVA por etapas (ERC+PDF incremental, TDD del esquematico):
     esp32  -> ESP32 + rieles de potencia (+5V/+3V3/GND + PWR_FLAG) + no_connect
     fsr    -> + banco de 6 FSR (divisor 3V3-FSR-nodo-10k-GND, nodo->ADC)
-    uln    -> + ULN2803A + 6 grupos LED (2.2k, 5V->anodo, catodo->OUTk, INk<-GPIO)
+    uln    -> + ULN2803A + 6 grupos LED (110 Ohm, 5V->anodo, catodo->OUTk, INk<-GPIO)
     dfplayer (=all) -> + DFPlayer + parlante 4ohm + desacoples
 
 Uso:  .venv/bin/python gen_tapete.py --stage {esp32|fsr|uln|dfplayer|all} [--project]
@@ -96,7 +96,7 @@ def sub_esp32(d: K.Design) -> None:
     d.notes.append((X_FSR, 30,
         "BLOQUE 1 - SENSADO (3V3): 6 canales  3V3 -[FSR]- nodo -[10k]- GND ; nodo -> ADC1"))
     d.notes.append((X_LED - 10, 30,
-        "BLOQUE 3 - ACTUACION (5V): 5V -[2k2]- anodo LED ; catodo -> OUTk del ULN2803A"))
+        "BLOQUE 3 - ACTUACION (5V): 5V -[110R]- anodo LED ; catodo -> OUTk del ULN2803A"))
     d.notes.append((X_PWR, Y_PWR + 45,
         "Alimentacion: USB del PC -> VIN(5V) del ESP32. Los rieles 3V3 y 5V NUNCA se puentean.\\n"
         "Conectividad definida por etiquetas de net (label): mismo nombre = mismo nodo."))
@@ -116,7 +116,7 @@ def sub_fsr(d: K.Design) -> None:
 
 
 def sub_uln(d: K.Design) -> None:
-    """ULN2803A + 6 grupos LED. 5V-[2.2k]-anodo ; catodo-OUTk ; INk<-GPIO."""
+    """ULN2803A + 6 grupos LED. 5V-[110R]-anodo ; catodo-OUTk ; INk<-GPIO."""
     d.add(K.Comp("U2", "Transistor_Array", "ULN2803A", "ULN2803A", X_ULN, Y_ULN))
     d.connect("GND", ("U2", "9"))          # pin 9 = GND
     d.connect("+5V", ("U2", "10"))         # pin 10 = COM -> 5V
@@ -126,8 +126,8 @@ def sub_uln(d: K.Design) -> None:
         col, fila = (k - 1) % 3, (k - 1) // 3
         x = X_LED + col * PASO_LED_X
         y = Y_LED + fila * PASO_LED_Y
-        rser, led = f"R{6 + k}", f"D{k}"   # R7..R12 = serie 2.2k ; D1..D6 = LED
-        d.add(K.Comp(rser, "Device", "R", "2.2k", x, y))
+        rser, led = f"R{6 + k}", f"D{k}"   # R7..R12 = serie 110 Ohm ; D1..D6 = LED
+        d.add(K.Comp(rser, "Device", "R", "110", x, y))
         d.add(K.Comp(led, "Device", "LED", "LED", x, y + 25))
         d.connect("+5V", (rser, "1"))
         d.connect(f"LED{k}_A", (rser, "2"), (led, "2"))    # anodo (pin 2 = A)

@@ -36,7 +36,17 @@ def test_el_umbral_corresponde_a_una_resistencia_de_fsr_concreta():
     assert 0.5 * R_PULLDOWN < r < 1.5 * R_PULLDOWN
 
 
-def test_el_grupo_led_queda_muy_por_debajo_del_maximo_del_led():
+def test_el_grupo_led_no_exige_mas_de_lo_que_el_uln_soporta():
+    # El unico limite CITABLE es el del ULN2803A (uln2803a.pdf): 500 mA/canal de maximo
+    # absoluto y ~100 mA/canal con los 8 canales activos a duty continuo. El maximo del
+    # LED es DESCONOCIDO: no hay datasheet del LED blanco en el repo.
     r = simular_grupo_led()
-    assert 0 < r["i_led_a"] < 1e-3          # muy tenue: menos de 1 mA por LED
+    assert r["i_grupo_a"] < 50e-3, "el grupo se acerca al limite continuo del ULN2803A"
     assert r["i_grupo_a"] == pytest.approx(3 * r["i_led_a"], rel=1e-6)
+
+
+def test_las_r_de_110_ohm_iluminan_de_verdad():
+    # Las 2.2 kOhm originales daban < 1 mA por LED: "tenue pero visible", y el autor las
+    # sustituyo por 110 Ohm el 2026-07-11 justo por eso. Si alguien vuelve a subir la R,
+    # que falle aqui y no en la mesa de terapia.
+    assert simular_grupo_led()["i_led_a"] > 2e-3

@@ -58,7 +58,7 @@ botón** (FSR_alto, FSR_bajo, LED_ánodo común, LED_cátodo común) — ver Pas
 | Azul | señal FSR (FSR_bajo / nodo → ADC) |
 | Verde | GPIO → IN del ULN |
 | Violeta | OUT del ULN → cátodo del grupo LED |
-| Amarillo | ánodo común del grupo LED (a 2.2 kΩ / 5 V) |
+| Amarillo | ánodo común del grupo LED (a 110 Ω / 5 V) |
 | Marrón | línea UART del DFPlayer |
 
 ### 1.3 Los peligros que fríen (resumen — el detalle está en cada paso)
@@ -99,7 +99,7 @@ Vista de arriba. Antes de pinchar hueco por hueco, ten claro el reparto del tabl
  │                 ULN · waypoints de energía A64=5V y A63=GND                         │
  │ ═══════════ canal central: mundo 3V3 (arriba) separado de mundo 5V (abajo) ════════ │
  │ F–J (abajo):    header inf del ESP32 (Fila J) · DFPlayer (Fila F) · OUT(F58–F53)/    │
- │                 COM(F50) del ULN · ánodos+2.2 kΩ (cols 59–64) y cátodos (a OUT, 53–58) │
+ │                 COM(F50) del ULN · ánodos+110 Ω (cols 59–64) y cátodos (a OUT, 53–58) │
  │                                                                                     │
  │ riel inferior +  =  5 V   ← entra por la DERECHA (P2/P3 bajan desde A64/A63, col 63–64)
  └──────────────────────────────────────────────────────────────────────────────────┘
@@ -200,7 +200,7 @@ riel. El 3V3 sube por la **izquierda**; el 5 V baja por la **derecha**; así los
 - **Waypoints:** izquierda en la **mitad INFERIOR** (`F1`,`F2`, libres); derecha en la
   **mitad SUPERIOR** (`A64`,`A63`, libres).
 - 🛑 **El 5 V (P2) NUNCA en la mitad inferior de la col 64:** ahí está el **ánodo de
-  LED6** con su 2.2 kΩ, y le saltaría la resistencia (lo quemaría). Su waypoint va en la
+  LED6** con su 110 Ω, y le saltaría la resistencia (lo quemaría). Su waypoint va en la
   mitad **superior** (`A64`), separada del ánodo por el canal central. Igual `A63` (GND,
   mitad superior) no toca el ánodo de LED5 que está en la col 63 mitad inferior.
 - ⚠️ **Pares `+`/`−` adyacentes:** `A64` (5 V) queda junto a `A63` (GND); `F1` (3V3)
@@ -305,11 +305,11 @@ riel superior −** y **pin 10 (F50) a riel inferior + (5 V)** — no los invier
 LED, la **pata larga es el ánodo (+)** y la corta (lado con el borde plano) es el **cátodo
 (−)**. Une las **3 patas largas** → un solo hilo = **ánodo común**; une las **3 patas
 cortas** → **cátodo común**. Rotula ambos hilos por botón (B1..B6). El **ánodo común** va a
-la 2.2 kΩ (a 5 V); el **cátodo común** a la salida OUTk del ULN.
+la 110 Ω (a 5 V); el **cátodo común** a la salida OUTk del ULN.
 
-Por grupo: `5V ─[2.2 kΩ]─ ánodo` (cols 59–64) y `cátodo ─ OUTk del ULN` (cols 53–58):
+Por grupo: `5V ─[110 Ω]─ ánodo` (cols 59–64) y `cátodo ─ OUTk del ULN` (cols 53–58):
 
-| Grupo | 2.2 kΩ (riel inferior + → ánodo) | Ánodo común (tapa) | Cátodo común (tapa) → OUT |
+| Grupo | 110 Ω (riel inferior + → ánodo) | Ánodo común (tapa) | Cátodo común (tapa) → OUT |
 |---|---|---|---|
 | LED1 | col **59** | → col 59 (amarillo) | → **col 58** (OUT1, violeta) |
 | LED2 | col **60** | → col 60 | → **col 57** (OUT2) |
@@ -322,11 +322,21 @@ Por grupo: `5V ─[2.2 kΩ]─ ánodo` (cols 59–64) y `cátodo ─ OUTk del UL
 **cátodo** en cols 53–58 (columnas no adyacentes). Rotula ambos por grupo (Bk) y sigue la
 tabla fila por fila para no cruzarlos.
 
-> **Brillo esperado = tenue pero visible.** Los 6 grupos usan **2.2 kΩ** (las 2× 1 kΩ del
-> inventario van al DFPlayer; `materiales.md §3`). Con 2.2 kΩ desde 5 V vía el ULN, cada
-> LED recibe **~0.19 mA** (≈ 3.5 mA los 6 grupos) según ngspice (`spice/`); **confirmar con
-> multímetro al energizar**. Es el máximo con el inventario; los LEDs van directo en la
-> superficie (huecos en el acrílico), así que a esa corriente se ven.
+> **Brillo (actualizado 2026-07-11): los 6 grupos usan 110 Ω.** Con las **2.2 kΩ** originales
+> cada LED recibía **~0.19 mA** y quedaba **demasiado tenue**, así que el autor las sustituyó
+> por **110 Ω**. Según ngspice (`spice/grupo_led.cir`), cada grupo pasa a **10,1 mA** (**3,4 mA
+> por LED**, ánodo a 3,89 V) — unos **61 mA** con los 6 grupos encendidos.
+>
+> **Sigue muy dentro de los límites del ULN2803A** (500 mA/canal de máximo absoluto;
+> `datasheets/uln2803a.pdf`) y **no provoca brownout del DFPlayer**: verificado en hardware el
+> 2026-07-11, los 3 modos × 3 niveles con audio, incluido Equilibrio n3 (4 grupos a la vez).
+> El máximo del LED es **DESCONOCIDO** (no hay datasheet del LED en el repo), pero 3,4 mA está
+> un orden de magnitud por debajo de los ~20 mA nominales de un LED de 5 mm corriente.
+>
+> ⚠️ **No cambies componentes con el circuito energizado.** Al sustituir estas resistencias con
+> el USB conectado, el glitch de alimentación **colgó el DFPlayer**: enmudeció del todo y **no
+> revivió con EN ni reseteando el ESP32** — hubo que **desconectar el USB** y volver a
+> conectarlo (mismo modo de fallo que el brownout, §7). Desconecta antes de tocar el protoboard.
 >
 > ⚠️ **GPIO5 (LED2) es un strapping pin** (el ESP32 lo lee al encender para decidir cómo
 > arranca; una carga puede alterarlo). Si tras cablear LED2 el ESP32 **no arranca**,
@@ -335,7 +345,7 @@ tabla fila por fila para no cruzarlos.
 > **toma del puente en el lado ESP32** de la col 32 a la **col 38** (ambas Fila J); el otro
 > extremo del puente sigue en el nodo de IN2 (col 57).
 
-**Verificación Paso 6:** polaridad de cada grupo (ánodo a 2.2 kΩ/5 V en cols 59–64,
+**Verificación Paso 6:** polaridad de cada grupo (ánodo a 110 Ω/5 V en cols 59–64,
 cátodo a OUT del ULN en cols 53–58); el ESP32 **sigue arrancando** tras cablear LED2.
 
 ### Paso 7 — DFPlayer Mini + parlante (cols 42–49)
@@ -488,7 +498,7 @@ ESP32 **RX2(16) ← TX** del módulo.
 Nodos 20/18/16/14/12/10 → ADC A38/A37/A36/A35/A34/A33.
 
 **ULN2803A + LEDs (cols 50–64):** ver Pasos 5–6. IN1..IN6 = E58..E53; OUT1..OUT6 =
-F58..F53; GND(p9)=E50→sup −; COM(p10)=F50→inf +; 2.2 kΩ (inf +) → ánodos cols 59–64;
+F58..F53; GND(p9)=E50→sup −; COM(p10)=F50→inf +; 110 Ω (inf +) → ánodos cols 59–64;
 cátodos → OUT en cols 58–53.
 
 **DFPlayer (cols 42–49):** ver Paso 7. VCC→inf +, GND→inf −, RX←1 kΩ←GPIO17(c31),
@@ -512,7 +522,7 @@ TX→GPIO16(c30, medir ≤3.3 V), SPK1/SPK2→parlante 4 Ω, caps 100 µF+100 nF
       **VN**=GPIO39/ADC en c37).
 - [ ] ULN **a caballo del canal**, muesca a la derecha; pin 9 (E50) a **riel superior −**,
       pin 10 (F50) a **riel inferior + (5 V)**.
-- [ ] LEDs: polaridad (ánodo a 2.2 kΩ/5 V en cols 59–64, cátodo a OUT del ULN cols 53–58).
+- [ ] LEDs: polaridad (ánodo a 110 Ω/5 V en cols 59–64, cátodo a OUT del ULN cols 53–58).
 - [ ] Electrolíticos (1000 µF, 100 µF) con la **polaridad correcta** (banda `−` a GND).
 - [ ] Nada en ADC2 / pines de WiFi. GPIO12 libre (no cablear).
 - [ ] **DFPlayer TX medido ≤ 3.3 V** antes de conectarlo a GPIO16 (si 5 V → divisor).
